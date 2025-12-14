@@ -13,7 +13,7 @@ require_once 'includes/header.php';
         <div class="page-container">
             <div class="page-header">
                 <h1 class="page-title">
-                    <div class="page-title-icon">
+                    <div class="page-title-icon black-svg">
                         <?php include 'svgs/upload.svg'; ?>
                     </div>
                     CSVファイルアップロード
@@ -67,7 +67,7 @@ require_once 'includes/header.php';
         <form id="uploadForm" action="upload.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= h(generateCsrfToken()) ?>">
             
-            <div class="form-group">
+            <div class="form-group flex-col">
                 <label for="csvFile">CSVファイルを選択:</label>
                 
                 <!-- ドラッグ&ドロップエリア -->

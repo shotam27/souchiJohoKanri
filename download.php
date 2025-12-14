@@ -196,7 +196,7 @@ require_once 'includes/header.php';
         <div class="page-container">
             <div class="page-header">
                 <h1 class="page-title">
-                    <div class="page-title-icon">
+                    <div class="page-title-icon black-svg">
                         <?php include 'svgs/download.svg'; ?>
                     </div>
                     CSVダウンロード

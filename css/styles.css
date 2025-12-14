@@ -56,11 +56,6 @@ body {
     color: #e8f2ff;
 }
 
-.brand-icon {
-    width: 32px;
-    height: 32px;
-}
-
 .navbar-brand svg {
     width: 32px;
     height: 32px;
@@ -85,21 +80,18 @@ body {
     color: white;
     text-decoration: none;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s;
     font-weight: 500;
     background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
     margin: 0 2px;
 }
 
 .nav-link:hover {
     background: rgba(255,255,255,0.2);
-    transform: translateY(-2px);
 }
 
 .nav-link.active {
     background: rgba(255,255,255,0.25);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .nav-icon {
@@ -117,7 +109,7 @@ body {
 .main-content {
     flex: 1;
     padding: 40px 20px;
-    min-height: calc(100vh - 70px - 60px);
+    width: 100%;
 }
 
 .page-container {
@@ -143,21 +135,28 @@ body {
 
 /* フッター */
 .main-footer {
-    background: #2c3e50;
+    background-color: #343a40;
     color: white;
-    padding: 20px;
     text-align: center;
+    padding: 20px 0;
     margin-top: auto;
+    width: 100%;
 }
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 20px;
 }
 
 .footer-content p {
     margin: 0;
+}
+
+.footer-version {
     font-size: 14px;
+    color: #adb5bd;
+    margin-top: 5px;
 }
 
 /* アラートアイコン */
@@ -178,28 +177,22 @@ body {
 /* ===================================
    共通スタイル
    =================================== */
-.page-title-icon svg path {
-    fill: #000000 !important;
-}
-
-/* アイコンと見出しを横並びにする */
 .page-title-icon {
-    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    display: flex;
     align-items: center;
-    margin-right: 8px;
-    vertical-align: middle;
+    justify-content: center;
 }
 
 .page-title-icon svg {
-    width: 24px;
-    height: 24px;
-    display: inline-block;
+    width: 100%;
+    height: 100%;
+    fill: #667eea;
 }
 
-.page-header .page-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.black-svg path{
+    fill: #333 !important;
 }
 
 /* リストのマーカーを削除 */
@@ -226,14 +219,22 @@ ul, ol {
 }
 
 .form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
+.flex-col {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .form-group label {
-    display: block;
     font-weight: bold;
-    margin-bottom: 8px;
-    color: #333;
+    color: #555;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .form-control {
@@ -260,6 +261,7 @@ ul, ol {
 
 .form-group select,
 .form-group input {
+    flex: 1;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -692,7 +694,6 @@ input[type="file"]:hover {
 .drag-drop-area.drag-over {
     border-color: #667eea;
     background-color: #e8f2ff;
-    transform: scale(1.02);
 }
 
 .drag-drop-area.has-file {
@@ -801,52 +802,4 @@ input[type="file"]:hover {
     background-color: #007acc;
     border-radius: 5px;
     transition: width 0.3s;
-}
-
-/* ===================================
-   レスポンシブ対応
-   =================================== */
-@media (max-width: 768px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .search-buttons {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .search-buttons .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .results-header {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
-    
-    .results-table {
-        font-size: 12px;
-    }
-    
-    .results-table th,
-    .results-table td {
-        padding: 6px;
-    }
-    
-    .form-control {
-        max-width: 100%;
-    }
-    
-    .preview-table {
-        font-size: 12px;
-    }
-    
-    .preview-table th,
-    .preview-table td {
-        padding: 6px;
-        max-width: 120px;
-    }
 }

@@ -27,7 +27,7 @@ require_once 'includes/header.php';
         <div class="page-container">
             <div class="page-header">
                 <h1 class="page-title">
-                    <div class="page-title-icon">
+                    <div class="page-title-icon black-svg">
                         <?php include 'svgs/search.svg'; ?>
                     </div>
                     装置情報検索
@@ -59,9 +59,6 @@ require_once 'includes/header.php';
         <!-- 検索フォーム -->   
         <form id="searchForm" class="search-form">
             <h3 class="form-section-title">                    
-                <div class="page-title-icon">
-                    <?php include 'svgs/search.svg'; ?>
-                </div>
                 検索条件
             </h3>
             
