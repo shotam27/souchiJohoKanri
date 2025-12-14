@@ -1,0 +1,47 @@
+# 依存関係とパッケージ
+node_modules/
+vendor/
+
+# ログファイル
+logs/*.log
+*.log
+
+# アップロードファイル
+uploads/*
+!uploads/.gitkeep
+
+# データベースファイル
+*.sqlite
+*.db
+
+# 環境設定
+.env
+.env.local
+.env.*.local
+config.php
+
+# IDEファイル
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 一時ファイル
+*.tmp
+*.temp
+~*
+
+# Docker関連（除外するもの）
+.docker/
+
+# PHPキャッシュ
+*.cache

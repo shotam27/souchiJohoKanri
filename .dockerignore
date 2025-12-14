@@ -1,0 +1,30 @@
+# Git関連
+.git
+.gitignore
+*.md
+
+# ドキュメント
+README.md
+README.docker.md
+SETUP.md
+
+# Windows関連
+Thumbs.db
+desktop.ini
+*.lnk
+
+# 一時ファイル
+*.tmp
+*.temp
+*.log
+
+# 開発ファイル
+.vscode/
+*.sublime-*
+
+# 不要なバッチファイル（実行時は含める）
+# check_environment.bat
+
+# バックアップファイル
+*.bak
+*.backup

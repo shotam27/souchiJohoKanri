@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PHP + Apache Webサーバー
+  web:
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./uploads:/var/www/html/uploads
+      - ./logs:/var/www/html/logs
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=device_management
+      - DB_USER=root
+      - DB_PASS=rootpassword
+    depends_on:
+      - mysql
+    networks:
+      - device-network
+
+  # MySQL データベース
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: device_management
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - device-network
+
+  # phpMyAdmin（データベース管理用）
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - device-network
+
+# データ永続化用ボリューム
+volumes:
+  mysql_data:
+
+# ネットワーク設定
+networks:
+  device-network:
+    driver: bridge

@@ -1,0 +1,143 @@
+<?php
+/**
+ * アプリケーション設定ファイル（サンプル）
+ * 
+ * このファイルをコピーして config.php を作成し、
+ * 実際の環境に合わせて設定を変更してください。
+ */
+
+// データベース設定（環境変数対応）
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'device_management');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_CHARSET', 'utf8mb4');
+
+// アップロード設定
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// エラーレポート設定（本番環境では無効にする）
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// エラーログ設定
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/php_error.log');
+
+// タイムゾーン設定
+date_default_timezone_set('Asia/Tokyo');
+
+// セッション設定
+session_start();
+
+// クラスファイルの自動読み込み
+spl_autoload_register(function ($class_name) {
+    $file = __DIR__ . '/classes/' . $class_name . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+/**
+ * テーブル名のサニタイズ関数
+ */
+function sanitizeTableName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * HTML出力用のエスケープ関数
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * エラーメッセージをセッションに保存
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * エラーメッセージを取得して削除
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 成功メッセージをセッションに保存
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * 成功メッセージを取得して削除
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * CSVヘッダーのサニタイズ（特殊文字を削除）
+ */
+function sanitizeColumnName($name) {
+    // BOM、特殊文字、空白を削除してアンダースコアに変換
+    $name = str_replace("\xEF\xBB\xBF", '', $name); // BOM削除
+    $name = trim($name);
+    $name = preg_replace('/[^\x20-\x7E]/', '', $name); // 制御文字を削除
+    $name = preg_replace('/[^a-zA-Z0-9_\x80-\xFF]/', '_', $name); // 英数字、アンダースコア、マルチバイト文字以外を_に
+    return $name;
+}
+
+/**
+ * 拡張カラムのバリデーション
+ */
+function validateExtendedColumn($columnName) {
+    // 予約語チェック
+    $reservedWords = [
+        'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER',
+        'TABLE', 'DATABASE', 'INDEX', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES',
+        'WHERE', 'FROM', 'JOIN', 'UNION', 'GROUP', 'ORDER', 'HAVING', 'LIMIT'
+    ];
+    
+    if (in_array(strtoupper($columnName), $reservedWords)) {
+        return false;
+    }
+    
+    // 既存の固定カラム名チェック
+    $fixedColumns = [
+        'primary_key', 'service_name', 'device_type', 'device_name', 
+        'device_ip', 'username', 'password', 'created_at', 'updated_at'
+    ];
+    
+    if (in_array($columnName, $fixedColumns)) {
+        return false;
+    }
+    
+    // 長さチェック（最大64文字）
+    if (strlen($columnName) > 64) {
+        return false;
+    }
+    
+    // 先頭が数字でないことを確認
+    if (preg_match('/^\d/', $columnName)) {
+        return false;
+    }
+    
+    return true;
+}
