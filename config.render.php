@@ -54,6 +54,39 @@ function h($str) {
 }
 
 /**
+ * CSRFトークン生成
+ * @return string
+ */
+function generateCsrfToken() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * CSRFトークン検証
+ * @param string $token
+ * @return bool
+ */
+function validateCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * ファイル名をサニタイズ
+ * @param string $filename
+ * @return string
+ */
+function sanitizeFilename($filename) {
+    // 危険な文字を除去
+    $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $filename);
+    // 連続するドットやアンダースコアを単一に
+    $filename = preg_replace('/[_\.]{2,}/', '_', $filename);
+    return $filename;
+}
+
+/**
  * CSVヘッダーからカラム定義を生成
  */
 function generateColumnsFromHeader($header) {
