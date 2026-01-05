@@ -15,9 +15,9 @@ define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
 define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
 define('UPLOAD_DIR', __DIR__ . '/uploads/');
 
-// エラーレポート設定（本番環境用）
-ini_set('display_errors', 0);
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
+// エラーレポート設定（デバッグ用 - 問題解決後は無効化）
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 // エラーログ設定
 ini_set('log_errors', 1);

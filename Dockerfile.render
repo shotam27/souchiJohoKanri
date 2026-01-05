@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 必要なPHP拡張機能をインストール
@@ -37,12 +38,11 @@ RUN mkdir -p /var/www/html/uploads /var/www/html/logs
 RUN chmod 755 /var/www/html/uploads \
     && chmod 755 /var/www/html/logs \
     && chown -R www-data:www-data /var/www/html/uploads \
-    && chown -R www-data:www-data /var/www/html/logs
+    && chown -R www-data:www-data /var/www/html/logs \
+    && chown -R www-data:www-data /var/www/html
 
 # 本番環境用のconfig.phpを使用
-RUN if [ ! -f /var/www/html/config.php ]; then \
-        cp /var/www/html/config.render.php /var/www/html/config.php; \
-    fi
+RUN cp /var/www/html/config.render.php /var/www/html/config.php
 
 # Apacheのポート80を公開
 EXPOSE 80
