@@ -24,10 +24,12 @@ services:
         fromDatabase:
           name: fusion-mysql
           property: password
-    disk:
-      name: fusion-uploads
-      mountPath: /var/www/html/uploads
-      sizeGB: 1
+    # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
+    # 無料プランの場合は以下をコメントアウト
+    # disk:
+    #   name: fusion-uploads
+    #   mountPath: /var/www/html/uploads
+    #   sizeGB: 1
 
   # MySQLデータベース
 databases:
