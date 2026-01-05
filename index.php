@@ -90,8 +90,7 @@ require_once 'includes/header.php';
                        id="csvFile" 
                        name="csv_file" 
                        accept=".csv,text/csv,application/csv" 
-                       class="file-input-hidden"
-                       required>
+                       class="file-input-hidden">
                 
                 <!-- 選択されたファイル情報 -->
                 <div class="selected-file-info" id="selectedFileInfo">

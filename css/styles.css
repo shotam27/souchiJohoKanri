@@ -449,6 +449,7 @@ ul, ol {
     padding: 15px;
     background-color: #e9ecef;
     border-radius: 4px;
+    margin-top: 60px;
 }
 
 .results-info {
@@ -729,7 +730,11 @@ input[type="file"]:hover {
 }
 
 .file-input-hidden {
-    display: none;
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }
 
 .selected-file-info {

@@ -24,13 +24,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                 装置情報管理システム
             </a>
             
-            <!-- モバイルメニュートグル -->
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                </svg>
-            </button>
-            
+
             <!-- ナビゲーションメニュー -->
             <ul class="navbar-nav" id="navbarNav">
                 <li class="nav-item">
@@ -62,11 +56,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
     </nav>
 
     <script>
-        // モバイルメニュートグル
-        function toggleMobileMenu() {
-            const nav = document.getElementById('navbarNav');
-            nav.classList.toggle('show');
-        }
+
         
         // ウィンドウサイズ変更時にモバイルメニューを閉じる
         window.addEventListener('resize', function() {

@@ -1,0 +1,52 @@
+# PHP 8.2 with Apache (Render本番環境用)
+FROM php:8.2-apache
+
+# 必要なシステムパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    zip \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# 必要なPHP拡張機能をインストール
+RUN docker-php-ext-install pdo pdo_mysql mysqli opcache
+
+# OPcache設定（本番環境用パフォーマンス最適化）
+RUN { \
+    echo 'opcache.memory_consumption=128'; \
+    echo 'opcache.interned_strings_buffer=8'; \
+    echo 'opcache.max_accelerated_files=4000'; \
+    echo 'opcache.revalidate_freq=2'; \
+    echo 'opcache.fast_shutdown=1'; \
+    echo 'opcache.enable_cli=1'; \
+    } > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Apacheのmod_rewriteを有効化
+RUN a2enmod rewrite
+
+# 作業ディレクトリを設定
+WORKDIR /var/www/html
+
+# アプリケーションファイルをコピー
+COPY . /var/www/html/
+
+# アップロードディレクトリとログディレクトリを作成
+RUN mkdir -p /var/www/html/uploads /var/www/html/logs
+
+# ディレクトリの権限を設定
+RUN chmod 755 /var/www/html/uploads \
+    && chmod 755 /var/www/html/logs \
+    && chown -R www-data:www-data /var/www/html/uploads \
+    && chown -R www-data:www-data /var/www/html/logs
+
+# 本番環境用のconfig.phpを使用
+RUN if [ ! -f /var/www/html/config.php ]; then \
+        cp /var/www/html/config.render.php /var/www/html/config.php; \
+    fi
+
+# Apacheのポート80を公開
+EXPOSE 80
+
+# ヘルスチェックコマンド
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1

@@ -1,0 +1,38 @@
+services:
+  # PHPウェブサービス
+  - type: web
+    name: fusion-device-manager
+    env: docker
+    region: singapore  # またはお好みのリージョン
+    plan: free  # または starter / standard
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: fusion-mysql
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: fusion-mysql
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: fusion-mysql
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: fusion-mysql
+          property: password
+    disk:
+      name: fusion-uploads
+      mountPath: /var/www/html/uploads
+      sizeGB: 1
+
+  # MySQLデータベース
+databases:
+  - name: fusion-mysql
+    databaseName: device_management
+    user: admin
+    region: singapore  # Webサービスと同じリージョン
+    plan: free  # または starter / standard
