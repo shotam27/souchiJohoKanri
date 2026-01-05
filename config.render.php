@@ -45,6 +45,15 @@ function sanitizeTableName($name) {
 }
 
 /**
+ * HTMLエスケープ関数
+ * @param string $str
+ * @return string
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
  * CSVヘッダーからカラム定義を生成
  */
 function generateColumnsFromHeader($header) {
