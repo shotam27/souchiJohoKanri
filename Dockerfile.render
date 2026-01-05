@@ -25,6 +25,14 @@ RUN { \
 # Apacheのmod_rewriteを有効化
 RUN a2enmod rewrite
 
+# Apache設定: AllowOverrideを有効化
+RUN echo '<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/custom.conf \
+    && a2enconf custom
+
 # 作業ディレクトリを設定
 WORKDIR /var/www/html
 
@@ -35,10 +43,9 @@ COPY . /var/www/html/
 RUN mkdir -p /var/www/html/uploads /var/www/html/logs
 
 # ディレクトリの権限を設定
-RUN chmod 755 /var/www/html/uploads \
+RUN chmod -R 755 /var/www/html \
+    && chmod 755 /var/www/html/uploads \
     && chmod 755 /var/www/html/logs \
-    && chown -R www-data:www-data /var/www/html/uploads \
-    && chown -R www-data:www-data /var/www/html/logs \
     && chown -R www-data:www-data /var/www/html
 
 # 本番環境用のconfig.phpを使用
