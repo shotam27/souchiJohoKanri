@@ -88,6 +88,22 @@ function successResponse($data, $message = 'Success') {
 }
 
 /**
+ * エラーメッセージをセッションに設定
+ * @param string $message
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * 成功メッセージをセッションに設定
+ * @param string $message
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
  * エラーメッセージを取得して削除
  * @return string|null
  */
