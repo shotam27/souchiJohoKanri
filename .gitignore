@@ -1,47 +1,21 @@
-# 依存関係とパッケージ
-node_modules/
-vendor/
-
-# ログファイル
-logs/*.log
+﻿# PHP
 *.log
+/logs/
+/uploads/*
+!/uploads/.gitkeep
 
-# アップロードファイル
-uploads/*
-!uploads/.gitkeep
-
-# データベースファイル
-*.sqlite
+# Database
+*.sql
 *.db
 
-# 環境設定
-.env
-.env.local
-.env.*.local
+# Environment
 config.php
+.env
 
-# IDEファイル
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS生成ファイル
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# 一時ファイル
-*.tmp
-*.temp
-~*
-
-# Docker関連（除外するもの）
-.docker/
-
-# PHPキャッシュ
-*.cache
+# IDE
+.vscode/
+.idea/

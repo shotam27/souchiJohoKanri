@@ -1,0 +1,2570 @@
+﻿<?php
+/**
+ * Ajax API 繧ｨ繝ｳ繝峨・繧､繝ｳ繝・
+ * 繝輔Ο繝ｳ繝医お繝ｳ繝峨°繧峨・髱槫酔譛溘Μ繧ｯ繧ｨ繧ｹ繝医ｒ蜃ｦ逅・
+ */
+
+require_once 'config.php';
+
+// JSON蠖｢蠑上〒蜃ｺ蜉・
+header('Content-Type: application/json; charset=UTF-8');
+
+// CORS蟇ｾ蠢懶ｼ亥ｿ・ｦ√↓蠢懊§縺ｦ・・
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+try {
+    // 繝ｪ繧ｯ繧ｨ繧ｹ繝医Γ繧ｽ繝・ラ縺ｮ遒ｺ隱・
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    if ($method !== 'GET' && $method !== 'POST') {
+        throw new Exception('險ｱ蜿ｯ縺輔ｌ縺ｦ縺・↑縺・Μ繧ｯ繧ｨ繧ｹ繝医Γ繧ｽ繝・ラ縺ｧ縺・);
+    }
+    
+    // 繧｢繧ｯ繧ｷ繝ｧ繝ｳ繝代Λ繝｡繝ｼ繧ｿ縺ｮ蜿門ｾ・
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    
+    if (empty($action)) {
+        throw new Exception('繧｢繧ｯ繧ｷ繝ｧ繝ｳ縺梧欠螳壹＆繧後※縺・∪縺帙ｓ');
+    }
+    
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯・
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $deviceManager = new DeviceManager($database);
+    
+    $response = ['success' => false, 'data' => null, 'message' => ''];
+    
+    switch ($action) {
+        case 'get_services':
+            // 繧ｵ繝ｼ繝薙せ蜷堺ｸ隕ｧ繧偵Μ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺九ｉ蜿門ｾ・
+            $services = $deviceManager->getServiceNamesFromRelation();
+            $response = [
+                'success' => true,
+                'data' => $services,
+                'message' => '繧ｵ繝ｼ繝薙せ蜷堺ｸ隕ｧ繧貞叙蠕励＠縺ｾ縺励◆'
+            ];
+            break;
+            
+        case 'get_device_types':
+            // 陬・ｽｮ遞ｮ蛻･荳隕ｧ繧偵Μ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺九ｉ蜿門ｾ暦ｼ医し繝ｼ繝薙せ蜷阪〒繝輔ぅ繝ｫ繧ｿ・・
+            $serviceName = $_GET['service_name'] ?? $_POST['service_name'] ?? null;
+            $deviceTypes = $deviceManager->getDeviceTypesFromRelation($serviceName);
+            $response = [
+                'success' => true,
+                'data' => $deviceTypes,
+                'message' => '陬・ｽｮ遞ｮ蛻･荳隕ｧ繧貞叙蠕励＠縺ｾ縺励◆'
+            ];
+            break;
+            
+        case 'get_all_relations':
+            // 蜈ｨ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ蜿門ｾ・
+            $relations = $deviceManager->getAllRelations();
+            $response = [
+                'success' => true,
+                'data' => $relations,
+                'message' => '繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳隕ｧ繧貞叙蠕励＠縺ｾ縺励◆'
+            ];
+            break;
+            
+        case 'build_relations':
+            // 譌｢蟄倥ョ繝ｼ繧ｿ縺九ｉ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ讒狗ｯ・
+            $result = $deviceManager->buildRelationsFromExistingData();
+            $response = [
+                'success' => $result['success'],
+                'data' => null,
+                'message' => $result['message']
+            ];
+            break;
+            
+        case 'search_devices':
+            // 陬・ｽｮ諠・ｱ讀懃ｴ｢
+            $serviceName = $_GET['service_name'] ?? $_POST['service_name'] ?? null;
+            $deviceType = $_GET['device_type'] ?? $_POST['device_type'] ?? null;
+            $deviceName = $_GET['device_name'] ?? $_POST['device_name'] ?? null;
+            $page = (int)($_GET['page'] ?? $_POST['page'] ?? 1);
+            $limit = 20; // 1繝壹・繧ｸ縺ゅ◆繧翫・莉ｶ謨ｰ
+            $offset = ($page - 1) * $limit;
+            
+            // 遨ｺ譁・ｭ怜・繧地ull縺ｫ螟画鋤
+            $serviceName = $serviceName === '' ? null : $serviceName;
+            $deviceType = $deviceType === '' ? null : $deviceType;
+            $deviceName = $deviceName === '' ? null : $deviceName;
+            
+            $devices = $deviceManager->searchDevicesAdvanced(
+                $serviceName, 
+                $deviceType, 
+                $deviceName, 
+                $limit, 
+                $offset
+            );
+            
+            $total = $deviceManager->countDevicesAdvanced(
+                $serviceName, 
+                $deviceType, 
+                $deviceName
+            );
+            
+            $totalPages = ceil($total / $limit);
+            
+            $response = [
+                'success' => true,
+                'data' => [
+                    'devices' => $devices,
+                    'pagination' => [
+                        'current_page' => $page,
+                        'total_pages' => $totalPages,
+                        'total_count' => $total,
+                        'per_page' => $limit
+                    ]
+                ],
+                'message' => "讀懃ｴ｢邨先棡: {$total}莉ｶ隕九▽縺九ｊ縺ｾ縺励◆"
+            ];
+            break;
+            
+        case 'get_statistics':
+            // 陬・ｽｮ邨ｱ險域ュ蝣ｱ繧貞叙蠕・
+            $stats = $deviceManager->getDeviceStatistics();
+            $response = [
+                'success' => true,
+                'data' => $stats,
+                'message' => '邨ｱ險域ュ蝣ｱ繧貞叙蠕励＠縺ｾ縺励◆'
+            ];
+            break;
+            
+        case 'build_relations':
+            // 譌｢蟄倥ョ繝ｼ繧ｿ縺九ｉ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繧定・蜍墓ｧ狗ｯ・
+            $buildResult = $deviceManager->buildRelationsFromExistingData();
+            $response = [
+                'success' => true,
+                'data' => $buildResult,
+                'message' => "繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ讒狗ｯ牙ｮ御ｺ・ {$buildResult['registered']}莉ｶ逋ｻ骭ｲ"
+            ];
+            break;
+            
+        case 'get_all_relations':
+            // 蜈ｨ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳隕ｧ繧貞叙蠕暦ｼ育ｮ｡逅・畑・・
+            $relations = $deviceManager->getAllRelations();
+            $response = [
+                'success' => true,
+                'data' => $relations,
+                'message' => '繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳隕ｧ繧貞叙蠕励＠縺ｾ縺励◆'
+            ];
+            break;
+            
+        default:
+            throw new Exception('荳肴ｭ｣縺ｪ繧｢繧ｯ繧ｷ繝ｧ繝ｳ縺ｧ縺・ ' . $action);
+    }
+    
+} catch (Exception $e) {
+    $response = [
+        'success' => false,
+        'data' => null,
+        'message' => $e->getMessage()
+    ];
+    
+    // 繧ｨ繝ｩ繝ｼ繝ｭ繧ｰ縺ｫ險倬鹸・域悽逡ｪ迺ｰ蠅・〒縺ｯ驥崎ｦ・ｼ・
+    error_log("Ajax API Error: " . $e->getMessage());
+    
+    // HTTP繧ｹ繝・・繧ｿ繧ｹ繧ｳ繝ｼ繝峨ｒ險ｭ螳・
+    http_response_code(400);
+} finally {
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§繧・
+    if (isset($database)) {
+        $database->close();
+    }
+}
+
+// JSON蠖｢蠑上〒繝ｬ繧ｹ繝昴Φ繧ｹ繧貞・蜉・
+echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+?>
+<?php
+/**
+ * Docker迺ｰ蠅・畑繧｢繝励Μ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ險ｭ螳壹ヵ繧｡繧､繝ｫ
+ */
+
+// 繝・・繧ｿ繝吶・繧ｹ險ｭ螳夲ｼ・ocker迺ｰ蠅・畑・・
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'mysql');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'device_management');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? 'rootpassword');
+define('DB_CHARSET', 'utf8mb4');
+
+// 繧｢繝・・繝ｭ繝ｼ繝芽ｨｭ螳・
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// 繧ｨ繝ｩ繝ｼ繝ｬ繝昴・繝郁ｨｭ螳夲ｼ・ocker迺ｰ蠅・〒縺ｯ譛牙柑・・
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// 繧ｿ繧､繝繧ｾ繝ｼ繝ｳ險ｭ螳・
+date_default_timezone_set('Asia/Tokyo');
+
+// 繧ｻ繝・す繝ｧ繝ｳ險ｭ螳・
+session_start();
+
+// 繧ｪ繝ｼ繝医Ο繝ｼ繝芽ｨｭ螳・
+function autoload($className) {
+    $classFile = __DIR__ . '/classes/' . $className . '.php';
+    if (file_exists($classFile)) {
+        require_once $classFile;
+    }
+}
+spl_autoload_register('autoload');
+
+// 蜈ｱ騾夐未謨ｰ
+
+/**
+ * HTML繧ｨ繧ｹ繧ｱ繝ｼ繝・
+ * @param string $str
+ * @return string
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * CSRF繝医・繧ｯ繝ｳ逕滓・
+ * @return string
+ */
+function generateCsrfToken() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * CSRF繝医・繧ｯ繝ｳ讀懆ｨｼ
+ * @param string $token
+ * @return bool
+ */
+function validateCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * 繝輔ぃ繧､繝ｫ蜷阪ｒ繧ｵ繝九ち繧､繧ｺ
+ * @param string $filename
+ * @return string
+ */
+function sanitizeFilename($filename) {
+    // 蜊ｱ髯ｺ縺ｪ譁・ｭ励ｒ髯､蜴ｻ
+    $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $filename);
+    // 騾｣邯壹☆繧九ラ繝・ヨ繧・い繝ｳ繝繝ｼ繧ｹ繧ｳ繧｢繧貞腰荳縺ｫ
+    $filename = preg_replace('/[_\.]{2,}/', '_', $filename);
+    return $filename;
+}
+
+/**
+ * 繝・・繧ｿ繝吶・繧ｹ縺ｮ繝・・繝悶Ν蜷阪→縺励※菴ｿ逕ｨ蜿ｯ閭ｽ縺ｪ譁・ｭ怜・縺ｫ螟画鋤
+ * @param string $str
+ * @return string
+ */
+function sanitizeTableName($str) {
+    // 譌･譛ｬ隱樊枚蟄励・谿九＠縲∫音谿頑枚蟄励・縺ｿ髯､蜴ｻ
+    $str = preg_replace('/[^\p{L}\p{N}_]/u', '_', $str);
+    // 騾｣邯壹☆繧九い繝ｳ繝繝ｼ繧ｹ繧ｳ繧｢繧貞腰荳縺ｫ
+    $str = preg_replace('/_+/', '_', $str);
+    // 蜈磯ｭ譛ｫ蟆ｾ縺ｮ繧｢繝ｳ繝繝ｼ繧ｹ繧ｳ繧｢繧帝勁蜴ｻ
+    $str = trim($str, '_');
+    return $str;
+}
+
+/**
+ * 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧偵そ繝・す繝ｧ繝ｳ縺ｫ險ｭ螳・
+ * @param string $message
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * 謌仙粥繝｡繝・そ繝ｼ繧ｸ繧偵そ繝・す繝ｧ繝ｳ縺ｫ險ｭ螳・
+ * @param string $message
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧貞叙蠕励＠縺ｦ蜑企勁
+ * @return string|null
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 謌仙粥繝｡繝・そ繝ｼ繧ｸ繧貞叙蠕励＠縺ｦ蜑企勁
+ * @return string|null
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * Docker迺ｰ蠅・・蛛･蜈ｨ諤ｧ繝√ぉ繝・け
+ * @return array
+ */
+function checkDockerEnvironment() {
+    $checks = [
+        'database_connection' => false,
+        'upload_directory' => false,
+        'required_extensions' => false
+    ];
+    
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯壹メ繧ｧ繝・け
+    try {
+        $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+        $database->connect();
+        $checks['database_connection'] = true;
+    } catch (Exception $e) {
+        // 謗･邯壼､ｱ謨・
+    }
+    
+    // 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ繝√ぉ繝・け
+    if (is_dir(UPLOAD_DIR) && is_writable(UPLOAD_DIR)) {
+        $checks['upload_directory'] = true;
+    }
+    
+    // 蠢・ｦ√↑諡｡蠑ｵ讖溯・繝√ぉ繝・け
+    if (extension_loaded('pdo') && extension_loaded('pdo_mysql')) {
+        $checks['required_extensions'] = true;
+    }
+    
+    return $checks;
+}
+?>
+<?php
+/**
+ * 繧｢繝励Μ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ險ｭ螳壹ヵ繧｡繧､繝ｫ・・ender譛ｬ逡ｪ迺ｰ蠅・畑・・
+ */
+
+// 繝・・繧ｿ繝吶・繧ｹ險ｭ螳夲ｼ育腸蠅・､画焚縺九ｉ蜿門ｾ暦ｼ・
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_CHARSET', 'utf8mb4');
+
+// 繧｢繝・・繝ｭ繝ｼ繝芽ｨｭ螳・
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// 繧ｨ繝ｩ繝ｼ繝ｬ繝昴・繝郁ｨｭ螳夲ｼ医ョ繝舌ャ繧ｰ逕ｨ - 蝠城｡瑚ｧ｣豎ｺ蠕後・辟｡蜉ｹ蛹厄ｼ・
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// 繧ｨ繝ｩ繝ｼ繝ｭ繧ｰ險ｭ螳・
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/php_error.log');
+
+// 繧ｿ繧､繝繧ｾ繝ｼ繝ｳ險ｭ螳・
+date_default_timezone_set('Asia/Tokyo');
+
+// 繧ｻ繝・す繝ｧ繝ｳ險ｭ螳・
+session_start();
+
+// 繧ｯ繝ｩ繧ｹ繝輔ぃ繧､繝ｫ縺ｮ閾ｪ蜍戊ｪｭ縺ｿ霎ｼ縺ｿ
+spl_autoload_register(function ($class_name) {
+    $file = __DIR__ . '/classes/' . $class_name . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+/**
+ * 繝・・繝悶Ν蜷阪・繧ｵ繝九ち繧､繧ｺ髢｢謨ｰ
+ */
+function sanitizeTableName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * HTML繧ｨ繧ｹ繧ｱ繝ｼ繝鈴未謨ｰ
+ * @param string $str
+ * @return string
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * CSRF繝医・繧ｯ繝ｳ逕滓・
+ * @return string
+ */
+function generateCsrfToken() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * CSRF繝医・繧ｯ繝ｳ讀懆ｨｼ
+ * @param string $token
+ * @return bool
+ */
+function validateCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * 繝輔ぃ繧､繝ｫ蜷阪ｒ繧ｵ繝九ち繧､繧ｺ
+ * @param string $filename
+ * @return string
+ */
+function sanitizeFilename($filename) {
+    // 蜊ｱ髯ｺ縺ｪ譁・ｭ励ｒ髯､蜴ｻ
+    $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $filename);
+    // 騾｣邯壹☆繧九ラ繝・ヨ繧・い繝ｳ繝繝ｼ繧ｹ繧ｳ繧｢繧貞腰荳縺ｫ
+    $filename = preg_replace('/[_\.]{2,}/', '_', $filename);
+    return $filename;
+}
+
+/**
+ * CSV繝倥ャ繝繝ｼ縺九ｉ繧ｫ繝ｩ繝螳夂ｾｩ繧堤函謌・
+ */
+function generateColumnsFromHeader($header) {
+    $columns = [];
+    foreach ($header as $columnName) {
+        $sanitized = preg_replace('/[^a-zA-Z0-9_]/', '_', $columnName);
+        $columns[] = "`{$sanitized}` TEXT";
+    }
+    return implode(', ', $columns);
+}
+
+/**
+ * CSV繧ｫ繝ｩ繝蜷阪ｒ繧ｵ繝九ち繧､繧ｺ
+ */
+function sanitizeColumnName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * 螳牙・縺ｪJSON蜃ｺ蜉・
+ */
+function jsonResponse($data, $statusCode = 200) {
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+/**
+ * 繧ｨ繝ｩ繝ｼ繝ｬ繧ｹ繝昴Φ繧ｹ
+ */
+function errorResponse($message, $statusCode = 400) {
+    jsonResponse(['success' => false, 'message' => $message], $statusCode);
+}
+
+/**
+ * 謌仙粥繝ｬ繧ｹ繝昴Φ繧ｹ
+ */
+function successResponse($data, $message = 'Success') {
+    jsonResponse(['success' => true, 'message' => $message, 'data' => $data]);
+}
+
+/**
+ * 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧偵そ繝・す繝ｧ繝ｳ縺ｫ險ｭ螳・
+ * @param string $message
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * 謌仙粥繝｡繝・そ繝ｼ繧ｸ繧偵そ繝・す繝ｧ繝ｳ縺ｫ險ｭ螳・
+ * @param string $message
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧貞叙蠕励＠縺ｦ蜑企勁
+ * @return string|null
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 謌仙粥繝｡繝・そ繝ｼ繧ｸ繧貞叙蠕励＠縺ｦ蜑企勁
+ * @return string|null
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+
+<?php
+/**
+ * Render 繝・ヰ繝・げ繝壹・繧ｸ
+ * 迺ｰ蠅・､画焚縺ｨ繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ遒ｺ隱・
+ */
+
+// 繧ｨ繝ｩ繝ｼ陦ｨ遉ｺ繧呈怏蜉ｹ蛹・
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+echo "<h1>Render 繝・ヰ繝・げ諠・ｱ</h1>";
+
+// 迺ｰ蠅・､画焚縺ｮ遒ｺ隱・
+echo "<h2>迺ｰ蠅・､画焚</h2>";
+echo "<pre>";
+echo "DB_HOST: " . (getenv('DB_HOST') ?: 'NOT SET') . "\n";
+echo "DB_NAME: " . (getenv('DB_NAME') ?: 'NOT SET') . "\n";
+echo "DB_USER: " . (getenv('DB_USER') ?: 'NOT SET') . "\n";
+echo "DB_PASS: " . (getenv('DB_PASS') ? '***SET***' : 'NOT SET') . "\n";
+echo "</pre>";
+
+// config.php縺ｮ蟄伜惠遒ｺ隱・
+echo "<h2>繝輔ぃ繧､繝ｫ遒ｺ隱・/h2>";
+echo "<pre>";
+echo "config.php exists: " . (file_exists('config.php') ? 'YES' : 'NO') . "\n";
+echo "config.render.php exists: " . (file_exists('config.render.php') ? 'YES' : 'NO') . "\n";
+echo "</pre>";
+
+// PHP諡｡蠑ｵ讖溯・縺ｮ遒ｺ隱・
+echo "<h2>PHP諡｡蠑ｵ讖溯・</h2>";
+echo "<pre>";
+echo "PDO: " . (extension_loaded('pdo') ? 'YES' : 'NO') . "\n";
+echo "PDO_MySQL: " . (extension_loaded('pdo_mysql') ? 'YES' : 'NO') . "\n";
+echo "MySQLi: " . (extension_loaded('mysqli') ? 'YES' : 'NO') . "\n";
+echo "</pre>";
+
+// 繝・・繧ｿ繝吶・繧ｹ謗･邯壹ユ繧ｹ繝・
+echo "<h2>繝・・繧ｿ繝吶・繧ｹ謗･邯壹ユ繧ｹ繝・/h2>";
+echo "<pre>";
+
+if (file_exists('config.php')) {
+    require_once 'config.php';
+    
+    try {
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]);
+        echo "笨・繝・・繧ｿ繝吶・繧ｹ謗･邯壽・蜉・\n";
+        
+        // 繝・・繝悶Ν荳隕ｧ繧貞叙蠕・
+        $stmt = $pdo->query("SHOW TABLES");
+        $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        echo "\n繝・・繝悶Ν謨ｰ: " . count($tables) . "\n";
+        if (count($tables) > 0) {
+            echo "繝・・繝悶Ν荳隕ｧ:\n";
+            foreach ($tables as $table) {
+                echo "  - $table\n";
+            }
+        } else {
+            echo "笞・・繝・・繝悶Ν縺悟ｭ伜惠縺励∪縺帙ｓ縲ゅョ繝ｼ繧ｿ繝吶・繧ｹ蛻晄悄蛹悶′蠢・ｦ√〒縺吶・n";
+        }
+        
+    } catch (PDOException $e) {
+        echo "笶・繝・・繧ｿ繝吶・繧ｹ謗･邯壹お繝ｩ繝ｼ:\n";
+        echo $e->getMessage() . "\n";
+    }
+} else {
+    echo "笶・config.php 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ\n";
+}
+
+echo "</pre>";
+
+// 繝・ぅ繝ｬ繧ｯ繝医Μ縺ｮ讓ｩ髯千｢ｺ隱・
+echo "<h2>繝・ぅ繝ｬ繧ｯ繝医Μ讓ｩ髯・/h2>";
+echo "<pre>";
+$dirs = ['uploads', 'logs', 'classes', 'includes'];
+foreach ($dirs as $dir) {
+    if (file_exists($dir)) {
+        echo "$dir: " . (is_writable($dir) ? '笨・譖ｸ縺崎ｾｼ縺ｿ蜿ｯ' : '笶・譖ｸ縺崎ｾｼ縺ｿ荳榊庄') . "\n";
+    } else {
+        echo "$dir: 笶・蟄伜惠縺励∪縺帙ｓ\n";
+    }
+}
+echo "</pre>";
+
+echo "<hr>";
+echo "<p><a href='/'>繝医ャ繝励・繝ｼ繧ｸ縺ｫ謌ｻ繧・/a></p>";
+?>
+
+<?php
+require_once 'config.php';
+
+// POST繝ｪ繧ｯ繧ｨ繧ｹ繝医・縺ｿ蜿励￠莉倥￠繧・
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    setErrorMessage('荳肴ｭ｣縺ｪ繝ｪ繧ｯ繧ｨ繧ｹ繝医〒縺・);
+    header('Location: index.php');
+    exit;
+}
+
+// CSRF繝医・繧ｯ繝ｳ縺ｮ讀懆ｨｼ
+if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) {
+    setErrorMessage('CSRF繝医・繧ｯ繝ｳ縺檎┌蜉ｹ縺ｧ縺・);
+    header('Location: index.php');
+    exit;
+}
+
+try {
+    // 繝輔ぃ繧､繝ｫ繧｢繝・・繝ｭ繝ｼ繝峨・讀懆ｨｼ
+    if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE => '繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟､ｧ縺阪☆縺弱∪縺・,
+            UPLOAD_ERR_FORM_SIZE => '繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟､ｧ縺阪☆縺弱∪縺・,
+            UPLOAD_ERR_PARTIAL => '繝輔ぃ繧､繝ｫ縺ｮ繧｢繝・・繝ｭ繝ｼ繝峨′螳御ｺ・＠縺ｦ縺・∪縺帙ｓ',
+            UPLOAD_ERR_NO_FILE => '繝輔ぃ繧､繝ｫ縺碁∈謚槭＆繧後※縺・∪縺帙ｓ',
+            UPLOAD_ERR_NO_TMP_DIR => '繝・Φ繝昴Λ繝ｪ繝・ぅ繝ｬ繧ｯ繝医Μ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ',
+            UPLOAD_ERR_CANT_WRITE => '繝輔ぃ繧､繝ｫ縺ｮ譖ｸ縺崎ｾｼ縺ｿ縺ｫ螟ｱ謨励＠縺ｾ縺励◆',
+            UPLOAD_ERR_EXTENSION => '繝輔ぃ繧､繝ｫ縺ｮ繧｢繝・・繝ｭ繝ｼ繝峨′蛛懈ｭ｢縺輔ｌ縺ｾ縺励◆'
+        ];
+        
+        $error_code = $_FILES['csv_file']['error'];
+        $error_message = isset($error_messages[$error_code]) ? 
+                        $error_messages[$error_code] : 
+                        '荳肴・縺ｪ繧｢繝・・繝ｭ繝ｼ繝峨お繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆';
+        
+        throw new Exception($error_message);
+    }
+    
+    $uploaded_file = $_FILES['csv_file'];
+    
+    // 繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺ｮ讀懆ｨｼ
+    if ($uploaded_file['size'] > UPLOAD_MAX_SIZE) {
+        throw new Exception('繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟宛髯舌ｒ雜・∴縺ｦ縺・∪縺呻ｼ域怙螟ｧ: ' . (UPLOAD_MAX_SIZE / 1024 / 1024) . 'MB・・);
+    }
+    
+    // 繝輔ぃ繧､繝ｫ蠖｢蠑上・讀懆ｨｼ
+    $file_info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($file_info, $uploaded_file['tmp_name']);
+    finfo_close($file_info);
+    
+    $file_extension = strtolower(pathinfo($uploaded_file['name'], PATHINFO_EXTENSION));
+    
+    if (!in_array($mime_type, UPLOAD_ALLOWED_TYPES) && $file_extension !== 'csv') {
+        throw new Exception('CSV繝輔ぃ繧､繝ｫ莉･螟悶・繧｢繝・・繝ｭ繝ｼ繝峨〒縺阪∪縺帙ｓ');
+    }
+    
+    // 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｮ菴懈・
+    if (!is_dir(UPLOAD_DIR)) {
+        if (!mkdir(UPLOAD_DIR, 0755, true)) {
+            throw new Exception('繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｮ菴懈・縺ｫ螟ｱ謨励＠縺ｾ縺励◆');
+        }
+    }
+    
+    // 繝輔ぃ繧､繝ｫ蜷阪・繧ｵ繝九ち繧､繧ｺ
+    $original_filename = $uploaded_file['name'];
+    $sanitized_filename = date('Y-m-d_H-i-s') . '_' . sanitizeFilename($original_filename);
+    $upload_path = UPLOAD_DIR . $sanitized_filename;
+    
+    // 繝輔ぃ繧､繝ｫ繧堤ｧｻ蜍・
+    if (!move_uploaded_file($uploaded_file['tmp_name'], $upload_path)) {
+        throw new Exception('繝輔ぃ繧､繝ｫ縺ｮ菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆');
+    }
+    
+    // CSV繝輔ぃ繧､繝ｫ縺ｮ蜃ｦ逅・
+    $csv_processor = new CsvProcessor();
+    if (!$csv_processor->loadFile($upload_path)) {
+        $errors = $csv_processor->getErrors();
+        throw new Exception('CSV繝輔ぃ繧､繝ｫ縺ｮ隱ｭ縺ｿ霎ｼ縺ｿ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' . implode(', ', $errors));
+    }
+    
+    // CSV繝・・繧ｿ縺ｮ讀懆ｨｼ
+    if (!$csv_processor->validate()) {
+        $errors = $csv_processor->getErrors();
+        throw new Exception('CSV繝・・繧ｿ縺ｮ讀懆ｨｼ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' . implode(', ', $errors));
+    }
+    
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯・
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $device_manager = new DeviceManager($database);
+    
+    // CSV繝・・繧ｿ繧偵ョ繝ｼ繧ｿ繝吶・繧ｹ縺ｫ逋ｻ骭ｲ
+    $results = $device_manager->processCsvData($csv_processor);
+    
+    // 蜃ｦ逅・ｵ先棡縺ｮ遒ｺ隱・
+    if (!$results['success']) {
+        throw new Exception('繝・・繧ｿ繝吶・繧ｹ縺ｸ縺ｮ逋ｻ骭ｲ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' . implode(', ', $results['errors']));
+    }
+    
+    // CSV繝・・繧ｿ縺九ｉ繧ｵ繝ｼ繝薙せ-陬・ｽｮ遞ｮ蛻･縺ｮ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繧定・蜍慕匳骭ｲ・亥挨繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ・・
+    $relationCount = 0;
+    try {
+        $csvData = $csv_processor->getData();
+        $processedRelations = [];
+        
+        error_log("Starting relation registration for " . count($csvData) . " records");
+        
+        foreach ($csvData as $row) {
+            $serviceName = $row['繧ｵ繝ｼ繝薙せ蜷・];
+            $deviceType = $row['陬・ｽｮ遞ｮ蛻･'];
+            
+            // 驥崎､・メ繧ｧ繝・け・亥酔荳蜃ｦ逅・・縺ｧ縺ｮ驥崎､・ｒ驕ｿ縺代ｋ・・
+            $relationKey = $serviceName . '|' . $deviceType;
+            if (!in_array($relationKey, $processedRelations)) {
+                try {
+                    $description = "CSV閾ｪ蜍慕匳骭ｲ: " . date('Y-m-d H:i:s') . " - " . basename($original_filename);
+                    error_log("Registering relation: {$serviceName} -> {$deviceType}");
+                    $device_manager->registerServiceDeviceTypeRelation($serviceName, $deviceType, $description);
+                    $relationCount++;
+                    $processedRelations[] = $relationKey;
+                    error_log("Successfully registered relation: {$relationKey}");
+                } catch (Exception $e) {
+                    // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逋ｻ骭ｲ縺ｮ繧ｨ繝ｩ繝ｼ縺ｯ隴ｦ蜻翫→縺励※謇ｱ縺・ｼ亥・逅・・邯咏ｶ夲ｼ・
+                    error_log("Relation registration warning for {$relationKey}: " . $e->getMessage());
+                }
+            } else {
+                error_log("Skipping duplicate relation: {$relationKey}");
+            }
+        }
+        
+        error_log("Completed relation registration. Total: {$relationCount} relations");
+    } catch (Exception $e) {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逋ｻ骭ｲ繧ｨ繝ｩ繝ｼ縺ｯ隴ｦ蜻翫→縺励※謇ｱ縺・
+        error_log("Relation registration process error: " . $e->getMessage());
+        $relationCount = 0;
+    }
+    
+    // 邨ｱ險域ュ蝣ｱ縺ｮ蜿門ｾ・
+    $statistics = $csv_processor->getStatistics();
+    
+    // 謌仙粥繝｡繝・そ繝ｼ繧ｸ縺ｮ險ｭ螳・
+    $success_message = "CSV繝輔ぃ繧､繝ｫ縺ｮ蜃ｦ逅・′螳御ｺ・＠縺ｾ縺励◆縲・n";
+    $success_message .= "- 蜃ｦ逅・Ξ繧ｳ繝ｼ繝画焚: " . $results['device_info_count'] . "莉ｶ\n";
+    $success_message .= "- 菴懈・縺輔ｌ縺溷虚逧・ユ繝ｼ繝悶Ν: " . count($results['dynamic_tables_created']) . "蛟欺n";
+    
+    if (!empty($results['dynamic_tables_created'])) {
+        $success_message .= "- 繝・・繝悶Ν蜷・ " . implode(', ', $results['dynamic_tables_created']) . "\n";
+    }
+    
+    $success_message .= "- 繧ｵ繝ｼ繝薙せ謨ｰ: " . count($statistics['services']) . "遞ｮ鬘杤n";
+    $success_message .= "- 陬・ｽｮ遞ｮ蛻･謨ｰ: " . count($statistics['device_types']) . "遞ｮ鬘杤n";
+    $success_message .= "- 閾ｪ蜍慕匳骭ｲ縺輔ｌ縺溘Μ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ: " . $relationCount . "莉ｶ";
+    
+    setSuccessMessage($success_message);
+    
+    // 繧｢繝・・繝ｭ繝ｼ繝峨＆繧後◆繝輔ぃ繧､繝ｫ繧貞炎髯､・医が繝励す繝ｧ繝ｳ・・
+    // unlink($upload_path);
+    
+} catch (Exception $e) {
+    // 隧ｳ邏ｰ縺ｪ繧ｨ繝ｩ繝ｼ諠・ｱ繧偵Ο繧ｰ縺ｫ險倬鹸
+    $errorDetails = [
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ];
+    error_log("Upload error details: " . json_encode($errorDetails, JSON_UNESCAPED_UNICODE));
+    
+    setErrorMessage("繧｢繝・・繝ｭ繝ｼ繝牙・逅・ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: " . $e->getMessage());
+    
+    // 繝・・繧ｿ繝吶・繧ｹ縺ｮ繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ迥ｶ諷九ｒ遒ｺ隱阪＠縺ｦ繝ｭ繝ｼ繝ｫ繝舌ャ繧ｯ
+    if (isset($database)) {
+        try {
+            if ($database->inTransaction()) {
+                $database->rollBack();
+                error_log("Transaction rolled back due to error");
+            }
+        } catch (Exception $rollbackError) {
+            error_log("Rollback error: " . $rollbackError->getMessage());
+        }
+    }
+    
+    // 繧ｨ繝ｩ繝ｼ譎ゅ・繧｢繝・・繝ｭ繝ｼ繝峨＆繧後◆繝輔ぃ繧､繝ｫ繧貞炎髯､
+    if (isset($upload_path) && file_exists($upload_path)) {
+        unlink($upload_path);
+    }
+} finally {
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§繧・
+    if (isset($database)) {
+        try {
+            $database->close();
+        } catch (Exception $closeError) {
+            error_log("Database close error: " . $closeError->getMessage());
+        }
+    }
+}
+
+// 邨先棡繝壹・繧ｸ縺ｫ繝ｪ繝繧､繝ｬ繧ｯ繝・
+header('Location: index.php');
+exit;
+?>
+<?php
+/**
+ * 蜈ｱ騾壹・繝・ム繝ｼ - 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ繝｡繝九Η繝ｼ莉倥″
+ */
+
+// 迴ｾ蝨ｨ縺ｮ繝壹・繧ｸ繧貞愛螳・
+$currentPage = basename($_SERVER['PHP_SELF'], '.php');
+?>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $pageTitle ?? '陬・ｽｮ諠・ｱ邂｡逅・す繧ｹ繝・Β' ?></title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- 繝｡繧､繝ｳ繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ繝舌・ -->
+    <nav class="main-navbar">
+        <div class="navbar-container">
+            <!-- 繝悶Λ繝ｳ繝峨Ο繧ｴ -->
+            <a href="index.php" class="navbar-brand">
+                <?php include 'svgs/brand.svg'; ?>
+                陬・ｽｮ諠・ｱ邂｡逅・す繧ｹ繝・Β
+            </a>
+            
+
+            <!-- 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ繝｡繝九Η繝ｼ -->
+            <ul class="navbar-nav" id="navbarNav">
+                <li class="nav-item">
+                    <a href="search.php" class="nav-link <?= $currentPage === 'search' ? 'active' : '' ?>">
+                        <div class="nav-icon">
+                            <?php include 'svgs/search.svg'; ?>
+                        </div>
+                        陬・ｽｮ讀懃ｴ｢
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.php" class="nav-link <?= $currentPage === 'index' ? 'active' : '' ?>">
+                        <div class="nav-icon">
+                            <?php include 'svgs/upload.svg'; ?>
+                        </div>
+                        CSV繧｢繝・・繝ｭ繝ｼ繝・
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="download.php" class="nav-link <?= $currentPage === 'download' ? 'active' : '' ?>">
+                        <div class="nav-icon">
+                            <?php include 'svgs/download.svg'; ?>
+                        </div>
+                        CSV繝繧ｦ繝ｳ繝ｭ繝ｼ繝・
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <script>
+
+        
+        // 繧ｦ繧｣繝ｳ繝峨え繧ｵ繧､繧ｺ螟画峩譎ゅ↓繝｢繝舌う繝ｫ繝｡繝九Η繝ｼ繧帝哩縺倥ｋ
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const nav = document.getElementById('navbarNav');
+                nav.classList.remove('show');
+            }
+        });
+        
+        // 螟夜Κ繧ｯ繝ｪ繝・け譎ゅ↓繝｢繝舌う繝ｫ繝｡繝九Η繝ｼ繧帝哩縺倥ｋ
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('navbarNav');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+                nav.classList.remove('show');
+            }
+        });
+    </script>
+<?php
+/**
+ * 蜈ｱ騾壹ヵ繝・ち繝ｼ
+ */
+?>
+    </div> <!-- main-content 縺ｮ邨ゆｺ・-->
+    
+    <!-- 繝輔ャ繧ｿ繝ｼ -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; <?= date('Y') ?> 陬・ｽｮ諠・ｱ邂｡逅・す繧ｹ繝・Β. All rights reserved.</p>
+            <p class="footer-version">
+                Built with PHP & MySQL | Version 1.0
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
+<?php
+require_once '../config.php';
+
+// 邂｡逅・・畑・壹ユ繝ｼ繝悶Ν邂｡逅・・繝ｼ繧ｸ
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+$message = '';
+$error = '';
+
+try {
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $deviceManager = new DeviceManager($database);
+    
+    // 繝・・繝悶Ν蜑企勁蜃ｦ逅・
+    if ($_POST['action'] ?? '' === 'delete_dynamic_tables') {
+        $tablesDeleted = 0;
+        
+        // 蜈ｨ繝・・繝悶Ν繧貞叙蠕・
+        $sql = "SHOW TABLES";
+        $stmt = $database->execute($sql);
+        $tables = $stmt->fetchAll(PDO::FETCH_NUM);
+        
+        foreach ($tables as $table) {
+            $tableName = $table[0];
+            // 繧ｷ繧ｹ繝・Β繝・・繝悶Ν莉･螟悶ｒ蜑企勁
+            if (!in_array($tableName, ['device_info', 'service_device_type_relations'])) {
+                try {
+                    $deleteSql = "DROP TABLE `{$tableName}`";
+                    $database->execute($deleteSql);
+                    $tablesDeleted++;
+                } catch (Exception $e) {
+                    error_log("繝・・繝悶Ν蜑企勁繧ｨ繝ｩ繝ｼ ({$tableName}): " . $e->getMessage());
+                }
+            }
+        }
+        
+        $message = "{$tablesDeleted}蛟九・蜍慕噪繝・・繝悶Ν繧貞炎髯､縺励∪縺励◆縲・;
+    }
+    
+    // 蜈ｨ繝・・繝悶Ν繧貞叙蠕励＠縺ｦ陦ｨ遉ｺ
+    $sql = "SHOW TABLES";
+    $stmt = $database->execute($sql);
+    $tables = $stmt->fetchAll(PDO::FETCH_NUM);
+    
+} catch (Exception $e) {
+    $error = "繧ｨ繝ｩ繝ｼ: " . $e->getMessage();
+    $tables = [];
+}
+?>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>繝・・繝悶Ν邂｡逅・- 陬・ｽｮ諠・ｱ邂｡逅・す繧ｹ繝・Β</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #dc3545;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-buttons a {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .nav-buttons a:hover {
+            background-color: #5a6268;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .system-table {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .dynamic-table {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>笞呻ｸ・繝・・繝悶Ν邂｡逅・/h1>
+            <div class="nav-buttons">
+                <a href="index.php">豆 CSV繧｢繝・・繝ｭ繝ｼ繝・/a>
+                <a href="search.php">剥 陬・ｽｮ讀懃ｴ｢</a>
+                <a href="relations.php">迫 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ邂｡逅・/a>
+            </div>
+        </div>
+        
+        <?php if ($error): ?>
+        <div class="alert alert-error">
+            <strong>繧ｨ繝ｩ繝ｼ:</strong> <?= htmlspecialchars($error) ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($message): ?>
+        <div class="alert alert-success">
+            <strong>謌仙粥:</strong> <?= htmlspecialchars($message) ?>
+        </div>
+        <?php endif; ?>
+        
+        <div class="alert alert-warning">
+            <h4>笞・・豕ｨ諢・/h4>
+            <p>
+                縺薙・繝壹・繧ｸ縺ｯ髢狗匱繝ｻ繝・せ繝育畑縺ｧ縺吶ょ虚逧・ユ繝ｼ繝悶Ν繧貞炎髯､縺吶ｋ縺ｨ縲，SV縺ｧ繧｢繝・・繝ｭ繝ｼ繝峨＠縺溘ョ繝ｼ繧ｿ縺悟､ｱ繧上ｌ縺ｾ縺吶・
+                譛ｬ逡ｪ迺ｰ蠅・〒縺ｯ菴ｿ逕ｨ縺励↑縺・〒縺上□縺輔＞縲・
+            </p>
+        </div>
+        
+        <h3>迴ｾ蝨ｨ縺ｮ繝・・繝悶Ν荳隕ｧ</h3>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>繝・・繝悶Ν蜷・/th>
+                    <th>繧ｿ繧､繝・/th>
+                    <th>隱ｬ譏・/th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($tables as $table): ?>
+                <?php 
+                    $tableName = $table[0];
+                    $isSystemTable = in_array($tableName, ['device_info', 'service_device_type_relations']);
+                ?>
+                <tr>
+                    <td class="<?= $isSystemTable ? 'system-table' : 'dynamic-table' ?>">
+                        <?= htmlspecialchars($tableName) ?>
+                    </td>
+                    <td>
+                        <?= $isSystemTable ? '繧ｷ繧ｹ繝・Β繝・・繝悶Ν' : '蜍慕噪繝・・繝悶Ν' ?>
+                    </td>
+                    <td>
+                        <?php if ($tableName === 'device_info'): ?>
+                            陬・ｽｮ諠・ｱ縺ｮ蝓ｺ譛ｬ繝・・繧ｿ
+                        <?php elseif ($tableName === 'service_device_type_relations'): ?>
+                            繧ｵ繝ｼ繝薙せ繝ｻ陬・ｽｮ遞ｮ蛻･繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ
+                        <?php else: ?>
+                            CSV繧｢繝・・繝ｭ繝ｼ繝峨〒菴懈・縺輔ｌ縺滓僑蠑ｵ繝・・繧ｿ繝・・繝悶Ν
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        
+        <h3>邂｡逅・桃菴・/h3>
+        
+        <form method="post" style="margin-top: 20px;" onsubmit="return confirm('蜈ｨ縺ｦ縺ｮ蜍慕噪繝・・繝悶Ν繧貞炎髯､縺励∪縺吶°・溘％縺ｮ謫堺ｽ懊・蜿悶ｊ豸医○縺ｾ縺帙ｓ縲・);">
+            <input type="hidden" name="action" value="delete_dynamic_tables">
+            <button type="submit" class="btn btn-danger">
+                卵・・蜈ｨ縺ｦ縺ｮ蜍慕噪繝・・繝悶Ν繧貞炎髯､
+            </button>
+        </form>
+        
+        <p style="margin-top: 20px; color: #6c757d; font-size: 14px;">
+            蜍慕噪繝・・繝悶Ν繧貞炎髯､縺吶ｋ縺ｨ縲∵ｬ｡蝗槭・CSV繧｢繝・・繝ｭ繝ｼ繝画凾縺ｫ譁ｰ縺励＞讒矩縺ｧ繝・・繝悶Ν縺悟・菴懈・縺輔ｌ縺ｾ縺吶・
+        </p>
+    </div>
+</body>
+</html>
+<?php
+/**
+ * 繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹悶せ繧ｯ繝ｪ繝励ヨ
+ * 繧｢繝励Μ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蛻晏屓繧ｻ繝・ヨ繧｢繝・・譎ゅ↓螳溯｡・
+ */
+
+require_once '../config.php';
+
+try {
+    echo "=== 陬・ｽｮ諠・ｱ邂｡逅・す繧ｹ繝・Β - 繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹・===\n\n";
+    
+    // 繝・・繧ｿ繝吶・繧ｹ謗･邯壹ユ繧ｹ繝・
+    echo "1. 繝・・繧ｿ繝吶・繧ｹ謗･邯壹ユ繧ｹ繝・..\n";
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $pdo = $database->connect();
+    echo "   笨・謗･邯壽・蜉歃n\n";
+    
+    // 陬・ｽｮ諠・ｱ繝・・繝悶Ν縺ｮ菴懈・
+    echo "2. 陬・ｽｮ諠・ｱ繝・・繝悶Ν菴懈・...\n";
+    $deviceManager = new DeviceManager($database);
+    
+    if (!$deviceManager->deviceInfoTableExists()) {
+        $deviceManager->createDeviceInfoTable();
+        echo "   笨・device_info 繝・・繝悶Ν繧剃ｽ懈・縺励∪縺励◆\n";
+    } else {
+        echo "   - device_info 繝・・繝悶Ν縺ｯ譌｢縺ｫ蟄伜惠縺励∪縺兔n";
+    }
+    
+    // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺ｮ菴懈・
+    if (!$deviceManager->relationTableExists()) {
+        $deviceManager->createRelationTable();
+        echo "   笨・service_device_type_relations 繝・・繝悶Ν繧剃ｽ懈・縺励∪縺励◆\n";
+    } else {
+        echo "   - service_device_type_relations 繝・・繝悶Ν縺ｯ譌｢縺ｫ蟄伜惠縺励∪縺兔n";
+    }
+    
+    // 繝・・繝悶Ν諠・ｱ縺ｮ陦ｨ遉ｺ
+    echo "\n3. 繝・・繝悶Ν讒矩遒ｺ隱・..\n";
+    $columns = $database->getTableColumns('device_info');
+    echo "   device_info 繝・・繝悶Ν縺ｮ繧ｫ繝ｩ繝:\n";
+    foreach ($columns as $column) {
+        echo "   - {$column['COLUMN_NAME']} ({$column['DATA_TYPE']})\n";
+    }
+    
+    // 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｮ遒ｺ隱・
+    echo "\n4. 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ遒ｺ隱・..\n";
+    if (!is_dir(UPLOAD_DIR)) {
+        mkdir(UPLOAD_DIR, 0755, true);
+        echo "   笨・繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ繧剃ｽ懈・縺励∪縺励◆: " . UPLOAD_DIR . "\n";
+    } else {
+        echo "   - 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｯ譌｢縺ｫ蟄伜惠縺励∪縺・ " . UPLOAD_DIR . "\n";
+    }
+    
+    // 讓ｩ髯千｢ｺ隱・
+    if (is_writable(UPLOAD_DIR)) {
+        echo "   笨・繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｯ譖ｸ縺崎ｾｼ縺ｿ蜿ｯ閭ｽ縺ｧ縺兔n";
+    } else {
+        echo "   笞 繧｢繝・・繝ｭ繝ｼ繝峨ョ繧｣繝ｬ繧ｯ繝医Μ縺ｫ譖ｸ縺崎ｾｼ縺ｿ讓ｩ髯舌′縺ゅｊ縺ｾ縺帙ｓ\n";
+    }
+    
+    // 繧ｵ繝ｳ繝励ΝCSV繝輔ぃ繧､繝ｫ縺ｮ蟄伜惠遒ｺ隱・
+    echo "\n5. 繧ｵ繝ｳ繝励Ν繝輔ぃ繧､繝ｫ遒ｺ隱・..\n";
+    $sampleCsvPath = __DIR__ . '/sample.csv';
+    if (file_exists($sampleCsvPath)) {
+        echo "   笨・繧ｵ繝ｳ繝励ΝCSV繝輔ぃ繧､繝ｫ縺悟ｭ伜惠縺励∪縺・ sample.csv\n";
+        
+        // 繧ｵ繝ｳ繝励Ν繝輔ぃ繧､繝ｫ縺ｮ蜀・ｮｹ遒ｺ隱・
+        $csvProcessor = new CsvProcessor();
+        if ($csvProcessor->loadFile($sampleCsvPath)) {
+            $stats = $csvProcessor->getStatistics();
+            echo "   - 繝・・繧ｿ陦梧焚: {$stats['total_rows']}\n";
+            echo "   - 繧ｵ繝ｼ繝薙せ: " . implode(', ', $stats['services']) . "\n";
+            echo "   - 陬・ｽｮ遞ｮ蛻･: " . implode(', ', $stats['device_types']) . "\n";
+        }
+    } else {
+        echo "   笞 sample.csv 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ\n";
+    }
+    
+    // 險ｭ螳壼､縺ｮ遒ｺ隱・
+    echo "\n6. 繧｢繝励Μ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ險ｭ螳夂｢ｺ隱・..\n";
+    echo "   - 繝・・繧ｿ繝吶・繧ｹ繝帙せ繝・ " . DB_HOST . "\n";
+    echo "   - 繝・・繧ｿ繝吶・繧ｹ蜷・ " . DB_NAME . "\n";
+    echo "   - 譛螟ｧ繧｢繝・・繝ｭ繝ｼ繝峨し繧､繧ｺ: " . (UPLOAD_MAX_SIZE / 1024 / 1024) . "MB\n";
+    echo "   - 險ｱ蜿ｯ繝輔ぃ繧､繝ｫ蠖｢蠑・ " . implode(', ', UPLOAD_ALLOWED_TYPES) . "\n";
+    
+    echo "\n=== 蛻晄悄蛹門ｮ御ｺ・===\n";
+    echo "繝悶Λ繧ｦ繧ｶ縺ｧ index.php 縺ｫ繧｢繧ｯ繧ｻ繧ｹ縺励※繧｢繝励Μ繧ｱ繝ｼ繧ｷ繝ｧ繝ｳ繧帝幕蟋九＠縺ｦ縺上□縺輔＞縲・n";
+    
+} catch (Exception $e) {
+    echo "笶・繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: " . $e->getMessage() . "\n";
+    echo "\n險ｭ螳壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞:\n";
+    echo "1. MySQL繧ｵ繝ｼ繝舌・縺瑚ｵｷ蜍輔＠縺ｦ縺・ｋ縺薙→繧堤｢ｺ隱構n";
+    echo "2. config.php 縺ｮ繝・・繧ｿ繝吶・繧ｹ謗･邯壽ュ蝣ｱ繧堤｢ｺ隱構n";
+    echo "3. 繝・・繧ｿ繝吶・繧ｹ '{DB_NAME}' 縺悟ｭ伜惠縺吶ｋ縺薙→繧堤｢ｺ隱構n";
+    echo "4. 繝ｦ繝ｼ繧ｶ繝ｼ '{DB_USER}' 縺ｫ驕ｩ蛻・↑讓ｩ髯舌′縺ゅｋ縺薙→繧堤｢ｺ隱構n";
+}
+?>
+<?php
+/**
+ * CSV繝輔ぃ繧､繝ｫ蜃ｦ逅・け繝ｩ繧ｹ
+ */
+class CsvProcessor {
+    private $filePath;
+    private $headers;
+    private $data;
+    private $errors;
+    
+    public function __construct($filePath = null) {
+        $this->filePath = $filePath;
+        $this->headers = [];
+        $this->data = [];
+        $this->errors = [];
+    }
+    
+    /**
+     * CSV繝輔ぃ繧､繝ｫ繧定ｪｭ縺ｿ霎ｼ繧
+     * @param string $filePath
+     * @return bool
+     */
+    public function loadFile($filePath) {
+        $this->filePath = $filePath;
+        $this->headers = [];
+        $this->data = [];
+        $this->errors = [];
+        
+        if (!file_exists($filePath)) {
+            $this->errors[] = "繝輔ぃ繧､繝ｫ縺悟ｭ伜惠縺励∪縺帙ｓ: " . $filePath;
+            return false;
+        }
+        
+        if (!is_readable($filePath)) {
+            $this->errors[] = "繝輔ぃ繧､繝ｫ繧定ｪｭ縺ｿ霎ｼ繧√∪縺帙ｓ: " . $filePath;
+            return false;
+        }
+        
+        // 繝輔ぃ繧､繝ｫ縺ｮ繧ｨ繝ｳ繧ｳ繝ｼ繝・ぅ繝ｳ繧ｰ繧呈､懷・繝ｻ螟画鋤
+        $content = file_get_contents($filePath);
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'EUC-JP', 'ASCII'], true);
+        
+        if ($encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+            file_put_contents($filePath, $content);
+        }
+        
+        // CSV繝輔ぃ繧､繝ｫ繧帝幕縺・
+        $handle = fopen($filePath, 'r');
+        if ($handle === false) {
+            $this->errors[] = "CSV繝輔ぃ繧､繝ｫ繧帝幕縺代∪縺帙ｓ";
+            return false;
+        }
+        
+        $rowNumber = 0;
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            $rowNumber++;
+            
+            if ($rowNumber === 1) {
+                // 繝倥ャ繝繝ｼ陦・
+                $this->headers = array_map('trim', $row);
+                
+                // 蠢・医き繝ｩ繝縺ｮ蟄伜惠遒ｺ隱・
+                $requiredColumns = ['繧ｵ繝ｼ繝薙せ蜷・, '陬・ｽｮ遞ｮ蛻･', '陬・ｽｮ蜷咲ｧｰ', '繝ｦ繝ｼ繧ｶ繝ｼ蜷・];
+                foreach ($requiredColumns as $required) {
+                    if (!in_array($required, $this->headers)) {
+                        $this->errors[] = "蠢・医き繝ｩ繝縺御ｸ崎ｶｳ縺励※縺・∪縺・ " . $required;
+                    }
+                }
+                
+                if (!empty($this->errors)) {
+                    fclose($handle);
+                    return false;
+                }
+            } else {
+                // 繝・・繧ｿ陦・
+                if (count($row) !== count($this->headers)) {
+                    $this->errors[] = "陦鶏$rowNumber}: 繧ｫ繝ｩ繝謨ｰ縺御ｸ閾ｴ縺励∪縺帙ｓ・域悄蠕・ " . count($this->headers) . ", 螳滄圀: " . count($row) . "・・;
+                    continue;
+                }
+                
+                $rowData = [];
+                for ($i = 0; $i < count($this->headers); $i++) {
+                    $rowData[$this->headers[$i]] = isset($row[$i]) ? trim($row[$i]) : '';
+                }
+                
+                // 蠢・磯・岼縺ｮ讀懆ｨｼ
+                if (empty($rowData['繧ｵ繝ｼ繝薙せ蜷・])) {
+                    $this->errors[] = "陦鶏$rowNumber}: 繧ｵ繝ｼ繝薙せ蜷阪′遨ｺ縺ｧ縺・;
+                    continue;
+                }
+                if (empty($rowData['陬・ｽｮ遞ｮ蛻･'])) {
+                    $this->errors[] = "陦鶏$rowNumber}: 陬・ｽｮ遞ｮ蛻･縺檎ｩｺ縺ｧ縺・;
+                    continue;
+                }
+                if (empty($rowData['陬・ｽｮ蜷咲ｧｰ'])) {
+                    $this->errors[] = "陦鶏$rowNumber}: 陬・ｽｮ蜷咲ｧｰ縺檎ｩｺ縺ｧ縺・;
+                    continue;
+                }
+                if (empty($rowData['繝ｦ繝ｼ繧ｶ繝ｼ蜷・])) {
+                    $this->errors[] = "陦鶏$rowNumber}: 繝ｦ繝ｼ繧ｶ繝ｼ蜷阪′遨ｺ縺ｧ縺・;
+                    continue;
+                }
+                
+                $this->data[] = $rowData;
+            }
+        }
+        
+        fclose($handle);
+        
+        if (empty($this->data)) {
+            $this->errors[] = "譛牙柑縺ｪ繝・・繧ｿ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ";
+            return false;
+        }
+        
+        return empty($this->errors);
+    }
+    
+    /**
+     * 繝倥ャ繝繝ｼ諠・ｱ繧貞叙蠕・
+     * @return array
+     */
+    public function getHeaders() {
+        return $this->headers;
+    }
+    
+    /**
+     * 繝・・繧ｿ繧貞叙蠕・
+     * @return array
+     */
+    public function getData() {
+        return $this->data;
+    }
+    
+    /**
+     * 繧ｨ繝ｩ繝ｼ諠・ｱ繧貞叙蠕・
+     * @return array
+     */
+    public function getErrors() {
+        return $this->errors;
+    }
+    
+    /**
+     * 蝓ｺ譛ｬ繧ｫ繝ｩ繝・・-6蛻礼岼・峨ｒ蜿門ｾ・
+     * @return array
+     */
+    public function getBasicColumns() {
+        return [
+            '繧ｵ繝ｼ繝薙せ蜷・,
+            '陬・ｽｮ遞ｮ蛻･', 
+            '陬・ｽｮ蜷咲ｧｰ',
+            '陬・ｽｮIP',
+            '繝ｦ繝ｼ繧ｶ繝ｼ蜷・,
+            '繝代せ繝ｯ繝ｼ繝・
+        ];
+    }
+    
+    /**
+     * 諡｡蠑ｵ繧ｫ繝ｩ繝・・蛻礼岼莉･髯搾ｼ峨ｒ蜿門ｾ・
+     * @return array
+     */
+    public function getExtendedColumns() {
+        $basicColumns = $this->getBasicColumns();
+        $extendedColumns = [];
+        
+        foreach ($this->headers as $header) {
+            if (!in_array($header, $basicColumns)) {
+                $extendedColumns[] = $header;
+            }
+        }
+        
+        return $extendedColumns;
+    }
+    
+    /**
+     * 荳ｻ繧ｭ繝ｼ蛟､繧堤函謌撰ｼ医ョ繝ｼ繧ｿ逕ｨ・・
+     * @param array $rowData
+     * @return string
+     */
+    public function generatePrimaryKey($rowData) {
+        return $rowData['繧ｵ繝ｼ繝薙せ蜷・] . '_' . 
+               $rowData['陬・ｽｮ遞ｮ蛻･'] . '_' . 
+               $rowData['陬・ｽｮ蜷咲ｧｰ'] . '_' . 
+               $rowData['繝ｦ繝ｼ繧ｶ繝ｼ蜷・];
+    }
+    
+    /**
+     * 荳ｻ繧ｭ繝ｼ繧ｫ繝ｩ繝蜷阪ｒ逕滓・・医ユ繝ｼ繝悶Ν螳夂ｾｩ逕ｨ・・
+     * @param array $rowData
+     * @return string
+     */
+    public function generatePrimaryKeyColumnName($rowData) {
+        // 荳ｻ繧ｭ繝ｼ繧ｫ繝ｩ繝蜷阪ｒ螳悟・縺ｫ蝗ｺ螳・
+        return 'primary_key';
+    }
+    
+    /**
+     * 蜍慕噪繝・・繝悶Ν蜷阪ｒ逕滓・
+     * @param array $rowData
+     * @return string
+     */
+    public function generateTableName($rowData) {
+        return sanitizeTableName($rowData['繧ｵ繝ｼ繝薙せ蜷・] . '_' . $rowData['陬・ｽｮ遞ｮ蛻･']);
+    }
+    
+    /**
+     * 繝・・繧ｿ繧定｣・ｽｮ諠・ｱ繝・・繝悶Ν逕ｨ縺ｫ螟画鋤
+     * @param array $rowData
+     * @return array
+     */
+    public function convertToDeviceInfo($rowData) {
+        return [
+            'primary_key' => $this->generatePrimaryKey($rowData),
+            'service_name' => $rowData['繧ｵ繝ｼ繝薙せ蜷・],
+            'device_type' => $rowData['陬・ｽｮ遞ｮ蛻･'],
+            'device_name' => $rowData['陬・ｽｮ蜷咲ｧｰ'],
+            'device_ip' => isset($rowData['陬・ｽｮIP']) ? $rowData['陬・ｽｮIP'] : null,
+            'username' => $rowData['繝ｦ繝ｼ繧ｶ繝ｼ蜷・],
+            'password' => isset($rowData['繝代せ繝ｯ繝ｼ繝・]) ? $rowData['繝代せ繝ｯ繝ｼ繝・] : null
+        ];
+    }
+    
+    /**
+     * 繝・・繧ｿ繧貞虚逧・ユ繝ｼ繝悶Ν逕ｨ縺ｫ螟画鋤
+     * @param array $rowData
+     * @return array
+     */
+    public function convertToExtendedData($rowData) {
+        $extendedColumns = $this->getExtendedColumns();
+        
+        // 荳ｻ繧ｭ繝ｼ繧ｫ繝ｩ繝蜷阪・譌･譛ｬ隱槭・縺ｾ縺ｾ菴ｿ逕ｨ
+        $primaryKeyColumnName = $this->generatePrimaryKeyColumnName($rowData);
+        $primaryKeyValue = $this->generatePrimaryKey($rowData);
+        
+        $result = [
+            $primaryKeyColumnName => $primaryKeyValue
+        ];
+        
+        foreach ($extendedColumns as $column) {
+            // 諡｡蠑ｵ繧ｫ繝ｩ繝蜷阪ｂ譌･譛ｬ隱槭・縺ｾ縺ｾ菴ｿ逕ｨ
+            $result[$column] = isset($rowData[$column]) ? $rowData[$column] : null;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * CSV繝輔ぃ繧､繝ｫ縺ｮ邨ｱ險域ュ蝣ｱ繧貞叙蠕・
+     * @return array
+     */
+    public function getStatistics() {
+        if (empty($this->data)) {
+            return [
+                'total_rows' => 0,
+                'services' => [],
+                'device_types' => [],
+                'unique_combinations' => 0
+            ];
+        }
+        
+        $services = [];
+        $deviceTypes = [];
+        $combinations = [];
+        
+        foreach ($this->data as $row) {
+            $services[] = $row['繧ｵ繝ｼ繝薙せ蜷・];
+            $deviceTypes[] = $row['陬・ｽｮ遞ｮ蛻･'];
+            $combinations[] = $row['繧ｵ繝ｼ繝薙せ蜷・] . '_' . $row['陬・ｽｮ遞ｮ蛻･'];
+        }
+        
+        return [
+            'total_rows' => count($this->data),
+            'services' => array_unique($services),
+            'device_types' => array_unique($deviceTypes),
+            'unique_combinations' => array_unique($combinations)
+        ];
+    }
+    
+    /**
+     * 繝舌Μ繝・・繧ｷ繝ｧ繝ｳ縺ｮ螳溯｡・
+     * @return bool
+     */
+    public function validate() {
+        $this->errors = [];
+        
+        if (empty($this->headers)) {
+            $this->errors[] = "CSV繝輔ぃ繧､繝ｫ縺瑚ｪｭ縺ｿ霎ｼ縺ｾ繧後※縺・∪縺帙ｓ";
+            return false;
+        }
+        
+        if (empty($this->data)) {
+            $this->errors[] = "繝・・繧ｿ縺悟ｭ伜惠縺励∪縺帙ｓ";
+            return false;
+        }
+        
+        // 荳ｻ繧ｭ繝ｼ縺ｮ驥崎､・メ繧ｧ繝・け
+        $primaryKeys = [];
+        foreach ($this->data as $index => $row) {
+            $primaryKey = $this->generatePrimaryKey($row);
+            if (in_array($primaryKey, $primaryKeys)) {
+                $this->errors[] = "陦・ . ($index + 2) . ": 荳ｻ繧ｭ繝ｼ縺碁㍾隍・＠縺ｦ縺・∪縺・- " . $primaryKey;
+            } else {
+                $primaryKeys[] = $primaryKey;
+            }
+        }
+        
+        // IP繧｢繝峨Ξ繧ｹ蠖｢蠑上・繝√ぉ繝・け・亥ｭ伜惠縺吶ｋ蝣ｴ蜷医・縺ｿ・・
+        foreach ($this->data as $index => $row) {
+            if (!empty($row['陬・ｽｮIP']) && !filter_var($row['陬・ｽｮIP'], FILTER_VALIDATE_IP)) {
+                $this->errors[] = "陦・ . ($index + 2) . ": 陬・ｽｮIP縺ｮ蠖｢蠑上′荳肴ｭ｣縺ｧ縺・- " . $row['陬・ｽｮIP'];
+            }
+        }
+        
+        return empty($this->errors);
+    }
+}
+?>
+<?php
+/**
+ * Database謗･邯夂ｮ｡逅・け繝ｩ繧ｹ
+ */
+class Database {
+    private $connection;
+    private $host;
+    private $dbname;
+    private $username;
+    private $password;
+    private $charset;
+    private $inTransaction = false;
+    
+    public function __construct($host, $dbname, $username, $password, $charset = 'utf8mb4') {
+        $this->host = $host;
+        $this->dbname = $dbname;
+        $this->username = $username;
+        $this->password = $password;
+        $this->charset = $charset;
+    }
+    
+    /**
+     * 繝・・繧ｿ繝吶・繧ｹ縺ｫ謗･邯・
+     * @return PDO
+     * @throws Exception
+     */
+    public function connect() {
+        if ($this->connection === null) {
+            try {
+                $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ];
+                
+                $this->connection = new PDO($dsn, $this->username, $this->password, $options);
+            } catch (PDOException $e) {
+                throw new Exception("繝・・繧ｿ繝吶・繧ｹ謗･邯壹お繝ｩ繝ｼ: " . $e->getMessage());
+            }
+        }
+        
+        return $this->connection;
+    }
+    
+    /**
+     * 謗･邯壹ｒ髢峨§繧・
+     */
+    public function close() {
+        if ($this->connection !== null) {
+            // 繧｢繧ｯ繝・ぅ繝悶↑繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ縺後≠繧後・繝ｭ繝ｼ繝ｫ繝舌ャ繧ｯ
+            try {
+                if ($this->connection->inTransaction()) {
+                    error_log("Warning: Active transaction found during connection close, rolling back");
+                    $this->connection->rollBack();
+                    $this->inTransaction = false;
+                }
+            } catch (Exception $e) {
+                error_log("Error during transaction cleanup: " . $e->getMessage());
+            }
+            
+            $this->connection = null;
+        }
+    }
+    
+    /**
+     * 繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ髢句ｧ・
+     */
+    public function beginTransaction() {
+        $connection = $this->connect();
+        if (!$connection->inTransaction()) {
+            $result = $connection->beginTransaction();
+            if ($result) {
+                $this->inTransaction = true;
+            }
+            return $result;
+        }
+        return true; // 譌｢縺ｫ繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ荳ｭ
+    }
+    
+    /**
+     * 繧ｳ繝溘ャ繝・
+     */
+    public function commit() {
+        $connection = $this->connect();
+        if ($connection->inTransaction()) {
+            $result = $connection->commit();
+            $this->inTransaction = false;
+            return $result;
+        }
+        return true; // 繧｢繧ｯ繝・ぅ繝悶↑繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ縺後↑縺・
+    }
+    
+    /**
+     * 繝ｭ繝ｼ繝ｫ繝舌ャ繧ｯ
+     */
+    public function rollBack() {
+        $connection = $this->connect();
+        if ($connection->inTransaction()) {
+            $result = $connection->rollBack();
+            $this->inTransaction = false;
+            return $result;
+        }
+        return true; // 繧｢繧ｯ繝・ぅ繝悶↑繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ縺後↑縺・
+    }
+    
+    /**
+     * 繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ迥ｶ諷九ｒ遒ｺ隱・
+     */
+    public function inTransaction() {
+        return $this->connect()->inTransaction();
+    }
+    
+    /**
+     * 繝励Μ繝壹い繝峨せ繝・・繝医Γ繝ｳ繝医・螳溯｡・
+     * @param string $query
+     * @param array $params
+     * @return PDOStatement
+     */
+    public function execute($query, $params = []) {
+        try {
+            $stmt = $this->connect()->prepare($query);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $e) {
+            throw new Exception("繧ｯ繧ｨ繝ｪ螳溯｡後お繝ｩ繝ｼ: " . $e->getMessage() . " SQL: " . $query);
+        }
+    }
+    
+    /**
+     * 繝・・繝悶Ν縺ｮ蟄伜惠遒ｺ隱・
+     * @param string $tableName
+     * @return bool
+     */
+    public function tableExists($tableName) {
+        try {
+            $stmt = $this->execute(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?",
+                [$this->dbname, $tableName]
+            );
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            throw new Exception("繝・・繝悶Ν蟄伜惠遒ｺ隱阪お繝ｩ繝ｼ: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 繝・・繝悶Ν縺ｮ繧ｫ繝ｩ繝諠・ｱ繧貞叙蠕・
+     * @param string $tableName
+     * @return array
+     */
+    public function getTableColumns($tableName) {
+        try {
+            $stmt = $this->execute(
+                "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT 
+                 FROM information_schema.columns 
+                 WHERE table_schema = ? AND table_name = ? 
+                 ORDER BY ORDINAL_POSITION",
+                [$this->dbname, $tableName]
+            );
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            throw new Exception("繧ｫ繝ｩ繝諠・ｱ蜿門ｾ励お繝ｩ繝ｼ: " . $e->getMessage());
+        }
+    }
+}
+?>
+<?php
+/**
+ * 陬・ｽｮ諠・ｱ邂｡逅・け繝ｩ繧ｹ
+ */
+class DeviceManager {
+    private $database;
+    
+    public function __construct(Database $database) {
+        $this->database = $database;
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ繝・・繝悶Ν縺悟ｭ伜惠縺吶ｋ縺九メ繧ｧ繝・け
+     * @return bool
+     */
+    public function deviceInfoTableExists() {
+        return $this->database->tableExists('device_info');
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ繝・・繝悶Ν繧剃ｽ懈・
+     * @return bool
+     * @throws Exception
+     */
+    public function createDeviceInfoTable() {
+        $sql = "
+            CREATE TABLE IF NOT EXISTS device_info (
+                primary_key VARCHAR(500) NOT NULL PRIMARY KEY COMMENT '繧ｵ繝ｼ繝薙せ蜷浩陬・ｽｮ遞ｮ蛻･蜷浩陬・ｽｮ蜷浩繝ｦ繝ｼ繧ｶ蜷阪・隍・粋繧ｭ繝ｼ',
+                service_name VARCHAR(100) NOT NULL COMMENT '繧ｵ繝ｼ繝薙せ蜷・,
+                device_type VARCHAR(100) NOT NULL COMMENT '陬・ｽｮ遞ｮ蛻･',
+                device_name VARCHAR(100) NOT NULL COMMENT '陬・ｽｮ蜷咲ｧｰ',
+                device_ip VARCHAR(45) COMMENT '陬・ｽｮIP',
+                username VARCHAR(100) NOT NULL COMMENT '繝ｦ繝ｼ繧ｶ繝ｼ蜷・,
+                password VARCHAR(255) COMMENT '繝代せ繝ｯ繝ｼ繝・,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '菴懈・譌･譎・,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '譖ｴ譁ｰ譌･譎・,
+                INDEX idx_service_device_type (service_name, device_type),
+                INDEX idx_device_info (service_name, device_type, device_name, username)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='陬・ｽｮ蝓ｺ譛ｬ諠・ｱ繝・・繝悶Ν'
+        ";
+        
+        try {
+            $this->database->execute($sql);
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ諠・ｱ繝・・繝悶Ν縺ｮ菴懈・縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 蜍慕噪繝・・繝悶Ν縺悟ｭ伜惠縺吶ｋ縺九メ繧ｧ繝・け
+     * @param string $tableName
+     * @return bool
+     */
+    public function dynamicTableExists($tableName) {
+        return $this->database->tableExists($tableName);
+    }
+    
+    /**
+     * 蜍慕噪繝・・繝悶Ν繧剃ｽ懈・
+     * @param string $tableName
+     * @param string $primaryKeyColumn
+     * @param array $extendedColumns
+     * @return bool
+     * @throws Exception
+     */
+    public function createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns) {
+        // 繝・・繝悶Ν蜷阪・縺ｿ繧ｵ繝九ち繧､繧ｺ・医き繝ｩ繝蜷阪・譌･譛ｬ隱槭ｒ菫晄戟・・
+        $tableName = sanitizeTableName($tableName);
+        
+        $columnDefinitions = [];
+        $columnDefinitions[] = "`{$primaryKeyColumn}` VARCHAR(500) NOT NULL PRIMARY KEY COMMENT '荳ｻ繧ｭ繝ｼ'";
+        
+        foreach ($extendedColumns as $column) {
+            // 繧ｫ繝ｩ繝蜷阪・譌･譛ｬ隱槭・縺ｾ縺ｾ菴ｿ逕ｨ縲√ヰ繝・け繧ｯ繧ｩ繝ｼ繝医〒繧ｨ繧ｹ繧ｱ繝ｼ繝・
+            $columnDefinitions[] = "`{$column}` TEXT COMMENT '" . addslashes($column) . "'";
+        }
+        
+        $columnDefinitions[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '菴懈・譌･譎・";
+        $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '譖ｴ譁ｰ譌･譎・";
+        
+        $sql = "
+            CREATE TABLE IF NOT EXISTS `{$tableName}` (
+                " . implode(",\n                ", $columnDefinitions) . "
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='蜍慕噪繝・・繝悶Ν: {$tableName}'
+        ";
+        
+        try {
+            error_log("Creating dynamic table SQL: " . $sql);
+            $this->database->execute($sql);
+            return true;
+        } catch (Exception $e) {
+            error_log("Dynamic table creation error: " . $e->getMessage());
+            error_log("SQL: " . $sql);
+            throw new Exception("蜍慕噪繝・・繝悶Ν '{$tableName}' 縺ｮ菴懈・縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ繧呈諺蜈･縺ｾ縺溘・譖ｴ譁ｰ
+     * @param array $deviceData
+     * @return bool
+     * @throws Exception
+     */
+    public function insertOrUpdateDeviceInfo($deviceData) {
+        $sql = "
+            INSERT INTO device_info 
+            (primary_key, service_name, device_type, device_name, device_ip, username, password)
+            VALUES (:primary_key, :service_name, :device_type, :device_name, :device_ip, :username, :password)
+            ON DUPLICATE KEY UPDATE
+                service_name = VALUES(service_name),
+                device_type = VALUES(device_type),
+                device_name = VALUES(device_name),
+                device_ip = VALUES(device_ip),
+                username = VALUES(username),
+                password = VALUES(password),
+                updated_at = CURRENT_TIMESTAMP
+        ";
+        
+        try {
+            $this->database->execute($sql, $deviceData);
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ諠・ｱ縺ｮ謖ｿ蜈･縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 蜍慕噪繝・・繝悶Ν縺ｫ繝・・繧ｿ繧呈諺蜈･縺ｾ縺溘・譖ｴ譁ｰ
+     * @param string $tableName
+     * @param array $data
+     * @return bool
+     * @throws Exception
+     */
+    public function insertOrUpdateDynamicData($tableName, $data) {
+        $tableName = sanitizeTableName($tableName);
+        
+        if (empty($data)) {
+            return true;
+        }
+        
+        // 繧ｫ繝ｩ繝蜷阪→繝励Ξ繝ｼ繧ｹ繝帙Ν繝繝ｼ繧呈ｺ門ｙ
+        $columns = [];
+        $placeholders = [];
+        $updateClauses = [];
+        $params = [];
+        $placeholderIndex = 0;
+        
+        foreach ($data as $key => $value) {
+            // 繧ｫ繝ｩ繝蜷阪・譌･譛ｬ隱槭・縺ｾ縺ｾ菴ｿ逕ｨ・医ヰ繝・け繧ｯ繧ｩ繝ｼ繝医〒繧ｨ繧ｹ繧ｱ繝ｼ繝暦ｼ・
+            $columns[] = "`{$key}`";
+            
+            // 繝励Ξ繝ｼ繧ｹ繝帙Ν繝繝ｼ蜷阪・闍ｱ謨ｰ蟄励・縺ｿ・・aram0, param1, ...・・
+            $placeholder = "param" . $placeholderIndex;
+            $placeholders[] = ":{$placeholder}";
+            $params[$placeholder] = $value;
+            
+            // 荳ｻ繧ｭ繝ｼ莉･螟悶・譖ｴ譁ｰ蜿･繧剃ｽ懈・
+            $primaryKeyColumns = array_keys($data);
+            if ($key !== $primaryKeyColumns[0]) {
+                $updateClauses[] = "`{$key}` = VALUES(`{$key}`)";
+            }
+            
+            $placeholderIndex++;
+        }
+        
+        $sql = "
+            INSERT INTO `{$tableName}` 
+            (" . implode(", ", $columns) . ")
+            VALUES (" . implode(", ", $placeholders) . ")
+        ";
+        
+        if (!empty($updateClauses)) {
+            $sql .= " ON DUPLICATE KEY UPDATE " . implode(", ", $updateClauses) . ", updated_at = CURRENT_TIMESTAMP";
+        }
+        
+        try {
+            error_log("Dynamic insert SQL: " . $sql);
+            error_log("Dynamic insert params: " . json_encode($params, JSON_UNESCAPED_UNICODE));
+            
+            $this->database->execute($sql, $params);
+            return true;
+        } catch (Exception $e) {
+            error_log("Dynamic insert error: " . $e->getMessage());
+            error_log("SQL: " . $sql);
+            error_log("Params: " . json_encode($params, JSON_UNESCAPED_UNICODE));
+            throw new Exception("蜍慕噪繝・・繝悶Ν '{$tableName}' 縺ｸ縺ｮ繝・・繧ｿ謖ｿ蜈･縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * CSV繝・・繧ｿ繧剃ｸ諡ｬ蜃ｦ逅・
+     * @param CsvProcessor $csvProcessor
+     * @return array 蜃ｦ逅・ｵ先棡
+     * @throws Exception
+     */
+    public function processCsvData(CsvProcessor $csvProcessor) {
+        $results = [
+            'success' => false,
+            'device_info_count' => 0,
+            'dynamic_tables_created' => [],
+            'dynamic_data_count' => 0,
+            'errors' => []
+        ];
+        
+        try {
+            // 繝医Λ繝ｳ繧ｶ繧ｯ繧ｷ繝ｧ繝ｳ髢句ｧ・
+            $this->database->beginTransaction();
+            
+            // 陬・ｽｮ諠・ｱ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・菴懈・
+            if (!$this->deviceInfoTableExists()) {
+                $this->createDeviceInfoTable();
+            }
+            
+            $data = $csvProcessor->getData();
+            $extendedColumns = $csvProcessor->getExtendedColumns();
+            
+            // 菴懈・縺悟ｿ・ｦ√↑蜍慕噪繝・・繝悶Ν繧堤音螳・
+            $dynamicTables = [];
+            foreach ($data as $row) {
+                $tableName = $csvProcessor->generateTableName($row);
+                if (!isset($dynamicTables[$tableName])) {
+                    $dynamicTables[$tableName] = true;
+                }
+            }
+            
+            // 蜍慕噪繝・・繝悶Ν繧剃ｽ懈・
+            foreach (array_keys($dynamicTables) as $tableName) {
+                if (!$this->dynamicTableExists($tableName)) {
+                    // 荳ｻ繧ｭ繝ｼ繧ｫ繝ｩ繝蜷阪ｒ豁｣縺励￥逕滓・
+                    $primaryKeyColumn = $csvProcessor->generatePrimaryKeyColumnName($data[0]);
+                    $this->createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns);
+                    $results['dynamic_tables_created'][] = $tableName;
+                }
+            }
+            
+            // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・菴懈・
+            if (!$this->relationTableExists()) {
+                $this->createRelationTable();
+            }
+            
+            // 繝・・繧ｿ繧貞・逅・
+            foreach ($data as $row) {
+                // 陬・ｽｮ諠・ｱ繝・・繝悶Ν縺ｫ謖ｿ蜈･
+                $deviceInfo = $csvProcessor->convertToDeviceInfo($row);
+                $this->insertOrUpdateDeviceInfo($deviceInfo);
+                $results['device_info_count']++;
+                
+                // 繧ｵ繝ｼ繝薙せ蜷阪→陬・ｽｮ遞ｮ蛻･縺ｮ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繧堤匳骭ｲ
+                try {
+                    $this->registerServiceDeviceTypeRelation(
+                        $row['繧ｵ繝ｼ繝薙せ蜷・],
+                        $row['陬・ｽｮ遞ｮ蛻･'],
+                        'CSV閾ｪ蜍慕匳骭ｲ'
+                    );
+                } catch (Exception $e) {
+                    // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逋ｻ骭ｲ繧ｨ繝ｩ繝ｼ縺ｯ繝ｭ繧ｰ縺ｫ險倬鹸縺吶ｋ縺悟・逅・・邯咏ｶ・
+                    error_log("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逋ｻ骭ｲ繧ｨ繝ｩ繝ｼ: " . $e->getMessage());
+                }
+                
+                // 蜍慕噪繝・・繝悶Ν縺ｫ謖ｿ蜈･・域僑蠑ｵ繧ｫ繝ｩ繝縺悟ｭ伜惠縺吶ｋ蝣ｴ蜷医・縺ｿ・・
+                if (!empty($extendedColumns)) {
+                    $tableName = $csvProcessor->generateTableName($row);
+                    $extendedData = $csvProcessor->convertToExtendedData($row);
+                    $this->insertOrUpdateDynamicData($tableName, $extendedData);
+                    $results['dynamic_data_count']++;
+                }
+            }
+            
+            // 繧ｳ繝溘ャ繝・
+            $this->database->commit();
+            $results['success'] = true;
+            
+        } catch (Exception $e) {
+            // 繝ｭ繝ｼ繝ｫ繝舌ャ繧ｯ
+            $this->database->rollBack();
+            $results['errors'][] = $e->getMessage();
+            throw $e;
+        }
+        
+        return $results;
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ繧呈､懃ｴ｢
+     * @param string $serviceName
+     * @param string $deviceType
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function searchDevices($serviceName = null, $deviceType = null, $limit = 100, $offset = 0) {
+        $whereConditions = [];
+        $params = [];
+        
+        if ($serviceName !== null && $serviceName !== '') {
+            $whereConditions[] = "service_name LIKE :service_name";
+            $params['service_name'] = '%' . $serviceName . '%';
+        }
+        
+        if ($deviceType !== null && $deviceType !== '') {
+            $whereConditions[] = "device_type LIKE :device_type";
+            $params['device_type'] = '%' . $deviceType . '%';
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+        
+        $sql = "
+            SELECT * FROM device_info 
+            {$whereClause}
+            ORDER BY service_name, device_type, device_name, username
+            LIMIT :limit OFFSET :offset
+        ";
+        
+        $params['limit'] = $limit;
+        $params['offset'] = $offset;
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ諠・ｱ縺ｮ讀懃ｴ｢縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ縺ｮ邱乗焚繧貞叙蠕・
+     * @param string $serviceName
+     * @param string $deviceType
+     * @return int
+     */
+    public function countDevices($serviceName = null, $deviceType = null) {
+        $whereConditions = [];
+        $params = [];
+        
+        if ($serviceName !== null && $serviceName !== '') {
+            $whereConditions[] = "service_name LIKE :service_name";
+            $params['service_name'] = '%' . $serviceName . '%';
+        }
+        
+        if ($deviceType !== null && $deviceType !== '') {
+            $whereConditions[] = "device_type LIKE :device_type";
+            $params['device_type'] = '%' . $deviceType . '%';
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+        
+        $sql = "SELECT COUNT(*) FROM device_info {$whereClause}";
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return (int)$stmt->fetchColumn();
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ謨ｰ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 蜍慕噪繝・・繝悶Ν縺ｮ荳隕ｧ繧貞叙蠕・
+     * @return array
+     */
+    public function getDynamicTables() {
+        $sql = "
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = DATABASE() 
+            AND table_name != 'device_info'
+            ORDER BY table_name
+        ";
+        
+        try {
+            $stmt = $this->database->execute($sql);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            throw new Exception("蜍慕噪繝・・繝悶Ν荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 繧ｵ繝ｼ繝薙せ蜷阪・荳隕ｧ繧貞叙蠕・
+     * @return array
+     */
+    public function getServiceNames() {
+        $sql = "
+            SELECT DISTINCT service_name 
+            FROM device_info 
+            ORDER BY service_name
+        ";
+        
+        try {
+            $stmt = $this->database->execute($sql);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            throw new Exception("繧ｵ繝ｼ繝薙せ蜷堺ｸ隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 謖・ｮ壹し繝ｼ繝薙せ蜷阪・陬・ｽｮ遞ｮ蛻･荳隕ｧ繧貞叙蠕・
+     * @param string|null $serviceName
+     * @return array
+     */
+    public function getDeviceTypes($serviceName = null) {
+        $sql = "
+            SELECT DISTINCT device_type 
+            FROM device_info
+        ";
+        
+        $params = [];
+        if ($serviceName !== null && $serviceName !== '') {
+            $sql .= " WHERE service_name = :service_name";
+            $params['service_name'] = $serviceName;
+        }
+        
+        $sql .= " ORDER BY device_type";
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ遞ｮ蛻･荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 陬・ｽｮ諠・ｱ繧定ｩｳ邏ｰ讀懃ｴ｢
+     * @param string|null $serviceName
+     * @param string|null $deviceType
+     * @param string|null $deviceName
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function searchDevicesAdvanced($serviceName = null, $deviceType = null, $deviceName = null, $limit = 50, $offset = 0) {
+        $whereConditions = [];
+        $params = [];
+        
+        if ($serviceName !== null && $serviceName !== '') {
+            $whereConditions[] = "service_name = :service_name";
+            $params['service_name'] = $serviceName;
+        }
+        
+        if ($deviceType !== null && $deviceType !== '') {
+            $whereConditions[] = "device_type = :device_type";
+            $params['device_type'] = $deviceType;
+        }
+        
+        if ($deviceName !== null && $deviceName !== '') {
+            $whereConditions[] = "device_name LIKE :device_name";
+            $params['device_name'] = '%' . $deviceName . '%';
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+        
+        $sql = "
+            SELECT 
+                primary_key,
+                service_name,
+                device_type,
+                device_name,
+                device_ip,
+                username,
+                password,
+                created_at,
+                updated_at
+            FROM device_info 
+            {$whereClause}
+            ORDER BY service_name, device_type, device_name, username
+            LIMIT :limit OFFSET :offset
+        ";
+        
+        $params['limit'] = $limit;
+        $params['offset'] = $offset;
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ諠・ｱ縺ｮ隧ｳ邏ｰ讀懃ｴ｢縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 隧ｳ邏ｰ讀懃ｴ｢縺ｮ邨先棡莉ｶ謨ｰ繧貞叙蠕・
+     * @param string|null $serviceName
+     * @param string|null $deviceType
+     * @param string|null $deviceName
+     * @return int
+     */
+    public function countDevicesAdvanced($serviceName = null, $deviceType = null, $deviceName = null) {
+        $whereConditions = [];
+        $params = [];
+        
+        if ($serviceName !== null && $serviceName !== '') {
+            $whereConditions[] = "service_name = :service_name";
+            $params['service_name'] = $serviceName;
+        }
+        
+        if ($deviceType !== null && $deviceType !== '') {
+            $whereConditions[] = "device_type = :device_type";
+            $params['device_type'] = $deviceType;
+        }
+        
+        if ($deviceName !== null && $deviceName !== '') {
+            $whereConditions[] = "device_name LIKE :device_name";
+            $params['device_name'] = '%' . $deviceName . '%';
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+        
+        $sql = "SELECT COUNT(*) FROM device_info {$whereClause}";
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return (int)$stmt->fetchColumn();
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ謨ｰ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 陬・ｽｮ邨ｱ險域ュ蝣ｱ繧貞叙蠕・
+     * @return array
+     */
+    public function getDeviceStatistics() {
+        try {
+            $statistics = [
+                'total_devices' => 0,
+                'total_services' => 0,
+                'total_device_types' => 0,
+                'total_combinations' => 0,
+                'total_relations' => 0
+            ];
+            
+            // device_info繝・・繝悶Ν縺悟ｭ伜惠縺吶ｋ蝣ｴ蜷医・邨ｱ險・
+            if ($this->database->tableExists('device_info')) {
+                $sql = "
+                    SELECT 
+                        COUNT(*) as total_devices,
+                        COUNT(DISTINCT service_name) as total_services,
+                        COUNT(DISTINCT device_type) as total_device_types,
+                        COUNT(DISTINCT CONCAT(service_name, '_', device_type)) as total_combinations
+                    FROM device_info
+                ";
+                $stmt = $this->database->execute($sql);
+                $result = $stmt->fetch();
+                
+                $statistics['total_devices'] = (int)$result['total_devices'];
+                $statistics['total_services'] = (int)$result['total_services'];
+                $statistics['total_device_types'] = (int)$result['total_device_types'];
+                $statistics['total_combinations'] = (int)$result['total_combinations'];
+            }
+            
+            // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ謨ｰ
+            if ($this->relationTableExists()) {
+                $sql = "SELECT COUNT(*) as count FROM service_device_type_relations WHERE is_active = 1";
+                $stmt = $this->database->execute($sql);
+                $result = $stmt->fetch();
+                $statistics['total_relations'] = (int)$result['count'];
+            }
+            
+            return $statistics;
+            
+        } catch (Exception $e) {
+            error_log("Get statistics error: " . $e->getMessage());
+            return [
+                'total_devices' => 0,
+                'total_services' => 0,
+                'total_device_types' => 0,
+                'total_combinations' => 0,
+                'total_relations' => 0
+            ];
+        }
+    }
+    
+    /**
+     * 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺吶ｋ縺九メ繧ｧ繝・け
+     * @return bool
+     */
+    public function relationTableExists() {
+        return $this->database->tableExists('service_device_type_relations');
+    }
+    
+    /**
+     * 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν繧剃ｽ懈・
+     * @return bool
+     * @throws Exception
+     */
+    public function createRelationTable() {
+        $sql = "
+            CREATE TABLE IF NOT EXISTS service_device_type_relations (
+                id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+                service_name VARCHAR(100) NOT NULL COMMENT '繧ｵ繝ｼ繝薙せ蜷・,
+                device_type VARCHAR(100) NOT NULL COMMENT '陬・ｽｮ遞ｮ蛻･',
+                description TEXT COMMENT '隱ｬ譏・,
+                is_active TINYINT(1) DEFAULT 1 COMMENT '譛牙柑繝輔Λ繧ｰ(1:譛牙柑, 0:辟｡蜉ｹ)',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '菴懈・譌･譎・,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '譖ｴ譁ｰ譌･譎・,
+                UNIQUE KEY unique_service_device_type (service_name, device_type),
+                INDEX idx_service_name (service_name),
+                INDEX idx_device_type (device_type),
+                INDEX idx_active (is_active)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='繧ｵ繝ｼ繝薙せ蜷阪→陬・ｽｮ遞ｮ蛻･縺ｮ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν'
+        ";
+        
+        try {
+            $this->database->execute($sql);
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺ｮ菴懈・縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 繧ｵ繝ｼ繝薙せ蜷阪→陬・ｽｮ遞ｮ蛻･縺ｮ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繧堤匳骭ｲ
+     * @param string $serviceName
+     * @param string $deviceType
+     * @param string $description
+     * @return bool
+     * @throws Exception
+     */
+    public function registerServiceDeviceTypeRelation($serviceName, $deviceType, $description = null) {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・菴懈・
+        if (!$this->relationTableExists()) {
+            $this->createRelationTable();
+        }
+        
+        $sql = "
+            INSERT INTO service_device_type_relations 
+            (service_name, device_type, description) 
+            VALUES (:service_name, :device_type, :description)
+            ON DUPLICATE KEY UPDATE
+                description = VALUES(description),
+                is_active = 1,
+                updated_at = CURRENT_TIMESTAMP
+        ";
+        
+        $params = [
+            'service_name' => $serviceName,
+            'device_type' => $deviceType,
+            'description' => $description
+        ];
+        
+        try {
+            $this->database->execute($sql, $params);
+            return true;
+        } catch (Exception $e) {
+            error_log("Relation registration error: " . $e->getMessage());
+            error_log("SQL: " . $sql);
+            error_log("Params: " . json_encode($params, JSON_UNESCAPED_UNICODE));
+            throw new Exception("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逋ｻ骭ｲ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 謖・ｮ壹し繝ｼ繝薙せ蜷阪・陬・ｽｮ遞ｮ蛻･荳隕ｧ繧偵Μ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺九ｉ蜿門ｾ・
+     * @param string|null $serviceName
+     * @return array
+     */
+    public function getDeviceTypesFromRelation($serviceName = null) {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・蠕捺擂縺ｮ譁ｹ豕・
+        if (!$this->relationTableExists()) {
+            return $this->getDeviceTypes($serviceName);
+        }
+        
+        $sql = "
+            SELECT DISTINCT device_type 
+            FROM service_device_type_relations
+            WHERE is_active = 1
+        ";
+        
+        $params = [];
+        if ($serviceName !== null && $serviceName !== '') {
+            $sql .= " AND service_name = :service_name";
+            $params['service_name'] = $serviceName;
+        }
+        
+        $sql .= " ORDER BY device_type";
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            throw new Exception("陬・ｽｮ遞ｮ蛻･荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺九ｉ蜈ｨ繧ｵ繝ｼ繝薙せ蜷阪ｒ蜿門ｾ・
+     * @return array
+     */
+    public function getServiceNamesFromRelation() {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・蠕捺擂縺ｮ譁ｹ豕・
+        if (!$this->relationTableExists()) {
+            return $this->getServiceNames();
+        }
+        
+        $sql = "
+            SELECT DISTINCT service_name 
+            FROM service_device_type_relations
+            WHERE is_active = 1
+            ORDER BY service_name
+        ";
+        
+        try {
+            $stmt = $this->database->execute($sql);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            throw new Exception("繧ｵ繝ｼ繝薙せ蜷堺ｸ隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蟄伜惠繝√ぉ繝・け
+     * @param string $serviceName
+     * @param string $deviceType
+     * @return bool
+     */
+    public function checkRelationExists($serviceName, $deviceType) {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺悟ｭ伜惠縺励↑縺・ｴ蜷医・蟶ｸ縺ｫtrue繧定ｿ斐☆
+        if (!$this->relationTableExists()) {
+            return true;
+        }
+        
+        $sql = "
+            SELECT COUNT(*) 
+            FROM service_device_type_relations
+            WHERE service_name = :service_name 
+            AND device_type = :device_type 
+            AND is_active = 1
+        ";
+        
+        $params = [
+            'service_name' => $serviceName,
+            'device_type' => $deviceType
+        ];
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            throw new Exception("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ蟄伜惠遒ｺ隱阪↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 譌｢蟄倥・device_info縺九ｉ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繧定・蜍墓ｧ狗ｯ・
+     * @return array 讒狗ｯ臥ｵ先棡
+     * @throws Exception
+     */
+    public function buildRelationsFromExistingData() {
+        // 繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ繝・・繝悶Ν縺ｮ菴懈・
+        if (!$this->relationTableExists()) {
+            $this->createRelationTable();
+        }
+        
+        // 譌｢蟄倥・繧ｵ繝ｼ繝薙せ蜷阪→陬・ｽｮ遞ｮ蛻･縺ｮ邨・∩蜷医ｏ縺帙ｒ蜿門ｾ・
+        $sql = "
+            SELECT DISTINCT 
+                service_name, 
+                device_type,
+                COUNT(*) as device_count
+            FROM device_info 
+            GROUP BY service_name, device_type
+            ORDER BY service_name, device_type
+        ";
+        
+        try {
+            $stmt = $this->database->execute($sql);
+            $combinations = $stmt->fetchAll();
+            
+            $registered = 0;
+            $errors = [];
+            
+            foreach ($combinations as $combination) {
+                try {
+                    $description = "陬・ｽｮ謨ｰ: {$combination['device_count']}蜿ｰ (閾ｪ蜍墓ｧ狗ｯ・";
+                    $this->registerServiceDeviceTypeRelation(
+                        $combination['service_name'],
+                        $combination['device_type'],
+                        $description
+                    );
+                    $registered++;
+                } catch (Exception $e) {
+                    $errors[] = "{$combination['service_name']} - {$combination['device_type']}: " . $e->getMessage();
+                }
+            }
+            
+            return [
+                'success' => true,
+                'registered' => $registered,
+                'total_combinations' => count($combinations),
+                'errors' => $errors
+            ];
+            
+        } catch (Exception $e) {
+            throw new Exception("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ閾ｪ蜍墓ｧ狗ｯ峨↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 蜈ｨ繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳隕ｧ繧貞叙蠕暦ｼ育ｮ｡逅・畑・・
+     * @return array
+     */
+    public function getAllRelations() {
+        if (!$this->relationTableExists()) {
+            return [];
+        }
+        
+        $sql = "
+            SELECT 
+                id,
+                service_name,
+                device_type,
+                description,
+                is_active,
+                created_at,
+                updated_at
+            FROM service_device_type_relations
+            ORDER BY service_name, device_type
+        ";
+        
+        try {
+            $stmt = $this->database->execute($sql);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            throw new Exception("繝ｪ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳隕ｧ縺ｮ蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆: " . $e->getMessage());
+        }
+    }
+}
+?>
