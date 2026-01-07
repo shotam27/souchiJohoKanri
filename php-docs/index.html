@@ -4163,19 +4163,34 @@ class DeviceManager {
 </div>
 </div>
 <script>
-// デフォルトで全て折りたたみ
+// デフォルトで全て折りたたみ & クリックイベントを追加
 window.addEventListener('DOMContentLoaded', function() {
     const fileSections = document.querySelectorAll('.file-section');
     fileSections.forEach(section => {
         section.classList.add('collapsed');
+        
+        // 三角形アイコンを追加
+        const filename = section.querySelector('.filename');
+        if (filename && !filename.querySelector('.toggle-icon')) {
+            const icon = document.createElement('span');
+            icon.className = 'toggle-icon';
+            icon.textContent = '▼';
+            filename.insertBefore(icon, filename.firstChild);
+        }
+    });
+    
+    // 各ヘッダーにクリックイベントを追加
+    const headers = document.querySelectorAll('.file-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function(e) {
+            // コピーボタンのクリックは無視
+            if (e.target.closest('.copy-button')) return;
+            
+            const section = this.closest('.file-section');
+            section.classList.toggle('collapsed');
+        });
     });
 });
-
-// 折りたたみトグル機能
-function toggleCode(header) {
-    const section = header.closest('.file-section');
-    section.classList.toggle('collapsed');
-}
 
 // コピー機能
 function copyCode(button) {
