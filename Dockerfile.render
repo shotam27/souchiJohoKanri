@@ -4,13 +4,14 @@ FROM php:8.2-apache
 # 必要なシステムパッケージをインストール
 RUN apt-get update && apt-get install -y \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 必要なPHP拡張機能をインストール
-RUN docker-php-ext-install pdo pdo_mysql mysqli opcache
+# 必要なPHP拡張機能をインストール（MySQL & PostgreSQL対応）
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli opcache
 
 # OPcache設定（本番環境用パフォーマンス最適化）
 RUN { \

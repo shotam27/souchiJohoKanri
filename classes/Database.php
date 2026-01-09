@@ -9,14 +9,18 @@ class Database {
     private $username;
     private $password;
     private $charset;
+    private $dbType;
+    private $port;
     private $inTransaction = false;
     
-    public function __construct($host, $dbname, $username, $password, $charset = 'utf8mb4') {
+    public function __construct($host, $dbname, $username, $password, $charset = 'utf8mb4', $dbType = 'mysql', $port = null) {
         $this->host = $host;
         $this->dbname = $dbname;
         $this->username = $username;
         $this->password = $password;
         $this->charset = $charset;
+        $this->dbType = $dbType;
+        $this->port = $port ?: ($dbType === 'pgsql' ? 5432 : 3306);
     }
     
     /**
@@ -27,7 +31,13 @@ class Database {
     public function connect() {
         if ($this->connection === null) {
             try {
-                $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+                // DSN生成（PostgreSQLとMySQL対応）
+                if ($this->dbType === 'pgsql') {
+                    $dsn = "pgsql:host={$this->host};port={$this->port};dbname={$this->dbname}";
+                } else {
+                    $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->dbname};charset={$this->charset}";
+                }
+                
                 $options = [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -35,6 +45,11 @@ class Database {
                 ];
                 
                 $this->connection = new PDO($dsn, $this->username, $this->password, $options);
+                
+                // PostgreSQLの場合はUTF-8エンコーディングを設定
+                if ($this->dbType === 'pgsql') {
+                    $this->connection->exec("SET NAMES 'UTF8'");
+                }
             } catch (PDOException $e) {
                 throw new Exception("データベース接続エラー: " . $e->getMessage());
             }

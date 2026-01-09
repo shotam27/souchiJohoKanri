@@ -4,11 +4,14 @@
  */
 
 // データベース設定（環境変数から取得）
+// Render PostgreSQL用設定
+define('DB_TYPE', getenv('DB_TYPE') ?: 'pgsql'); // 'pgsql' or 'mysql'
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_PORT', getenv('DB_PORT') ?: '5432'); // PostgreSQL: 5432, MySQL: 3306
 define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
-define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_USER', getenv('DB_USER') ?: 'postgres');
 define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_CHARSET', 'utf8mb4'); // MySQLのみ使用
 
 // アップロード設定
 define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
@@ -41,7 +44,8 @@ spl_autoload_register(function ($class_name) {
  * テーブル名のサニタイズ関数
  */
 function sanitizeTableName($name) {
-    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+    // 日本語（マルチバイト文字）を許可し、英数字、アンダースコア、マルチバイト文字以外を_に変換
+    return preg_replace('/[^a-zA-Z0-9_\x80-\xFF]/', '_', $name);
 }
 
 /**
