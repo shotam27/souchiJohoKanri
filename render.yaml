@@ -12,23 +12,23 @@ services:
         value: pgsql
       - key: DB_HOST
         fromDatabase:
-          name: fusion-postgres
+          name: fusion-mysql
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: fusion-postgres
+          name: fusion-mysql
           property: port
       - key: DB_NAME
         fromDatabase:
-          name: fusion-postgres
+          name: fusion-mysql
           property: database
       - key: DB_USER
         fromDatabase:
-          name: fusion-postgres
+          name: fusion-mysql
           property: user
       - key: DB_PASS
         fromDatabase:
-          name: fusion-postgres
+          name: fusion-mysql
           property: password
     # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
     # 無料プランの場合は以下をコメントアウト
@@ -37,9 +37,9 @@ services:
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
 
-  # PostgreSQLデータベース
+  # PostgreSQLデータベース（名前はfusion-mysqlだが実体はPostgreSQL）
 databases:
-  - name: fusion-postgres
+  - name: fusion-mysql
     databaseName: device_management
     user: admin
     region: singapore  # Webサービスと同じリージョン
