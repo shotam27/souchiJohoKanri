@@ -24,6 +24,14 @@ class Database {
     }
     
     /**
+     * データベースタイプを取得
+     * @return string
+     */
+    public function getDbType() {
+        return $this->dbType;
+    }
+    
+    /**
      * データベースに接続
      * @return PDO
      * @throws Exception

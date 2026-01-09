@@ -23,28 +23,48 @@ class DeviceManager {
      * @throws Exception
      */
     public function createDeviceInfoTable() {
-        $sql = "
-            CREATE TABLE IF NOT EXISTS device_info (
-                primary_key VARCHAR(500) NOT NULL PRIMARY KEY COMMENT 'サービス名_装置種別名_装置名_ユーザ名の複合キー',
-                service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                device_name VARCHAR(100) NOT NULL COMMENT '装置名称',
-                device_ip VARCHAR(45) COMMENT '装置IP',
-                username VARCHAR(100) NOT NULL COMMENT 'ユーザー名',
-                password VARCHAR(255) COMMENT 'パスワード',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                INDEX idx_service_device_type (service_name, device_type),
-                INDEX idx_device_info (service_name, device_type, device_name, username)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='装置基本情報テーブル'
-        ";
+        $isPgsql = $this->database->getDbType() === 'pgsql';
         
-        try {
+        if ($isPgsql) {
+            // PostgreSQL用SQL
+            $sql = "
+                CREATE TABLE IF NOT EXISTS device_info (
+                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY,
+                    service_name VARCHAR(100) NOT NULL,
+                    device_type VARCHAR(100) NOT NULL,
+                    device_name VARCHAR(100) NOT NULL,
+                    device_ip VARCHAR(45),
+                    username VARCHAR(100) NOT NULL,
+                    password VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ";
             $this->database->execute($sql);
-            return true;
-        } catch (Exception $e) {
-            throw new Exception("装置情報テーブルの作成に失敗しました: " . $e->getMessage());
+            // インデックス作成
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_device_type ON device_info (service_name, device_type)");
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_info ON device_info (service_name, device_type, device_name, username)");
+        } else {
+            // MySQL用SQL
+            $sql = "
+                CREATE TABLE IF NOT EXISTS device_info (
+                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY COMMENT 'サービス名_装置種別名_装置名_ユーザ名の複合キー',
+                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
+                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
+                    device_name VARCHAR(100) NOT NULL COMMENT '装置名称',
+                    device_ip VARCHAR(45) COMMENT '装置IP',
+                    username VARCHAR(100) NOT NULL COMMENT 'ユーザー名',
+                    password VARCHAR(255) COMMENT 'パスワード',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
+                    INDEX idx_service_device_type (service_name, device_type),
+                    INDEX idx_device_info (service_name, device_type, device_name, username)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='装置基本情報テーブル'
+            ";
+            $this->database->execute($sql);
         }
+        
+        return true;
     }
     
     /**
@@ -67,23 +87,37 @@ class DeviceManager {
     public function createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns) {
         // テーブル名のみサニタイズ（カラム名は日本語を保持）
         $tableName = sanitizeTableName($tableName);
+        $isPgsql = $this->database->getDbType() === 'pgsql';
         
         $columnDefinitions = [];
-        $columnDefinitions[] = "`{$primaryKeyColumn}` VARCHAR(500) NOT NULL PRIMARY KEY COMMENT '主キー'";
+        $columnDefinitions[] = "\"{$primaryKeyColumn}\" VARCHAR(500) NOT NULL PRIMARY KEY";
         
         foreach ($extendedColumns as $column) {
-            // カラム名は日本語のまま使用、バッククォートでエスケープ
-            $columnDefinitions[] = "`{$column}` TEXT COMMENT '" . addslashes($column) . "'";
+            // カラム名は日本語のまま使用、ダブルクォートでエスケープ
+            $columnDefinitions[] = "\"{$column}\" TEXT";
         }
         
-        $columnDefinitions[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時'";
-        $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時'";
+        $columnDefinitions[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
         
-        $sql = "
-            CREATE TABLE IF NOT EXISTS `{$tableName}` (
-                " . implode(",\n                ", $columnDefinitions) . "
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='動的テーブル: {$tableName}'
-        ";
+        if ($isPgsql) {
+            $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
+        } else {
+            $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時'";
+        }
+        
+        if ($isPgsql) {
+            $sql = "
+                CREATE TABLE IF NOT EXISTS \"{$tableName}\" (
+                    " . implode(",\n                    ", $columnDefinitions) . "
+                )
+            ";
+        } else {
+            $sql = "
+                CREATE TABLE IF NOT EXISTS `{$tableName}` (
+                    " . implode(",\n                    ", $columnDefinitions) . "
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='動的テーブル: {$tableName}'
+            ";
+        }
         
         try {
             error_log("Creating dynamic table SQL: " . $sql);
@@ -587,28 +621,48 @@ class DeviceManager {
      * @throws Exception
      */
     public function createRelationTable() {
-        $sql = "
-            CREATE TABLE IF NOT EXISTS service_device_type_relations (
-                id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
-                service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                description TEXT COMMENT '説明',
-                is_active TINYINT(1) DEFAULT 1 COMMENT '有効フラグ(1:有効, 0:無効)',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                UNIQUE KEY unique_service_device_type (service_name, device_type),
-                INDEX idx_service_name (service_name),
-                INDEX idx_device_type (device_type),
-                INDEX idx_active (is_active)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='サービス名と装置種別のリレーションテーブル'
-        ";
+        $isPgsql = $this->database->getDbType() === 'pgsql';
         
-        try {
+        if ($isPgsql) {
+            // PostgreSQL用SQL
+            $sql = "
+                CREATE TABLE IF NOT EXISTS service_device_type_relations (
+                    id SERIAL PRIMARY KEY,
+                    service_name VARCHAR(100) NOT NULL,
+                    device_type VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    is_active SMALLINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (service_name, device_type)
+                )
+            ";
             $this->database->execute($sql);
-            return true;
-        } catch (Exception $e) {
-            throw new Exception("リレーションテーブルの作成に失敗しました: " . $e->getMessage());
+            // インデックス作成
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_name ON service_device_type_relations (service_name)");
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_type ON service_device_type_relations (device_type)");
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_active ON service_device_type_relations (is_active)");
+        } else {
+            // MySQL用SQL
+            $sql = "
+                CREATE TABLE IF NOT EXISTS service_device_type_relations (
+                    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
+                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
+                    description TEXT COMMENT '説明',
+                    is_active TINYINT(1) DEFAULT 1 COMMENT '有効フラグ(1:有効, 0:無効)',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
+                    UNIQUE KEY unique_service_device_type (service_name, device_type),
+                    INDEX idx_service_name (service_name),
+                    INDEX idx_device_type (device_type),
+                    INDEX idx_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='サービス名と装置種別のリレーションテーブル'
+            ";
+            $this->database->execute($sql);
         }
+        
+        return true;
     }
     
     /**
