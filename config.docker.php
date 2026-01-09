@@ -148,7 +148,7 @@ function checkDockerEnvironment() {
     
     // データベース接続チェック
     try {
-        $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+        $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', 3306);
         $database->connect();
         $checks['database_connection'] = true;
     } catch (Exception $e) {

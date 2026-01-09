@@ -85,7 +85,7 @@ try {
     }
     
     // データベース接続
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, defined('DB_TYPE') ? DB_TYPE : 'mysql', defined('DB_PORT') ? DB_PORT : null);
     $device_manager = new DeviceManager($database);
     
     // CSVデータをデータベースに登録
