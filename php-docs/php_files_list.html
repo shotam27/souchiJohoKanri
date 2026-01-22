@@ -1426,13 +1426,37 @@ require_once 'includes/header.php';
             e.preventDefault();
             dragDropArea.classList.remove('drag-over');
             
+            console.log('ファイルドロップイベント発生');
+            
             const files = e.dataTransfer.files;
-            if (files.length &gt; 0) {
-                const file = files[0];
-                if (validateFile(file)) {
-                    fileInput.files = files;
-                    displayFileInfo(file);
-                }
+            console.log('ドロップされたファイル数:', files.length);
+            
+            if (files.length === 0) {
+                alert('⚠️ ファイルを検出できませんでした\n\nもう一度お試しください。');
+                console.error('ドロップされたファイルが見つかりません');
+                return;
+            }
+            
+            if (files.length &gt; 1) {
+                alert('⚠️ 複数のファイルが選択されています\n\n1つのCSVファイルのみを選択してください。');
+                console.warn('複数ファイル検出:', files.length, '個');
+                return;
+            }
+            
+            const file = files[0];
+            console.log('ファイル詳細:', {
+                name: file.name,
+                size: file.size + ' bytes',
+                type: file.type,
+                lastModified: new Date(file.lastModified).toLocaleString('ja-JP')
+            });
+            
+            if (validateFile(file)) {
+                fileInput.files = files;
+                displayFileInfo(file);
+                console.log('✓ ファイル設定完了');
+            } else {
+                console.error('ファイル検証失敗:', file.name);
             }
         });
         
@@ -1446,9 +1470,22 @@ require_once 'includes/header.php';
         
         // ファイル情報を表示
         function displayFileInfo(file) {
-            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const fileSizeBytes = file.size;
+            let fileSizeText;
+            
+            if (fileSizeBytes === 0) {
+                fileSizeText = '0 KB (ファイルが空です)';
+                alert('⚠️ エラー: ファイルサイズが0バイトです\n\nファイル名: ' + file.name + '\n\n可能な原因:\n1. ファイルが空です\n2. ファイルが破損しています\n3. ファイルへのアクセス権限がありません\n\n別のファイルを選択するか、ファイルを確認してください。');
+            } else if (fileSizeBytes &lt; 1024) {
+                fileSizeText = fileSizeBytes + ' B';
+            } else if (fileSizeBytes &lt; 1024 * 1024) {
+                fileSizeText = (fileSizeBytes / 1024).toFixed(2) + ' KB';
+            } else {
+                fileSizeText = (fileSizeBytes / 1024 / 1024).toFixed(2) + ' MB';
+            }
+            
             fileName.textContent = file.name;
-            fileSize.textContent = `${fileSizeMB} MB`;
+            fileSize.textContent = fileSizeText;
             
             selectedFileInfo.classList.add('show');
             dragDropArea.classList.add('has-file');
@@ -1462,19 +1499,40 @@ require_once 'includes/header.php';
         
         // ファイル検証
         function validateFile(file) {
+            console.log('ファイル検証開始:', {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified)
+            });
+            
+            // ファイルサイズが0バイトチェック
+            if (file.size === 0) {
+                alert('❌ エラー: ファイルが空です\n\nファイル名: ' + file.name + '\nファイルサイズ: 0バイト\n\nファイルの内容を確認してください。');
+                console.error('ファイルサイズが0バイト:', file.name);
+                return false;
+            }
+            
             // ファイルサイズチェック
             if (file.size &gt; &lt;?= UPLOAD_MAX_SIZE ?&gt;) {
-                alert('ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。');
+                alert('❌ エラー: ファイルサイズが大きすぎます\n\nファイル名: ' + file.name + '\nファイルサイズ: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB\n\n10MB以下のファイルを選択してください。');
+                console.error('ファイルサイズ超過:', file.size, 'bytes');
                 return false;
             }
             
             // ファイル形式チェック
             const allowedTypes = ['text/csv', 'application/csv', 'text/plain'];
-            if (!allowedTypes.includes(file.type) &amp;&amp; !file.name.toLowerCase().endsWith('.csv')) {
-                alert('CSVファイルのみアップロード可能です。');
+            const fileName = file.name.toLowerCase();
+            const hasValidExtension = fileName.endsWith('.csv');
+            const hasValidMimeType = allowedTypes.includes(file.type);
+            
+            if (!hasValidExtension &amp;&amp; !hasValidMimeType) {
+                alert('❌ エラー: CSVファイルのみアップロード可能です\n\nファイル名: ' + file.name + '\nファイル形式: ' + (file.type || '不明') + '\n\n.csv形式のファイルを選択してください。');
+                console.error('無効なファイル形式:', { type: file.type, name: file.name });
                 return false;
             }
             
+            console.log('✓ ファイル検証成功');
             return true;
         }
         
@@ -1483,19 +1541,37 @@ require_once 'includes/header.php';
             const uploadBtn = document.getElementById('uploadBtn');
             const uploadProgress = document.getElementById('uploadProgress');
             
+            console.log('フォーム送信開始');
+            
             if (!fileInput.files.length) {
-                alert('CSVファイルを選択してください。');
+                alert('❌ CSVファイルを選択してください。');
+                console.error('ファイルが選択されていません');
                 e.preventDefault();
                 return;
             }
             
             const file = fileInput.files[0];
+            console.log('送信するファイル:', {
+                name: file.name,
+                size: file.size + ' bytes',
+                type: file.type
+            });
+            
+            if (file.size === 0) {
+                alert('❌ エラー: ファイルが空です\n\nファイル名: ' + file.name + '\n\n空のファイルはアップロードできません。');
+                console.error('空のファイルが選択されています');
+                e.preventDefault();
+                return;
+            }
+            
             if (!validateFile(file)) {
+                console.error('ファイル検証失敗');
                 e.preventDefault();
                 return;
             }
             
             // アップロード開始
+            console.log('✓ アップロード開始');
             uploadBtn.disabled = true;
             uploadBtn.textContent = 'アップロード中...';
             uploadProgress.style.display = 'block';

@@ -4,7 +4,7 @@
  * アプリケーションの初回セットアップ時に実行
  */
 
-require_once '../config.php';
+require_once __DIR__ . '/../config.php';
 
 try {
     echo "=== 装置情報管理システム - データベース初期化 ===\n\n";
