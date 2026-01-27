@@ -437,26 +437,22 @@ class DeviceManager {
                 }
                 
                 // サービス名と装置種別のリレーションを登録
-                try {
-                    $this->registerServiceDeviceTypeRelation(
-                        $row['サービス名'],
-                        $row['装置種別'],
-                        'CSV自動登録'
-                    );
-                    error_log("Successfully registered relation for row {$rowIndex}");
-                } catch (Exception $e) {
-                    // リレーション登録エラーはログに記録するが処理は継続
-                    error_log("リレーション登録エラー: " . $e->getMessage());
-                    
-                    // PostgreSQLの場合、エラーでトランザクションが中断されるので再開
-                    if ($isPgsql) {
-                        if ($this->database->inTransaction()) {
-                            $this->database->rollback();
-                            error_log("Rolled back transaction due to relation error");
-                        }
-                        $this->database->beginTransaction();
-                        error_log("Restarted transaction after relation error");
+                // PostgreSQLの場合、トランザクション管理を簡素化するため、
+                // upload.php側でまとめて登録するのでここではスキップ
+                if (!$isPgsql) {
+                    try {
+                        $this->registerServiceDeviceTypeRelation(
+                            $row['サービス名'],
+                            $row['装置種別'],
+                            'CSV自動登録'
+                        );
+                        error_log("Successfully registered relation for row {$rowIndex}");
+                    } catch (Exception $e) {
+                        // リレーション登録エラーはログに記録するが処理は継続
+                        error_log("リレーション登録エラー: " . $e->getMessage());
                     }
+                } else {
+                    error_log("Skipping relation registration in PostgreSQL mode (will be done in upload.php)");
                 }
                 
                 // 動的テーブルに挿入
