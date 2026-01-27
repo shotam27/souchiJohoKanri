@@ -131,7 +131,7 @@ require_once 'includes/header.php';
         const selectedFileInfo = document.getElementById('selectedFileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
-        let selectedFile = null; // 古いブラウザ（IE11など）やDataTransfer非対応ブラウザ用のファイル保持
+        let selectedFile = null; // DataTransfer API非対応環境用のファイル保持変数
         
         // ドラッグ&ドロップエリアのクリックでファイル選択ダイアログを開く
         dragDropArea.addEventListener('click', function() {
@@ -182,8 +182,12 @@ require_once 'includes/header.php';
             
             if (validateFile(file)) {
                 // DataTransferオブジェクトを使ってファイルを設定
-                // DataTransfer APIのサポート確認と使用
-                if (typeof DataTransfer !== 'undefined') {
+                // DataTransfer APIのサポート確認（コンストラクタとitemsプロパティの両方）
+                const hasDataTransferSupport = typeof DataTransfer !== 'undefined' && 
+                                               DataTransfer.prototype && 
+                                               'items' in DataTransfer.prototype;
+                
+                if (hasDataTransferSupport) {
                     try {
                         const dataTransfer = new DataTransfer();
                         dataTransfer.items.add(file);
@@ -352,9 +356,8 @@ require_once 'includes/header.php';
                 if (xhr.status === 200) {
                     console.log('✓ アップロード完了');
                     progressBar.style.width = '100%';
-                    // レスポンスに基づいてリダイレクト
-                    // PHPのheader('Location: ...')によるリダイレクトは自動的に処理される
-                    // upload.phpは成功時にindex.phpにリダイレクトする想定
+                    // XHRはサーバーのリダイレクトを自動的に追従するが、
+                    // ブラウザのロケーションは変更されないため、手動でリダイレクトが必要
                     setTimeout(function() {
                         window.location.href = 'index.php';
                     }, 500);
