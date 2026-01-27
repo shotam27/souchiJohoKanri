@@ -13,10 +13,12 @@ echo "<h1>Render デバッグ情報</h1>";
 // 環境変数の確認
 echo "<h2>環境変数</h2>";
 echo "<pre>";
-echo "DB_HOST: " . (getenv('DB_HOST') ?: 'NOT SET') . "\n";
-echo "DB_NAME: " . (getenv('DB_NAME') ?: 'NOT SET') . "\n";
-echo "DB_USER: " . (getenv('DB_USER') ?: 'NOT SET') . "\n";
-echo "DB_PASS: " . (getenv('DB_PASS') ? '***SET***' : 'NOT SET') . "\n";
+echo "DB_HOST: " . (getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? 'NOT SET') . "\n";
+echo "DB_NAME: " . (getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? 'NOT SET') . "\n";
+echo "DB_USER: " . (getenv('DB_USER') ?: $_ENV['DB_USER'] ?? 'NOT SET') . "\n";
+echo "DB_PASS: " . ((getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? null) ? '***SET***' : 'NOT SET') . "\n";
+echo "DB_TYPE: " . (getenv('DB_TYPE') ?: $_ENV['DB_TYPE'] ?? 'NOT SET') . "\n";
+echo "DB_PORT: " . (getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? 'NOT SET') . "\n";
 echo "</pre>";
 
 // config.phpの存在確認
@@ -31,6 +33,7 @@ echo "<h2>PHP拡張機能</h2>";
 echo "<pre>";
 echo "PDO: " . (extension_loaded('pdo') ? 'YES' : 'NO') . "\n";
 echo "PDO_MySQL: " . (extension_loaded('pdo_mysql') ? 'YES' : 'NO') . "\n";
+echo "PDO_PostgreSQL: " . (extension_loaded('pdo_pgsql') ? 'YES' : 'NO') . "\n";
 echo "MySQLi: " . (extension_loaded('mysqli') ? 'YES' : 'NO') . "\n";
 echo "</pre>";
 
@@ -42,7 +45,22 @@ if (file_exists('config.php')) {
     require_once 'config.php';
     
     try {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
+        $dbPort = defined('DB_PORT') ? DB_PORT : ($dbType === 'pgsql' ? 5432 : 3306);
+        
+        echo "接続情報:\n";
+        echo "  DB_TYPE: {$dbType}\n";
+        echo "  DB_HOST: " . DB_HOST . "\n";
+        echo "  DB_PORT: {$dbPort}\n";
+        echo "  DB_NAME: " . DB_NAME . "\n";
+        echo "  DB_USER: " . DB_USER . "\n\n";
+        
+        if ($dbType === 'pgsql') {
+            $dsn = "pgsql:host=" . DB_HOST . ";port={$dbPort};dbname=" . DB_NAME;
+        } else {
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        }
+        
         $pdo = new PDO($dsn, DB_USER, DB_PASS, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -51,7 +69,11 @@ if (file_exists('config.php')) {
         echo "✅ データベース接続成功!\n";
         
         // テーブル一覧を取得
-        $stmt = $pdo->query("SHOW TABLES");
+        if ($dbType === 'pgsql') {
+            $stmt = $pdo->query("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'");
+        } else {
+            $stmt = $pdo->query("SHOW TABLES");
+        }
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo "\nテーブル数: " . count($tables) . "\n";
         if (count($tables) > 0) {
