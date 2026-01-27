@@ -142,17 +142,12 @@ class DeviceManager {
      * @throws Exception
      */
     public function insertOrUpdateDeviceInfo($deviceData, $additionalData = []) {
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
         // 基本カラム
         $columns = ['primary_key', 'service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password'];
         $placeholders = [':primary_key', ':service_name', ':device_type', ':device_name', ':device_ip', ':username', ':password'];
-        $updateClauses = [
-            'service_name = VALUES(service_name)',
-            'device_type = VALUES(device_type)',
-            'device_name = VALUES(device_name)',
-            'device_ip = VALUES(device_ip)',
-            'username = VALUES(username)',
-            'password = VALUES(password)'
-        ];
+        $updateColumns = ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password'];
         
         $params = $deviceData;
         
@@ -162,21 +157,50 @@ class DeviceManager {
         // 追加データがある場合、device_infoに存在するカラムのみ追加
         foreach ($additionalData as $column => $value) {
             if (in_array($column, $existingColumns) && !in_array($column, $columns)) {
-                $columns[] = "`{$column}`";
+                $columns[] = $isPgsql ? "\"{$column}\"" : "`{$column}`";
                 $placeholders[] = ":{$column}";
-                $updateClauses[] = "`{$column}` = VALUES(`{$column}`)";
+                $updateColumns[] = $column;
                 $params[$column] = $value;
             }
         }
         
-        $sql = "
-            INSERT INTO device_info 
-            (" . implode(", ", $columns) . ")
-            VALUES (" . implode(", ", $placeholders) . ")
-            ON DUPLICATE KEY UPDATE
-                " . implode(",\n                ", $updateClauses) . ",
-                updated_at = CURRENT_TIMESTAMP
-        ";
+        if ($isPgsql) {
+            // PostgreSQL用: ON CONFLICT ... DO UPDATE
+            $updateClauses = [];
+            foreach ($updateColumns as $col) {
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password']) 
+                    ? $col 
+                    : "\"{$col}\"";
+                $updateClauses[] = "{$quotedCol} = EXCLUDED.{$quotedCol}";
+            }
+            
+            $sql = "
+                INSERT INTO device_info 
+                (" . implode(", ", $columns) . ")
+                VALUES (" . implode(", ", $placeholders) . ")
+                ON CONFLICT (primary_key) DO UPDATE SET
+                    " . implode(",\n                    ", $updateClauses) . ",
+                    updated_at = CURRENT_TIMESTAMP
+            ";
+        } else {
+            // MySQL用: ON DUPLICATE KEY UPDATE
+            $updateClauses = [];
+            foreach ($updateColumns as $col) {
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password']) 
+                    ? $col 
+                    : "`{$col}`";
+                $updateClauses[] = "{$quotedCol} = VALUES({$quotedCol})";
+            }
+            
+            $sql = "
+                INSERT INTO device_info 
+                (" . implode(", ", $columns) . ")
+                VALUES (" . implode(", ", $placeholders) . ")
+                ON DUPLICATE KEY UPDATE
+                    " . implode(",\n                    ", $updateClauses) . ",
+                    updated_at = CURRENT_TIMESTAMP
+            ";
+        }
         
         try {
             $this->database->execute($sql, $params);
@@ -195,6 +219,7 @@ class DeviceManager {
      */
     public function insertOrUpdateDynamicData($tableName, $data) {
         $tableName = sanitizeTableName($tableName);
+        $isPgsql = $this->database->getDbType() === 'pgsql';
         
         if (empty($data)) {
             return true;
@@ -206,10 +231,18 @@ class DeviceManager {
         $updateClauses = [];
         $params = [];
         $placeholderIndex = 0;
+        $primaryKeyColumn = null;
+        
+        // 適切なクォート文字を選択
+        $quote = $isPgsql ? '"' : '`';
         
         foreach ($data as $key => $value) {
-            // カラム名は日本語のまま使用（バッククォートでエスケープ）
-            $columns[] = "`{$key}`";
+            if ($placeholderIndex === 0) {
+                $primaryKeyColumn = $key; // 最初のカラムが主キー
+            }
+            
+            // カラム名は日本語のまま使用（適切なクォートでエスケープ）
+            $columns[] = "{$quote}{$key}{$quote}";
             
             // プレースホルダー名は英数字のみ（param0, param1, ...）
             $placeholder = "param" . $placeholderIndex;
@@ -217,22 +250,42 @@ class DeviceManager {
             $params[$placeholder] = $value;
             
             // 主キー以外の更新句を作成
-            $primaryKeyColumns = array_keys($data);
-            if ($key !== $primaryKeyColumns[0]) {
-                $updateClauses[] = "`{$key}` = VALUES(`{$key}`)";
+            if ($key !== $primaryKeyColumn) {
+                if ($isPgsql) {
+                    $updateClauses[] = "{$quote}{$key}{$quote} = EXCLUDED.{$quote}{$key}{$quote}";
+                } else {
+                    $updateClauses[] = "{$quote}{$key}{$quote} = VALUES({$quote}{$key}{$quote})";
+                }
             }
             
             $placeholderIndex++;
         }
         
-        $sql = "
-            INSERT INTO `{$tableName}` 
-            (" . implode(", ", $columns) . ")
-            VALUES (" . implode(", ", $placeholders) . ")
-        ";
-        
-        if (!empty($updateClauses)) {
-            $sql .= " ON DUPLICATE KEY UPDATE " . implode(", ", $updateClauses) . ", updated_at = CURRENT_TIMESTAMP";
+        if ($isPgsql) {
+            // PostgreSQL用
+            $tableQuote = '"';
+            $sql = "
+                INSERT INTO {$tableQuote}{$tableName}{$tableQuote} 
+                (" . implode(", ", $columns) . ")
+                VALUES (" . implode(", ", $placeholders) . ")
+            ";
+            
+            if (!empty($updateClauses)) {
+                $sql .= " ON CONFLICT ({$quote}{$primaryKeyColumn}{$quote}) DO UPDATE SET " 
+                     . implode(", ", $updateClauses) 
+                     . ", updated_at = CURRENT_TIMESTAMP";
+            }
+        } else {
+            // MySQL用
+            $sql = "
+                INSERT INTO `{$tableName}` 
+                (" . implode(", ", $columns) . ")
+                VALUES (" . implode(", ", $placeholders) . ")
+            ";
+            
+            if (!empty($updateClauses)) {
+                $sql .= " ON DUPLICATE KEY UPDATE " . implode(", ", $updateClauses) . ", updated_at = CURRENT_TIMESTAMP";
+            }
         }
         
         try {
