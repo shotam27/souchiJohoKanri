@@ -165,6 +165,13 @@ try {
     ];
     error_log("Upload error details: " . json_encode($errorDetails, JSON_UNESCAPED_UNICODE));
     
+    // デバッグ用：ファイルにも書き出す
+    @file_put_contents('/tmp/fusion_upload_debug.log', 
+        date('Y-m-d H:i:s') . "\n" . 
+        json_encode($errorDetails, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n", 
+        FILE_APPEND
+    );
+    
     setErrorMessage("アップロード処理中にエラーが発生しました: " . $e->getMessage());
     
     // データベースのトランザクション状態を確認してロールバック
