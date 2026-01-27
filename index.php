@@ -51,14 +51,21 @@ require_once 'includes/header.php';
             </h3>
             <p>以下の形式のCSVファイルをアップロードしてください：</p>
             <div class="csv-format">
-サービス名,装置種別,装置名称,装置IP,ユーザー名,パスワード,関連装置名称,関連装置IP,ポート番号
-サービスA,装置種別A,souchimei,198.1.1.1,admin,admin123,kanrensouchi,198.1.1.11,1
-サービスA,装置種別A,souchimei2,198.1.1.2,admin,admin123,kanrensouchi2,198.1.1.12,1
+サービス名,装置種別,装置名称,ユーザー名,装置IP,パスワード,その他カラム1,その他カラム2
+サービスA,装置種別A,souchimei,admin,198.1.1.1,admin123,値1,値2
+サービスA,装置種別A,souchimei2,admin,198.1.1.2,admin123,値3,値4
             </div>
             <ul>
                 <li><strong>必須項目:</strong> サービス名、装置種別、装置名称、ユーザー名</li>
+                <li><strong>任意項目:</strong> 装置IP、パスワード</li>
                 <li><strong>主キー:</strong> [サービス名]_[装置種別]_[装置名称]_[ユーザー名]</li>
-                <li><strong>7行目以降のカラム:</strong> 動的テーブルに格納されます</li>
+                <li><strong>その他のカラム:</strong> 
+                    <ul>
+                        <li>device_infoテーブルに存在するカラムの場合 → device_infoに登録</li>
+                        <li>存在しない場合 → [サービス名]_[装置種別]テーブルに登録</li>
+                        <li>カラムが存在しない場合は自動で追加されます</li>
+                    </ul>
+                </li>
                 <li><strong>文字エンコーディング:</strong> UTF-8</li>
                 <li><strong>ファイルサイズ制限:</strong> 最大10MB</li>
             </ul>
@@ -137,31 +144,49 @@ require_once 'includes/header.php';
             fileInput.click();
         });
         
-        // ドラッグオーバー
+        // ドラッグオーバー（ドロップを許可するため必須）
         dragDropArea.addEventListener('dragover', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            dragDropArea.classList.add('drag-over');
+        });
+        
+        // ドラッグエンター
+        dragDropArea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             dragDropArea.classList.add('drag-over');
         });
         
         // ドラッグリーブ
         dragDropArea.addEventListener('dragleave', function(e) {
             e.preventDefault();
-            dragDropArea.classList.remove('drag-over');
+            e.stopPropagation();
+            // ドロップエリア自体から出た場合のみクラスを削除
+            if (e.target === dragDropArea) {
+                dragDropArea.classList.remove('drag-over');
+            }
         });
         
         // ドロップ
         dragDropArea.addEventListener('drop', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             dragDropArea.classList.remove('drag-over');
             
             console.log('ファイルドロップイベント発生');
+            console.log('e.dataTransfer:', e.dataTransfer);
             
             const files = e.dataTransfer.files;
-            console.log('ドロップされたファイル数:', files.length);
+            console.log('ドロップされたファイル数:', files ? files.length : 'undefined');
+            console.log('files オブジェクト:', files);
             
-            if (files.length === 0) {
-                alert('⚠️ ファイルを検出できませんでした\n\nもう一度お試しください。');
+            if (!files || files.length === 0) {
+                alert('⚠️ ファイルを検出できませんでした\n\nもう一度お試しください。\n\n通常のファイル選択ボタンをお試しください。');
                 console.error('ドロップされたファイルが見つかりません');
+                console.error('e.dataTransfer.files:', e.dataTransfer.files);
+                console.error('e.dataTransfer.items:', e.dataTransfer.items);
                 return;
             }
             
@@ -180,7 +205,10 @@ require_once 'includes/header.php';
             });
             
             if (validateFile(file)) {
-                fileInput.files = files;
+                // DataTransferオブジェクトを使ってファイル入力に設定
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
                 displayFileInfo(file);
                 console.log('✓ ファイル設定完了');
             } else {

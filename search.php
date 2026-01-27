@@ -122,6 +122,7 @@ require_once 'includes/header.php';
                             <th>パスワード</th>
                             <th>登録日時</th>
                             <th>更新日時</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody id="resultsTableBody">
@@ -286,7 +287,7 @@ require_once 'includes/header.php';
             tableBody.innerHTML = '';
             
             if (data.devices.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
             } else {
                 data.devices.forEach(device => {
                     const row = document.createElement('tr');
@@ -299,6 +300,12 @@ require_once 'includes/header.php';
                         <td class="text-truncate" title="${escapeHtml(device.password || '-')}">${device.password ? '●●●●●●' : '-'}</td>
                         <td>${formatDateTime(device.created_at)}</td>
                         <td>${formatDateTime(device.updated_at)}</td>
+                        <td>
+                            <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.device_ip || '')}', '${escapeHtml(device.username)}', '${escapeHtml(device.password || '')}', '${escapeHtml(device.device_name)}')" 
+                                    ${!device.device_ip || !device.username || !device.password ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
+                                🔧 マクロ
+                            </button>
+                        </td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -447,6 +454,45 @@ require_once 'includes/header.php';
             if (!dateStr) return '-';
             const date = new Date(dateStr);
             return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP');
+        }
+
+        // Teratermマクロダウンロード
+        async function downloadTeratermMacro(deviceIp, username, password, deviceName) {
+            if (!deviceIp || !username || !password) {
+                showAlert('error', 'IPアドレス、ユーザー名、パスワードが必要です');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    action: 'generate_teraterm_macro',
+                    device_ip: deviceIp,
+                    username: username,
+                    password: password,
+                    device_name: deviceName
+                });
+
+                const response = await fetch('ajax_api.php?' + params.toString());
+                
+                if (!response.ok) {
+                    throw new Error('マクロの生成に失敗しました');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${deviceName}_${deviceIp}.ttl`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert('success', 'Teratermマクロをダウンロードしました');
+            } catch (error) {
+                console.error('Macro download error:', error);
+                showAlert('error', 'マクロのダウンロードに失敗しました: ' + error.message);
+            }
         }
     </script>
 

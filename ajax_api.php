@@ -152,6 +152,35 @@ try {
             ];
             break;
             
+        case 'generate_teraterm_macro':
+            // Teratermマクロ生成
+            $deviceIp = $_GET['device_ip'] ?? '';
+            $username = $_GET['username'] ?? '';
+            $password = $_GET['password'] ?? '';
+            $deviceName = $_GET['device_name'] ?? 'device';
+            
+            if (empty($deviceIp) || empty($username) || empty($password)) {
+                throw new Exception('IPアドレス、ユーザー名、パスワードが必要です');
+            }
+            
+            require_once 'classes/TeratermMacroGenerator.php';
+            
+            $generator = new TeratermMacroGenerator($deviceIp, $username, $password);
+            
+            // ファイル名を生成（安全な文字に変換）
+            $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $deviceName);
+            $filename = "{$safeName}_{$deviceIp}.ttl";
+            
+            // JSONレスポンスではなく、ファイルとしてダウンロード
+            header('Content-Type: text/plain; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            
+            echo $generator->generate();
+            exit; // JSON出力をスキップ
+            
         default:
             throw new Exception('不正なアクションです: ' . $action);
     }

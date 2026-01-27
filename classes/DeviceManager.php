@@ -90,11 +90,15 @@ class DeviceManager {
         $isPgsql = $this->database->getDbType() === 'pgsql';
         
         $columnDefinitions = [];
-        $columnDefinitions[] = "\"{$primaryKeyColumn}\" VARCHAR(500) NOT NULL PRIMARY KEY";
+        
+        // MySQL/PostgreSQLで適切なクォート文字を使用
+        $quote = $isPgsql ? '"' : '`';
+        
+        $columnDefinitions[] = "{$quote}{$primaryKeyColumn}{$quote} VARCHAR(500) NOT NULL PRIMARY KEY";
         
         foreach ($extendedColumns as $column) {
-            // カラム名は日本語のまま使用、ダブルクォートでエスケープ
-            $columnDefinitions[] = "\"{$column}\" TEXT";
+            // カラム名は日本語のまま使用、適切なクォートでエスケープ
+            $columnDefinitions[] = "{$quote}{$column}{$quote} TEXT";
         }
         
         $columnDefinitions[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
@@ -131,28 +135,51 @@ class DeviceManager {
     }
     
     /**
-     * 装置情報を挿入または更新
+     * 装置情報を挿入または更新（動的カラム対応）
      * @param array $deviceData
+     * @param array $additionalData 追加カラムデータ
      * @return bool
      * @throws Exception
      */
-    public function insertOrUpdateDeviceInfo($deviceData) {
+    public function insertOrUpdateDeviceInfo($deviceData, $additionalData = []) {
+        // 基本カラム
+        $columns = ['primary_key', 'service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password'];
+        $placeholders = [':primary_key', ':service_name', ':device_type', ':device_name', ':device_ip', ':username', ':password'];
+        $updateClauses = [
+            'service_name = VALUES(service_name)',
+            'device_type = VALUES(device_type)',
+            'device_name = VALUES(device_name)',
+            'device_ip = VALUES(device_ip)',
+            'username = VALUES(username)',
+            'password = VALUES(password)'
+        ];
+        
+        $params = $deviceData;
+        
+        // device_infoテーブルの既存カラムを取得
+        $existingColumns = $this->getTableColumns('device_info');
+        
+        // 追加データがある場合、device_infoに存在するカラムのみ追加
+        foreach ($additionalData as $column => $value) {
+            if (in_array($column, $existingColumns) && !in_array($column, $columns)) {
+                $columns[] = "`{$column}`";
+                $placeholders[] = ":{$column}";
+                $updateClauses[] = "`{$column}` = VALUES(`{$column}`)";
+                $params[$column] = $value;
+            }
+        }
+        
         $sql = "
             INSERT INTO device_info 
-            (primary_key, service_name, device_type, device_name, device_ip, username, password)
-            VALUES (:primary_key, :service_name, :device_type, :device_name, :device_ip, :username, :password)
+            (" . implode(", ", $columns) . ")
+            VALUES (" . implode(", ", $placeholders) . ")
             ON DUPLICATE KEY UPDATE
-                service_name = VALUES(service_name),
-                device_type = VALUES(device_type),
-                device_name = VALUES(device_name),
-                device_ip = VALUES(device_ip),
-                username = VALUES(username),
-                password = VALUES(password),
+                " . implode(",\n                ", $updateClauses) . ",
                 updated_at = CURRENT_TIMESTAMP
         ";
         
         try {
-            $this->database->execute($sql, $deviceData);
+            $this->database->execute($sql, $params);
             return true;
         } catch (Exception $e) {
             throw new Exception("装置情報の挿入に失敗しました: " . $e->getMessage());
@@ -234,6 +261,7 @@ class DeviceManager {
             'device_info_count' => 0,
             'dynamic_tables_created' => [],
             'dynamic_data_count' => 0,
+            'columns_added' => [],
             'errors' => []
         ];
         
@@ -249,22 +277,45 @@ class DeviceManager {
             $data = $csvProcessor->getData();
             $extendedColumns = $csvProcessor->getExtendedColumns();
             
-            // 作成が必要な動的テーブルを特定
-            $dynamicTables = [];
+            // device_infoテーブルの既存カラムを取得
+            $deviceInfoExistingColumns = $this->getTableColumns('device_info');
+            
+            // 動的テーブルごとに必要なカラムを判定
+            $dynamicTableColumns = [];
             foreach ($data as $row) {
                 $tableName = $csvProcessor->generateTableName($row);
-                if (!isset($dynamicTables[$tableName])) {
-                    $dynamicTables[$tableName] = true;
+                
+                if (!isset($dynamicTableColumns[$tableName])) {
+                    $dynamicTableColumns[$tableName] = [];
+                }
+                
+                // 各拡張カラムをdevice_infoまたは動的テーブルに振り分け
+                foreach ($extendedColumns as $column) {
+                    // device_infoに存在しないカラムのみ動的テーブルへ
+                    if (!in_array($column, $deviceInfoExistingColumns)) {
+                        if (!in_array($column, $dynamicTableColumns[$tableName])) {
+                            $dynamicTableColumns[$tableName][] = $column;
+                        }
+                    }
                 }
             }
             
-            // 動的テーブルを作成
-            foreach (array_keys($dynamicTables) as $tableName) {
+            // 動的テーブルを作成またはカラム追加
+            foreach ($dynamicTableColumns as $tableName => $columns) {
                 if (!$this->dynamicTableExists($tableName)) {
-                    // 主キーカラム名を正しく生成
+                    // テーブル新規作成
                     $primaryKeyColumn = $csvProcessor->generatePrimaryKeyColumnName($data[0]);
-                    $this->createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns);
+                    $this->createDynamicTable($tableName, $primaryKeyColumn, $columns);
                     $results['dynamic_tables_created'][] = $tableName;
+                } else {
+                    // 既存テーブルに不足カラムを追加
+                    $existingColumns = $this->getTableColumns($tableName);
+                    foreach ($columns as $column) {
+                        if (!in_array($column, $existingColumns)) {
+                            $this->addColumnToDynamicTable($tableName, $column);
+                            $results['columns_added'][] = "{$tableName}.{$column}";
+                        }
+                    }
                 }
             }
             
@@ -275,9 +326,18 @@ class DeviceManager {
             
             // データを処理
             foreach ($data as $row) {
-                // 装置情報テーブルに挿入
+                // 装置情報テーブルに挿入（拡張カラムも含む）
                 $deviceInfo = $csvProcessor->convertToDeviceInfo($row);
-                $this->insertOrUpdateDeviceInfo($deviceInfo);
+                
+                // 拡張カラムの中でdevice_infoに存在するカラムを抽出
+                $additionalDeviceInfoData = [];
+                foreach ($extendedColumns as $column) {
+                    if (in_array($column, $deviceInfoExistingColumns)) {
+                        $additionalDeviceInfoData[$column] = isset($row[$column]) ? $row[$column] : null;
+                    }
+                }
+                
+                $this->insertOrUpdateDeviceInfo($deviceInfo, $additionalDeviceInfoData);
                 $results['device_info_count']++;
                 
                 // サービス名と装置種別のリレーションを登録
@@ -292,11 +352,28 @@ class DeviceManager {
                     error_log("リレーション登録エラー: " . $e->getMessage());
                 }
                 
-                // 動的テーブルに挿入（拡張カラムが存在する場合のみ）
-                if (!empty($extendedColumns)) {
-                    $tableName = $csvProcessor->generateTableName($row);
-                    $extendedData = $csvProcessor->convertToExtendedData($row);
-                    $this->insertOrUpdateDynamicData($tableName, $extendedData);
+                // 動的テーブルに挿入
+                $tableName = $csvProcessor->generateTableName($row);
+                
+                // device_infoに存在するカラムと、動的テーブルに存在するカラムを分離
+                $deviceInfoColumns = $csvProcessor->getDeviceInfoColumns();
+                $deviceInfoExistingColumns = $this->getTableColumns('device_info');
+                
+                // 動的テーブル用のデータを作成
+                $dynamicData = [];
+                $dynamicData[$csvProcessor->generatePrimaryKeyColumnName($row)] = $csvProcessor->generatePrimaryKey($row);
+                
+                foreach ($extendedColumns as $column) {
+                    // device_infoに存在するカラムはdevice_infoに、それ以外は動的テーブルに
+                    if (!in_array($column, $deviceInfoExistingColumns)) {
+                        // 動的テーブルのカラムとして登録
+                        $dynamicData[$column] = isset($row[$column]) ? $row[$column] : null;
+                    }
+                }
+                
+                // 動的テーブルに挿入（動的テーブル用のデータが存在する場合のみ）
+                if (count($dynamicData) > 1) { // primary_key以外のカラムがある場合
+                    $this->insertOrUpdateDynamicData($tableName, $dynamicData);
                     $results['dynamic_data_count']++;
                 }
             }
@@ -879,6 +956,73 @@ class DeviceManager {
             return $stmt->fetchAll();
         } catch (Exception $e) {
             throw new Exception("リレーション一覧の取得に失敗しました: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * テーブルのカラム一覧を取得
+     * @param string $tableName
+     * @return array
+     */
+    public function getTableColumns($tableName) {
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
+        if ($isPgsql) {
+            $sql = "
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = :table_name
+                ORDER BY ordinal_position
+            ";
+            $params = ['table_name' => $tableName];
+        } else {
+            $sql = "
+                SELECT COLUMN_NAME as column_name
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = :table_name
+                ORDER BY ORDINAL_POSITION
+            ";
+            $params = ['table_name' => $tableName];
+        }
+        
+        try {
+            $stmt = $this->database->execute($sql, $params);
+            $columns = [];
+            while ($row = $stmt->fetch()) {
+                $columns[] = $row['column_name'];
+            }
+            return $columns;
+        } catch (Exception $e) {
+            error_log("Failed to get columns for table {$tableName}: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * 動的テーブルにカラムを追加
+     * @param string $tableName
+     * @param string $columnName
+     * @return bool
+     * @throws Exception
+     */
+    public function addColumnToDynamicTable($tableName, $columnName) {
+        $tableName = sanitizeTableName($tableName);
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
+        if ($isPgsql) {
+            $sql = "ALTER TABLE \"{$tableName}\" ADD COLUMN \"{$columnName}\" TEXT";
+        } else {
+            $sql = "ALTER TABLE `{$tableName}` ADD COLUMN `{$columnName}` TEXT";
+        }
+        
+        try {
+            error_log("Adding column to dynamic table: {$sql}");
+            $this->database->execute($sql);
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to add column {$columnName} to table {$tableName}: " . $e->getMessage());
+            throw new Exception("カラム '{$columnName}' をテーブル '{$tableName}' に追加できませんでした: " . $e->getMessage());
         }
     }
 }

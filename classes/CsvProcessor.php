@@ -60,7 +60,7 @@ class CsvProcessor {
                 // ヘッダー行
                 $this->headers = array_map('trim', $row);
                 
-                // 必須カラムの存在確認
+                // 必須カラムの存在確認（4つのみ）
                 $requiredColumns = ['サービス名', '装置種別', '装置名称', 'ユーザー名'];
                 foreach ($requiredColumns as $required) {
                     if (!in_array($required, $this->headers)) {
@@ -141,10 +141,10 @@ class CsvProcessor {
     }
     
     /**
-     * 基本カラム（1-6列目）を取得
+     * device_infoテーブルのカラム一覧を取得
      * @return array
      */
-    public function getBasicColumns() {
+    public function getDeviceInfoColumns() {
         return [
             'サービス名',
             '装置種別', 
@@ -156,15 +156,23 @@ class CsvProcessor {
     }
     
     /**
-     * 拡張カラム（7列目以降）を取得
+     * 基本カラム（device_infoに登録されるカラム）を取得
+     * @return array
+     */
+    public function getBasicColumns() {
+        return $this->getDeviceInfoColumns();
+    }
+    
+    /**
+     * 拡張カラム（device_info以外のカラム）を取得
      * @return array
      */
     public function getExtendedColumns() {
-        $basicColumns = $this->getBasicColumns();
+        $deviceInfoColumns = $this->getDeviceInfoColumns();
         $extendedColumns = [];
         
         foreach ($this->headers as $header) {
-            if (!in_array($header, $basicColumns)) {
+            if (!in_array($header, $deviceInfoColumns)) {
                 $extendedColumns[] = $header;
             }
         }
