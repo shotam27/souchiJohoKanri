@@ -131,7 +131,7 @@ require_once 'includes/header.php';
         const selectedFileInfo = document.getElementById('selectedFileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
-        let selectedFile = null; // 古いブラウザ対応のためのファイル保持
+        let selectedFile = null; // 古いブラウザ（IE11など）やDataTransfer非対応ブラウザ用のファイル保持
         
         // ドラッグ&ドロップエリアのクリックでファイル選択ダイアログを開く
         dragDropArea.addEventListener('click', function() {
@@ -182,15 +182,22 @@ require_once 'includes/header.php';
             
             if (validateFile(file)) {
                 // DataTransferオブジェクトを使ってファイルを設定
-                try {
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(file);
-                    fileInput.files = dataTransfer.files;
-                    selectedFile = null; // DataTransferで設定できた場合はクリア
-                    console.log('✓ DataTransferでファイル設定完了');
-                } catch (error) {
-                    // 古いブラウザの場合の代替
-                    console.warn('DataTransfer非対応、代替方法を使用:', error);
+                // DataTransfer APIのサポート確認と使用
+                if (typeof DataTransfer !== 'undefined') {
+                    try {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                        selectedFile = null; // DataTransferで設定できた場合はクリア
+                        console.log('✓ DataTransferでファイル設定完了');
+                    } catch (error) {
+                        // DataTransfer利用時にエラーが発生した場合の代替
+                        console.warn('DataTransferエラー、代替方法を使用:', error);
+                        selectedFile = file;
+                    }
+                } else {
+                    // DataTransfer非対応ブラウザの場合
+                    console.warn('DataTransfer非対応、selectedFile変数を使用');
                     selectedFile = file;
                 }
                 displayFileInfo(file);
@@ -288,7 +295,11 @@ require_once 'includes/header.php';
             console.log('フォーム送信開始');
             
             // ファイルの取得（selectedFileまたはfileInput.files）
-            let file = selectedFile || (fileInput.files.length > 0 ? fileInput.files[0] : null);
+            const getSelectedFile = function() {
+                return selectedFile || (fileInput.files.length > 0 ? fileInput.files[0] : null);
+            };
+            
+            let file = getSelectedFile();
             
             if (!file) {
                 alert('❌ CSVファイルを選択してください。');
@@ -341,8 +352,12 @@ require_once 'includes/header.php';
                 if (xhr.status === 200) {
                     console.log('✓ アップロード完了');
                     progressBar.style.width = '100%';
-                    // サーバーレスポンスを処理（リダイレクトまたはメッセージ表示）
-                    window.location.href = xhr.responseURL || 'index.php';
+                    // レスポンスに基づいてリダイレクト
+                    // PHPのheader('Location: ...')によるリダイレクトは自動的に処理される
+                    // upload.phpは成功時にindex.phpにリダイレクトする想定
+                    setTimeout(function() {
+                        window.location.href = 'index.php';
+                    }, 500);
                 } else {
                     console.error('アップロードエラー:', xhr.status);
                     alert('❌ アップロードエラーが発生しました。\n\nステータス: ' + xhr.status);
