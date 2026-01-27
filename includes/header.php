@@ -71,7 +71,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             const nav = document.getElementById('navbarNav');
             const toggle = document.querySelector('.mobile-menu-toggle');
             
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+            if (nav && (!nav.contains(event.target) && (!toggle || !toggle.contains(event.target)))) {
                 nav.classList.remove('show');
             }
         });
