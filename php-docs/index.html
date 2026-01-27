@@ -1559,6 +1559,7 @@ require_once 'includes/header.php';
         const selectedFileInfo = document.getElementById('selectedFileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
+        let selectedFile = null; // DataTransfer API非対応環境用のファイル保持変数
         
         // ドラッグ&amp;ドロップエリアのクリックでファイル選択ダイアログを開く
         dragDropArea.addEventListener('click', function() {
@@ -1586,7 +1587,26 @@ require_once 'includes/header.php';
             if (files.length &gt; 0) {
                 const file = files[0];
                 if (validateFile(file)) {
-                    fileInput.files = files;
+                    // DataTransferオブジェクトを使ってファイルを設定
+                    // DataTransfer APIのサポート確認（コンストラクタとitemsプロパティの両方）
+                    const hasDataTransferSupport = typeof DataTransfer !== 'undefined' &amp;&amp; 
+                                                   DataTransfer.prototype &amp;&amp; 
+                                                   'items' in DataTransfer.prototype;
+                    
+                    if (hasDataTransferSupport) {
+                        try {
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileInput.files = dataTransfer.files;
+                            selectedFile = null; // DataTransferで設定できた場合はクリア
+                        } catch (error) {
+                            // DataTransfer利用時にエラーが発生した場合の代替
+                            selectedFile = file;
+                        }
+                    } else {
+                        // DataTransfer非対応ブラウザの場合
+                        selectedFile = file;
+                    }
                     displayFileInfo(file);
                 }
             }
@@ -1596,15 +1616,28 @@ require_once 'includes/header.php';
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
+                selectedFile = null; // 通常の選択の場合はselectedFileをクリア
                 displayFileInfo(file);
             }
         });
         
         // ファイル情報を表示
         function displayFileInfo(file) {
-            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const fileSizeBytes = file.size;
+            let fileSizeText;
+            
+            if (fileSizeBytes === 0) {
+                fileSizeText = '0 KB (ファイルが空です)';
+            } else if (fileSizeBytes &lt; 1024) {
+                fileSizeText = fileSizeBytes + ' B';
+            } else if (fileSizeBytes &lt; 1024 * 1024) {
+                fileSizeText = (fileSizeBytes / 1024).toFixed(2) + ' KB';
+            } else {
+                fileSizeText = (fileSizeBytes / 1024 / 1024).toFixed(2) + ' MB';
+            }
+            
             fileName.textContent = file.name;
-            fileSize.textContent = `${fileSizeMB} MB`;
+            fileSize.textContent = fileSizeText;
             
             selectedFileInfo.classList.add('show');
             dragDropArea.classList.add('has-file');
@@ -1636,18 +1669,26 @@ require_once 'includes/header.php';
         
         // フォーム送信
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // デフォルトのフォーム送信を防止
+            
             const uploadBtn = document.getElementById('uploadBtn');
             const uploadProgress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
             
-            if (!fileInput.files.length) {
+            // ファイルの取得（selectedFileまたはfileInput.files）
+            const getSelectedFile = function() {
+                return selectedFile || (fileInput.files.length &gt; 0 ? fileInput.files[0] : null);
+            };
+            
+            let file = getSelectedFile();
+            
+            if (!file) {
                 alert('CSVファイルを選択してください。');
-                e.preventDefault();
                 return;
             }
             
-            const file = fileInput.files[0];
+            const fileObj = fileInput.files[0];
             if (!validateFile(file)) {
-                e.preventDefault();
                 return;
             }
             
@@ -1656,15 +1697,50 @@ require_once 'includes/header.php';
             uploadBtn.textContent = 'アップロード中...';
             uploadProgress.style.display = 'block';
             
-            // 擬似的なプログレスバー
-            let progress = 0;
-            const progressInterval = setInterval(function() {
-                progress += 5;
-                document.getElementById('progressBar').style.width = progress + '%';
-                if (progress &gt;= 90) {
-                    clearInterval(progressInterval);
+            // FormDataを作成
+            const formData = new FormData();
+            formData.append('csv_file', file);
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+            
+            // XMLHttpRequestでアップロード
+            const xhr = new XMLHttpRequest();
+            
+            // プログレスイベント
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
                 }
-            }, 100);
+            });
+            
+            // 完了イベント
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    progressBar.style.width = '100%';
+                    // XHRはサーバーのリダイレクトを自動的に追従するが、
+                    // ブラウザのロケーションは変更されないため、手動でリダイレクトが必要
+                    setTimeout(function() {
+                        window.location.href = 'index.php';
+                    }, 500);
+                } else {
+                    alert('アップロードエラーが発生しました。\n\nステータス: ' + xhr.status);
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'CSVファイルをアップロード';
+                    uploadProgress.style.display = 'none';
+                }
+            });
+            
+            // エラーイベント
+            xhr.addEventListener('error', function() {
+                alert('ネットワークエラーが発生しました。');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'CSVファイルをアップロード';
+                uploadProgress.style.display = 'none';
+            });
+            
+            // 送信
+            xhr.open('POST', 'upload.php', true);
+            xhr.send(formData);
         });
     &lt;/script&gt;
 
