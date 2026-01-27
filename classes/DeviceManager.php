@@ -447,6 +447,16 @@ class DeviceManager {
                 } catch (Exception $e) {
                     // リレーション登録エラーはログに記録するが処理は継続
                     error_log("リレーション登録エラー: " . $e->getMessage());
+                    
+                    // PostgreSQLの場合、エラーでトランザクションが中断されるので再開
+                    if ($isPgsql) {
+                        if ($this->database->inTransaction()) {
+                            $this->database->rollback();
+                            error_log("Rolled back transaction due to relation error");
+                        }
+                        $this->database->beginTransaction();
+                        error_log("Restarted transaction after relation error");
+                    }
                 }
                 
                 // 動的テーブルに挿入
@@ -884,15 +894,32 @@ class DeviceManager {
             $this->createRelationTable();
         }
         
-        $sql = "
-            INSERT INTO service_device_type_relations 
-            (service_name, device_type, description) 
-            VALUES (:service_name, :device_type, :description)
-            ON DUPLICATE KEY UPDATE
-                description = VALUES(description),
-                is_active = 1,
-                updated_at = CURRENT_TIMESTAMP
-        ";
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
+        if ($isPgsql) {
+            // PostgreSQL用
+            $sql = "
+                INSERT INTO service_device_type_relations 
+                (service_name, device_type, description) 
+                VALUES (:service_name, :device_type, :description)
+                ON CONFLICT (service_name, device_type) 
+                DO UPDATE SET
+                    description = EXCLUDED.description,
+                    is_active = TRUE,
+                    updated_at = CURRENT_TIMESTAMP
+            ";
+        } else {
+            // MySQL用
+            $sql = "
+                INSERT INTO service_device_type_relations 
+                (service_name, device_type, description) 
+                VALUES (:service_name, :device_type, :description)
+                ON DUPLICATE KEY UPDATE
+                    description = VALUES(description),
+                    is_active = 1,
+                    updated_at = CURRENT_TIMESTAMP
+            ";
+        }
         
         $params = [
             'service_name' => $serviceName,
