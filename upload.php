@@ -86,6 +86,20 @@ try {
     
     // データベース接続
     $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, defined('DB_TYPE') ? DB_TYPE : 'mysql', defined('DB_PORT') ? DB_PORT : null);
+    
+    // データベース初期化（必須テーブルの存在確認と作成）
+    $db_initializer = new DatabaseInitializer($database);
+    error_log("Initializing required database tables");
+    $init_results = $db_initializer->initializeAllTables();
+    
+    if (!empty($init_results['tables_created'])) {
+        error_log("Created tables: " . implode(', ', $init_results['tables_created']));
+    }
+    
+    if (!empty($init_results['errors'])) {
+        throw new Exception('データベース初期化エラー: ' . implode(', ', $init_results['errors']));
+    }
+    
     $device_manager = new DeviceManager($database);
     
     // CSVデータをデータベースに登録

@@ -330,8 +330,9 @@ class DeviceManager {
             // トランザクション開始
             $this->database->beginTransaction();
             
-            // 装置情報テーブルが存在しない場合は作成
+            // 装置情報テーブルの存在確認（DatabaseInitializerで作成済みのはず）
             if (!$this->deviceInfoTableExists()) {
+                error_log("Warning: device_info table not found. Creating now...");
                 $this->createDeviceInfoTable();
             }
             
@@ -380,8 +381,9 @@ class DeviceManager {
                 }
             }
             
-            // リレーションテーブルが存在しない場合は作成
+            // リレーションテーブルの存在確認（DatabaseInitializerで作成済みのはず）
             if (!$this->relationTableExists()) {
+                error_log("Warning: service_device_type_relations table not found. Creating now...");
                 $this->createRelationTable();
             }
             

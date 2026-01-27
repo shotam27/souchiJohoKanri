@@ -15,23 +15,31 @@ try {
     $pdo = $database->connect();
     echo "   ✓ 接続成功\n\n";
     
-    // 装置情報テーブルの作成
-    echo "2. 装置情報テーブル作成...\n";
-    $deviceManager = new DeviceManager($database);
+    // データベース初期化（必須テーブルの作成）
+    echo "2. 必須テーブル作成...\n";
+    $dbInitializer = new DatabaseInitializer($database);
+    $initResults = $dbInitializer->initializeAllTables();
     
-    if (!$deviceManager->deviceInfoTableExists()) {
-        $deviceManager->createDeviceInfoTable();
-        echo "   ✓ device_info テーブルを作成しました\n";
+    if (!empty($initResults['tables_created'])) {
+        foreach ($initResults['tables_created'] as $tableName) {
+            echo "   ✓ {$tableName} テーブルを作成しました\n";
+        }
     } else {
-        echo "   - device_info テーブルは既に存在します\n";
+        echo "   - すべての必須テーブルは既に存在します\n";
     }
     
-    // リレーションテーブルの作成
-    if (!$deviceManager->relationTableExists()) {
-        $deviceManager->createRelationTable();
-        echo "   ✓ service_device_type_relations テーブルを作成しました\n";
-    } else {
-        echo "   - service_device_type_relations テーブルは既に存在します\n";
+    if (!empty($initResults['errors'])) {
+        foreach ($initResults['errors'] as $error) {
+            echo "   ⚠ エラー: {$error}\n";
+        }
+    }
+    
+    // テーブル存在確認
+    $tableStatus = $dbInitializer->checkRequiredTables();
+    echo "\n   テーブル状態:\n";
+    foreach ($tableStatus as $tableName => $exists) {
+        $status = $exists ? "✓ 存在" : "✗ 不在";
+        echo "   - {$tableName}: {$status}\n";
     }
     
     // テーブル情報の表示
