@@ -379,9 +379,12 @@ class DeviceManager {
             
             // データを処理
             foreach ($data as $rowIndex => $row) {
+                error_log("Processing row {$rowIndex}: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+                
                 try {
                     // 装置情報テーブルに挿入（拡張カラムも含む）
                     $deviceInfo = $csvProcessor->convertToDeviceInfo($row);
+                    error_log("Device info data: " . json_encode($deviceInfo, JSON_UNESCAPED_UNICODE));
                     
                     // 拡張カラムの中でdevice_infoに存在するカラムを抽出
                     $additionalDeviceInfoData = [];
@@ -390,12 +393,15 @@ class DeviceManager {
                             $additionalDeviceInfoData[$column] = isset($row[$column]) ? $row[$column] : null;
                         }
                     }
+                    error_log("Additional device info data: " . json_encode($additionalDeviceInfoData, JSON_UNESCAPED_UNICODE));
                     
                     $this->insertOrUpdateDeviceInfo($deviceInfo, $additionalDeviceInfoData);
+                    error_log("Successfully inserted device_info for row {$rowIndex}");
                     $results['device_info_count']++;
                     
                 } catch (Exception $e) {
                     error_log("Row {$rowIndex} - device_info insert error: " . $e->getMessage());
+                    error_log("Stack trace: " . $e->getTraceAsString());
                     throw new Exception("行" . ($rowIndex + 2) . "のdevice_info登録でエラー: " . $e->getMessage());
                 }
                 
@@ -406,6 +412,7 @@ class DeviceManager {
                         $row['装置種別'],
                         'CSV自動登録'
                     );
+                    error_log("Successfully registered relation for row {$rowIndex}");
                 } catch (Exception $e) {
                     // リレーション登録エラーはログに記録するが処理は継続
                     error_log("リレーション登録エラー: " . $e->getMessage());
@@ -414,6 +421,7 @@ class DeviceManager {
                 // 動的テーブルに挿入
                 try {
                     $tableName = $csvProcessor->generateTableName($row);
+                    error_log("Dynamic table name: {$tableName}");
                     
                     // 動的テーブル用のデータを作成
                     $dynamicData = [];
@@ -427,14 +435,20 @@ class DeviceManager {
                         }
                     }
                     
+                    error_log("Dynamic data: " . json_encode($dynamicData, JSON_UNESCAPED_UNICODE));
+                    
                     // 動的テーブルに挿入（動的テーブル用のデータが存在する場合のみ）
                     if (count($dynamicData) > 1) { // primary_key以外のカラムがある場合
                         $this->insertOrUpdateDynamicData($tableName, $dynamicData);
+                        error_log("Successfully inserted dynamic data for row {$rowIndex}");
                         $results['dynamic_data_count']++;
+                    } else {
+                        error_log("No dynamic data to insert for row {$rowIndex}");
                     }
                     
                 } catch (Exception $e) {
                     error_log("Row {$rowIndex} - dynamic table insert error: " . $e->getMessage());
+                    error_log("Stack trace: " . $e->getTraceAsString());
                     throw new Exception("行" . ($rowIndex + 2) . "の動的テーブル登録でエラー: " . $e->getMessage());
                 }
             }
