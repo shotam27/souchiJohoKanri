@@ -120,6 +120,7 @@
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     <div class="container">
         <h1>📁 PHP Files Documentation</h1>
         <div class="stats">
@@ -161,6 +162,2656 @@
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
                 <pre><code>&lt;?php
 require_once &#x27;../config.php&#x27;;
+=======
+<div class="container">
+<div class="header"><h1>📄 PHPファイル完全版</h1><p>全17ファイルの完全なソースコード</p><p style="font-size: 0.9em; margin-top: 10px; opacity: 0.9;"> ファイル名をクリックして展開/折りたたみ</p></div>
+<div class="toc"><h2> 目次</h2><ul>
+<li><a href='#ajax_api'>ajax_api.php</a></li>
+<li><a href='#config_docker'>config.docker.php</a></li>
+<li><a href='#config'>config.php</a></li>
+<li><a href='#config_render'>config.render.php</a></li>
+<li><a href='#debug'>debug.php</a></li>
+<li><a href='#download'>download.php</a></li>
+<li><a href='#index'>index.php</a></li>
+<li><a href='#search'>search.php</a></li>
+<li><a href='#test_static'>test-static.php</a></li>
+<li><a href='#upload'>upload.php</a></li>
+<li><a href='#header'>header.php</a></li>
+<li><a href='#footer'>footer.php</a></li>
+<li><a href='#admin_tables'>admin_tables.php</a></li>
+<li><a href='#init_database'>init_database.php</a></li>
+<li><a href='#csvprocessor'>CsvProcessor.php</a></li>
+<li><a href='#database'>Database.php</a></li>
+<li><a href='#devicemanager'>DeviceManager.php</a></li>
+</ul></div>
+<div class="content">
+<div class="file-section" id="ajax_api">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">ajax_api.php</div></div>
+<div>180行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">Ajax APIエンドポイント。フロントエンドからの非同期リクエストを処理。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * Ajax API エンドポイント
+ * フロントエンドからの非同期リクエストを処理
+ */
+
+require_once 'config.php';
+
+// JSON形式で出力
+header('Content-Type: application/json; charset=UTF-8');
+
+// CORS対応（必要に応じて）
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+try {
+    // リクエストメソッドの確認
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    if ($method !== 'GET' &amp;&amp; $method !== 'POST') {
+        throw new Exception('許可されていないリクエストメソッドです');
+    }
+    
+    // アクションパラメータの取得
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    
+    if (empty($action)) {
+        throw new Exception('アクションが指定されていません');
+    }
+    
+    // データベース接続
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $deviceManager = new DeviceManager($database);
+    
+    $response = ['success' =&gt; false, 'data' =&gt; null, 'message' =&gt; ''];
+    
+    switch ($action) {
+        case 'get_services':
+            // サービス名一覧をリレーションテーブルから取得
+            $services = $deviceManager-&gt;getServiceNamesFromRelation();
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $services,
+                'message' =&gt; 'サービス名一覧を取得しました'
+            ];
+            break;
+            
+        case 'get_device_types':
+            // 装置種別一覧をリレーションテーブルから取得（サービス名でフィルタ）
+            $serviceName = $_GET['service_name'] ?? $_POST['service_name'] ?? null;
+            $deviceTypes = $deviceManager-&gt;getDeviceTypesFromRelation($serviceName);
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $deviceTypes,
+                'message' =&gt; '装置種別一覧を取得しました'
+            ];
+            break;
+            
+        case 'get_all_relations':
+            // 全リレーション取得
+            $relations = $deviceManager-&gt;getAllRelations();
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $relations,
+                'message' =&gt; 'リレーション一覧を取得しました'
+            ];
+            break;
+            
+        case 'build_relations':
+            // 既存データからリレーション構築
+            $result = $deviceManager-&gt;buildRelationsFromExistingData();
+            $response = [
+                'success' =&gt; $result['success'],
+                'data' =&gt; null,
+                'message' =&gt; $result['message']
+            ];
+            break;
+            
+        case 'search_devices':
+            // 装置情報検索
+            $serviceName = $_GET['service_name'] ?? $_POST['service_name'] ?? null;
+            $deviceType = $_GET['device_type'] ?? $_POST['device_type'] ?? null;
+            $deviceName = $_GET['device_name'] ?? $_POST['device_name'] ?? null;
+            $page = (int)($_GET['page'] ?? $_POST['page'] ?? 1);
+            $limit = 20; // 1ページあたりの件数
+            $offset = ($page - 1) * $limit;
+            
+            // 空文字列をnullに変換
+            $serviceName = $serviceName === '' ? null : $serviceName;
+            $deviceType = $deviceType === '' ? null : $deviceType;
+            $deviceName = $deviceName === '' ? null : $deviceName;
+            
+            $devices = $deviceManager-&gt;searchDevicesAdvanced(
+                $serviceName, 
+                $deviceType, 
+                $deviceName, 
+                $limit, 
+                $offset
+            );
+            
+            $total = $deviceManager-&gt;countDevicesAdvanced(
+                $serviceName, 
+                $deviceType, 
+                $deviceName
+            );
+            
+            $totalPages = ceil($total / $limit);
+            
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; [
+                    'devices' =&gt; $devices,
+                    'pagination' =&gt; [
+                        'current_page' =&gt; $page,
+                        'total_pages' =&gt; $totalPages,
+                        'total_count' =&gt; $total,
+                        'per_page' =&gt; $limit
+                    ]
+                ],
+                'message' =&gt; "検索結果: {$total}件見つかりました"
+            ];
+            break;
+            
+        case 'get_statistics':
+            // 装置統計情報を取得
+            $stats = $deviceManager-&gt;getDeviceStatistics();
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $stats,
+                'message' =&gt; '統計情報を取得しました'
+            ];
+            break;
+            
+        case 'build_relations':
+            // 既存データからリレーションを自動構築
+            $buildResult = $deviceManager-&gt;buildRelationsFromExistingData();
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $buildResult,
+                'message' =&gt; "リレーション構築完了: {$buildResult['registered']}件登録"
+            ];
+            break;
+            
+        case 'get_all_relations':
+            // 全リレーション一覧を取得（管理用）
+            $relations = $deviceManager-&gt;getAllRelations();
+            $response = [
+                'success' =&gt; true,
+                'data' =&gt; $relations,
+                'message' =&gt; 'リレーション一覧を取得しました'
+            ];
+            break;
+            
+        default:
+            throw new Exception('不正なアクションです: ' . $action);
+    }
+    
+} catch (Exception $e) {
+    $response = [
+        'success' =&gt; false,
+        'data' =&gt; null,
+        'message' =&gt; $e-&gt;getMessage()
+    ];
+    
+    // エラーログに記録（本番環境では重要）
+    error_log("Ajax API Error: " . $e-&gt;getMessage());
+    
+    // HTTPステータスコードを設定
+    http_response_code(400);
+} finally {
+    // データベース接続を閉じる
+    if (isset($database)) {
+        $database-&gt;close();
+    }
+}
+
+// JSON形式でレスポンスを出力
+echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="config_docker">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">config.docker.php</div></div>
+<div>170行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">Docker環境用設定ファイル。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * Docker環境用アプリケーション設定ファイル
+ */
+
+// データベース設定（Docker環境用）
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'mysql');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'device_management');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? 'rootpassword');
+define('DB_CHARSET', 'utf8mb4');
+
+// アップロード設定
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// エラーレポート設定（Docker環境では有効）
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// タイムゾーン設定
+date_default_timezone_set('Asia/Tokyo');
+
+// セッション設定
+session_start();
+
+// オートロード設定
+function autoload($className) {
+    $classFile = __DIR__ . '/classes/' . $className . '.php';
+    if (file_exists($classFile)) {
+        require_once $classFile;
+    }
+}
+spl_autoload_register('autoload');
+
+// 共通関数
+
+/**
+ * HTMLエスケープ
+ * @param string $str
+ * @return string
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * CSRFトークン生成
+ * @return string
+ */
+function generateCsrfToken() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * CSRFトークン検証
+ * @param string $token
+ * @return bool
+ */
+function validateCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) &amp;&amp; hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * ファイル名をサニタイズ
+ * @param string $filename
+ * @return string
+ */
+function sanitizeFilename($filename) {
+    // 危険な文字を除去
+    $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $filename);
+    // 連続するドットやアンダースコアを単一に
+    $filename = preg_replace('/[_\.]{2,}/', '_', $filename);
+    return $filename;
+}
+
+/**
+ * データベースのテーブル名として使用可能な文字列に変換
+ * @param string $str
+ * @return string
+ */
+function sanitizeTableName($str) {
+    // 日本語文字は残し、特殊文字のみ除去
+    $str = preg_replace('/[^\p{L}\p{N}_]/u', '_', $str);
+    // 連続するアンダースコアを単一に
+    $str = preg_replace('/_+/', '_', $str);
+    // 先頭末尾のアンダースコアを除去
+    $str = trim($str, '_');
+    return $str;
+}
+
+/**
+ * エラーメッセージをセッションに設定
+ * @param string $message
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * 成功メッセージをセッションに設定
+ * @param string $message
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * エラーメッセージを取得して削除
+ * @return string|null
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 成功メッセージを取得して削除
+ * @return string|null
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * Docker環境の健全性チェック
+ * @return array
+ */
+function checkDockerEnvironment() {
+    $checks = [
+        'database_connection' =&gt; false,
+        'upload_directory' =&gt; false,
+        'required_extensions' =&gt; false
+    ];
+    
+    // データベース接続チェック
+    try {
+        $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+        $database-&gt;connect();
+        $checks['database_connection'] = true;
+    } catch (Exception $e) {
+        // 接続失敗
+    }
+    
+    // アップロードディレクトリチェック
+    if (is_dir(UPLOAD_DIR) &amp;&amp; is_writable(UPLOAD_DIR)) {
+        $checks['upload_directory'] = true;
+    }
+    
+    // 必要な拡張機能チェック
+    if (extension_loaded('pdo') &amp;&amp; extension_loaded('pdo_mysql')) {
+        $checks['required_extensions'] = true;
+    }
+    
+    return $checks;
+}
+?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="config">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">config.php</div></div>
+<div>143行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">アプリケーション設定ファイル（サンプル）。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * アプリケーション設定ファイル（サンプル）
+ * 
+ * このファイルをコピーして config.php を作成し、
+ * 実際の環境に合わせて設定を変更してください。
+ */
+
+// データベース設定（環境変数対応）
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'device_management');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_CHARSET', 'utf8mb4');
+
+// アップロード設定
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// エラーレポート設定（本番環境では無効にする）
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// エラーログ設定
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/php_error.log');
+
+// タイムゾーン設定
+date_default_timezone_set('Asia/Tokyo');
+
+// セッション設定
+session_start();
+
+// クラスファイルの自動読み込み
+spl_autoload_register(function ($class_name) {
+    $file = __DIR__ . '/classes/' . $class_name . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+/**
+ * テーブル名のサニタイズ関数
+ */
+function sanitizeTableName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * HTML出力用のエスケープ関数
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * エラーメッセージをセッションに保存
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * エラーメッセージを取得して削除
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 成功メッセージをセッションに保存
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * 成功メッセージを取得して削除
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * CSVヘッダーのサニタイズ（特殊文字を削除）
+ */
+function sanitizeColumnName($name) {
+    // BOM、特殊文字、空白を削除してアンダースコアに変換
+    $name = str_replace("\xEF\xBB\xBF", '', $name); // BOM削除
+    $name = trim($name);
+    $name = preg_replace('/[^\x20-\x7E]/', '', $name); // 制御文字を削除
+    $name = preg_replace('/[^a-zA-Z0-9_\x80-\xFF]/', '_', $name); // 英数字、アンダースコア、マルチバイト文字以外を_に
+    return $name;
+}
+
+/**
+ * 拡張カラムのバリデーション
+ */
+function validateExtendedColumn($columnName) {
+    // 予約語チェック
+    $reservedWords = [
+        'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER',
+        'TABLE', 'DATABASE', 'INDEX', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES',
+        'WHERE', 'FROM', 'JOIN', 'UNION', 'GROUP', 'ORDER', 'HAVING', 'LIMIT'
+    ];
+    
+    if (in_array(strtoupper($columnName), $reservedWords)) {
+        return false;
+    }
+    
+    // 既存の固定カラム名チェック
+    $fixedColumns = [
+        'primary_key', 'service_name', 'device_type', 'device_name', 
+        'device_ip', 'username', 'password', 'created_at', 'updated_at'
+    ];
+    
+    if (in_array($columnName, $fixedColumns)) {
+        return false;
+    }
+    
+    // 長さチェック（最大64文字）
+    if (strlen($columnName) &gt; 64) {
+        return false;
+    }
+    
+    // 先頭が数字でないことを確認
+    if (preg_match('/^\d/', $columnName)) {
+        return false;
+    }
+    
+    return true;
+}
+?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="config_render">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">config.render.php</div></div>
+<div>173行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">Render本番環境用設定ファイル。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * アプリケーション設定ファイル（Render本番環境用）
+ */
+
+// データベース設定（環境変数から取得）
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_CHARSET', 'utf8mb4');
+
+// アップロード設定
+define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
+define('UPLOAD_ALLOWED_TYPES', ['text/csv', 'application/csv', 'text/plain']);
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
+// エラーレポート設定（デバッグ用 - 問題解決後は無効化）
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// エラーログ設定
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/php_error.log');
+
+// タイムゾーン設定
+date_default_timezone_set('Asia/Tokyo');
+
+// セッション設定
+session_start();
+
+// クラスファイルの自動読み込み
+spl_autoload_register(function ($class_name) {
+    $file = __DIR__ . '/classes/' . $class_name . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+/**
+ * テーブル名のサニタイズ関数
+ */
+function sanitizeTableName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * HTMLエスケープ関数
+ * @param string $str
+ * @return string
+ */
+function h($str) {
+    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * CSRFトークン生成
+ * @return string
+ */
+function generateCsrfToken() {
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * CSRFトークン検証
+ * @param string $token
+ * @return bool
+ */
+function validateCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) &amp;&amp; hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * ファイル名をサニタイズ
+ * @param string $filename
+ * @return string
+ */
+function sanitizeFilename($filename) {
+    // 危険な文字を除去
+    $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $filename);
+    // 連続するドットやアンダースコアを単一に
+    $filename = preg_replace('/[_\.]{2,}/', '_', $filename);
+    return $filename;
+}
+
+/**
+ * CSVヘッダーからカラム定義を生成
+ */
+function generateColumnsFromHeader($header) {
+    $columns = [];
+    foreach ($header as $columnName) {
+        $sanitized = preg_replace('/[^a-zA-Z0-9_]/', '_', $columnName);
+        $columns[] = "`{$sanitized}` TEXT";
+    }
+    return implode(', ', $columns);
+}
+
+/**
+ * CSVカラム名をサニタイズ
+ */
+function sanitizeColumnName($name) {
+    return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+}
+
+/**
+ * 安全なJSON出力
+ */
+function jsonResponse($data, $statusCode = 200) {
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+/**
+ * エラーレスポンス
+ */
+function errorResponse($message, $statusCode = 400) {
+    jsonResponse(['success' =&gt; false, 'message' =&gt; $message], $statusCode);
+}
+
+/**
+ * 成功レスポンス
+ */
+function successResponse($data, $message = 'Success') {
+    jsonResponse(['success' =&gt; true, 'message' =&gt; $message, 'data' =&gt; $data]);
+}
+
+/**
+ * エラーメッセージをセッションに設定
+ * @param string $message
+ */
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
+/**
+ * 成功メッセージをセッションに設定
+ * @param string $message
+ */
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+/**
+ * エラーメッセージを取得して削除
+ * @return string|null
+ */
+function getErrorMessage() {
+    if (isset($_SESSION['error_message'])) {
+        $message = $_SESSION['error_message'];
+        unset($_SESSION['error_message']);
+        return $message;
+    }
+    return null;
+}
+
+/**
+ * 成功メッセージを取得して削除
+ * @return string|null
+ */
+function getSuccessMessage() {
+    if (isset($_SESSION['success_message'])) {
+        $message = $_SESSION['success_message'];
+        unset($_SESSION['success_message']);
+        return $message;
+    }
+    return null;
+}
+</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="debug">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">debug.php</div></div>
+<div>92行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">デバッグ用ページ。環境変数とDB接続を確認。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * Render デバッグページ
+ * 環境変数とデータベース接続を確認
+ */
+
+// エラー表示を有効化
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+echo "&lt;h1&gt;Render デバッグ情報&lt;/h1&gt;";
+
+// 環境変数の確認
+echo "&lt;h2&gt;環境変数&lt;/h2&gt;";
+echo "&lt;pre&gt;";
+echo "DB_HOST: " . (getenv('DB_HOST') ?: 'NOT SET') . "\n";
+echo "DB_NAME: " . (getenv('DB_NAME') ?: 'NOT SET') . "\n";
+echo "DB_USER: " . (getenv('DB_USER') ?: 'NOT SET') . "\n";
+echo "DB_PASS: " . (getenv('DB_PASS') ? '***SET***' : 'NOT SET') . "\n";
+echo "&lt;/pre&gt;";
+
+// config.phpの存在確認
+echo "&lt;h2&gt;ファイル確認&lt;/h2&gt;";
+echo "&lt;pre&gt;";
+echo "config.php exists: " . (file_exists('config.php') ? 'YES' : 'NO') . "\n";
+echo "config.render.php exists: " . (file_exists('config.render.php') ? 'YES' : 'NO') . "\n";
+echo "&lt;/pre&gt;";
+
+// PHP拡張機能の確認
+echo "&lt;h2&gt;PHP拡張機能&lt;/h2&gt;";
+echo "&lt;pre&gt;";
+echo "PDO: " . (extension_loaded('pdo') ? 'YES' : 'NO') . "\n";
+echo "PDO_MySQL: " . (extension_loaded('pdo_mysql') ? 'YES' : 'NO') . "\n";
+echo "MySQLi: " . (extension_loaded('mysqli') ? 'YES' : 'NO') . "\n";
+echo "&lt;/pre&gt;";
+
+// データベース接続テスト
+echo "&lt;h2&gt;データベース接続テスト&lt;/h2&gt;";
+echo "&lt;pre&gt;";
+
+if (file_exists('config.php')) {
+    require_once 'config.php';
+    
+    try {
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+            PDO::ATTR_ERRMODE =&gt; PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES =&gt; false
+        ]);
+        echo "✅ データベース接続成功!\n";
+        
+        // テーブル一覧を取得
+        $stmt = $pdo-&gt;query("SHOW TABLES");
+        $tables = $stmt-&gt;fetchAll(PDO::FETCH_COLUMN);
+        echo "\nテーブル数: " . count($tables) . "\n";
+        if (count($tables) &gt; 0) {
+            echo "テーブル一覧:\n";
+            foreach ($tables as $table) {
+                echo "  - $table\n";
+            }
+        } else {
+            echo "⚠️ テーブルが存在しません。データベース初期化が必要です。\n";
+        }
+        
+    } catch (PDOException $e) {
+        echo "❌ データベース接続エラー:\n";
+        echo $e-&gt;getMessage() . "\n";
+    }
+} else {
+    echo "❌ config.php が見つかりません\n";
+}
+
+echo "&lt;/pre&gt;";
+
+// ディレクトリの権限確認
+echo "&lt;h2&gt;ディレクトリ権限&lt;/h2&gt;";
+echo "&lt;pre&gt;";
+$dirs = ['uploads', 'logs', 'classes', 'includes'];
+foreach ($dirs as $dir) {
+    if (file_exists($dir)) {
+        echo "$dir: " . (is_writable($dir) ? '✅ 書き込み可' : '❌ 書き込み不可') . "\n";
+    } else {
+        echo "$dir: ❌ 存在しません\n";
+    }
+}
+echo "&lt;/pre&gt;";
+
+echo "&lt;hr&gt;";
+echo "&lt;p&gt;&lt;a href='/'&gt;トップページに戻る&lt;/a&gt;&lt;/p&gt;";
+?&gt;
+</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="download">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">download.php</div></div>
+<div>537行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">CSVダウンロード機能。データをCSV形式でエクスポート。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+require_once 'config.php';
+
+$pageTitle = 'CSVダウンロード - 装置情報管理システム';
+
+try {
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $deviceManager = new DeviceManager($database);
+    
+    // サービス名とデバイス種別を取得
+    $services = $deviceManager-&gt;getServiceNamesFromRelation();
+    
+    $selectedService = $_GET['service_name'] ?? $_POST['service_name'] ?? '';
+    $selectedDeviceType = $_GET['device_type'] ?? $_POST['device_type'] ?? '';
+    
+    // 選択されたサービスに対応するデバイス種別を取得
+    $deviceTypes = [];
+    if (!empty($selectedService)) {
+        $deviceTypes = $deviceManager-&gt;getDeviceTypesFromRelation($selectedService);
+    }
+    
+    // プレビューデータ
+    $previewData = [];
+    $tableName = '';
+    $totalCount = 0;
+    $previewColumns = [];
+    
+    if (!empty($selectedService) &amp;&amp; !empty($selectedDeviceType)) {
+        // 動的テーブル名を生成
+        $tableName = sanitizeTableName($selectedService . '_' . $selectedDeviceType);
+        
+        if ($deviceManager-&gt;dynamicTableExists($tableName)) {
+            // 動的テーブルのカラムを取得（primary_key, created_at, updated_at を除く）
+            $dynamicColumnsResult = $database-&gt;getTableColumns($tableName);
+            $dynamicColumns = array_column($dynamicColumnsResult, 'COLUMN_NAME');
+            $excludeColumns = ['primary_key', 'created_at', 'updated_at'];
+            $extendedColumns = array_diff($dynamicColumns, $excludeColumns);
+            
+            // プレビュー用のカラムヘッダーを作成
+            $previewColumns = [
+                'サービス名', '装置種別', '装置名称', '装置IP', 'ユーザー名', 'パスワード'
+            ];
+            $previewColumns = array_merge($previewColumns, $extendedColumns);
+            
+            // JOINクエリでデータを取得（最初の10件）
+            $dynamicColumnList = [];
+            foreach ($extendedColumns as $col) {
+                $dynamicColumnList[] = "dt.`{$col}`";
+            }
+            $dynamicColumnStr = !empty($dynamicColumnList) ? ', ' . implode(', ', $dynamicColumnList) : '';
+            
+            $sql = "
+                SELECT 
+                    di.service_name as 'サービス名',
+                    di.device_type as '装置種別',
+                    di.device_name as '装置名称',
+                    di.device_ip as '装置IP',
+                    di.username as 'ユーザー名',
+                    di.password as 'パスワード'
+                    {$dynamicColumnStr}
+                FROM device_info di
+                LEFT JOIN `{$tableName}` dt ON di.primary_key = dt.primary_key
+                WHERE di.service_name = ? AND di.device_type = ?
+                ORDER BY di.created_at DESC
+                LIMIT 10
+            ";
+            
+            $stmt = $database-&gt;execute($sql, [$selectedService, $selectedDeviceType]);
+            $previewData = $stmt-&gt;fetchAll();
+            
+            // 総件数を取得
+            $countSql = "
+                SELECT COUNT(*) as total 
+                FROM device_info di
+                LEFT JOIN `{$tableName}` dt ON di.primary_key = dt.primary_key
+                WHERE di.service_name = ? AND di.device_type = ?
+            ";
+            $countStmt = $database-&gt;execute($countSql, [$selectedService, $selectedDeviceType]);
+            $totalCount = $countStmt-&gt;fetchColumn();
+        }
+    }
+    
+    // CSVダウンロード処理
+    if ($_POST['action'] ?? '' === 'download_csv') {
+        $service = $_POST['service_name'] ?? '';
+        $deviceType = $_POST['device_type'] ?? '';
+        
+        if (!empty($service) &amp;&amp; !empty($deviceType)) {
+            $tableName = sanitizeTableName($service . '_' . $deviceType);
+            
+            if ($deviceManager-&gt;dynamicTableExists($tableName)) {
+                // 動的テーブルのカラムを取得（primary_key, created_at, updated_at を除く）
+                $dynamicColumnsResult = $database-&gt;getTableColumns($tableName);
+                $dynamicColumns = array_column($dynamicColumnsResult, 'COLUMN_NAME');
+                $excludeColumns = ['primary_key', 'created_at', 'updated_at'];
+                $extendedColumns = array_diff($dynamicColumns, $excludeColumns);
+                
+                // JOINクエリでデータを取得
+                $dynamicColumnList = [];
+                foreach ($extendedColumns as $col) {
+                    $dynamicColumnList[] = "dt.`{$col}`";
+                }
+                $dynamicColumnStr = !empty($dynamicColumnList) ? ', ' . implode(', ', $dynamicColumnList) : '';
+                
+                $sql = "
+                    SELECT 
+                        di.service_name as 'サービス名',
+                        di.device_type as '装置種別',
+                        di.device_name as '装置名称',
+                        di.device_ip as '装置IP',
+                        di.username as 'ユーザー名',
+                        di.password as 'パスワード'
+                        {$dynamicColumnStr}
+                    FROM device_info di
+                    LEFT JOIN `{$tableName}` dt ON di.primary_key = dt.primary_key
+                    WHERE di.service_name = ? AND di.device_type = ?
+                    ORDER BY di.created_at DESC
+                ";
+                
+                $stmt = $database-&gt;execute($sql, [$service, $deviceType]);
+                $data = $stmt-&gt;fetchAll();
+                
+                if (!empty($data)) {
+                    // 選択されたフィールドを取得
+                    $selectedFields = $_POST['selected_fields'] ?? [];
+                    
+                    // デバッグ: 選択されたフィールドをログ出力
+                    error_log("=== CSV Download Debug ===");
+                    error_log("POST data: " . print_r($_POST, true));
+                    error_log("Selected fields: " . print_r($selectedFields, true));
+                    error_log("Available fields: " . print_r(array_keys($data[0] ?? []), true));
+                    
+                    // CSVファイル名を生成
+                    $filename = $service . '_' . $deviceType . '_' . date('Y-m-d_H-i-s') . '.csv';
+                    
+                    // HTTPヘッダーを設定
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $filename . '"');
+                    header('Cache-Control: no-cache, must-revalidate');
+                    
+                    // BOMを出力（Excelでの文字化け対策）
+                    echo "\xEF\xBB\xBF";
+                    
+                    // CSVデータを出力
+                    $output = fopen('php://output', 'w');
+                    
+                    // ヘッダー行を出力（選択されたフィールドのみ）
+                    if (!empty($selectedFields)) {
+                        fputcsv($output, $selectedFields);
+                        
+                        // データ行を出力（選択されたフィールドのみ）
+                        foreach ($data as $row) {
+                            $filteredRow = [];
+                            foreach ($selectedFields as $field) {
+                                $filteredRow[] = $row[$field] ?? '';
+                            }
+                            fputcsv($output, $filteredRow);
+                        }
+                    } else {
+                        // 選択フィールドがない場合は全フィールド出力
+                        $headers = array_keys($data[0]);
+                        fputcsv($output, $headers);
+                        
+                        foreach ($data as $row) {
+                            fputcsv($output, $row);
+                        }
+                    }
+                    
+                    fclose($output);
+                    exit;
+                } else {
+                    setErrorMessage('ダウンロードするデータがありません。');
+                }
+            } else {
+                setErrorMessage('指定されたテーブルが存在しません。');
+            }
+        } else {
+            setErrorMessage('サービス名と装置種別を選択してください。');
+        }
+    }
+    
+} catch (Exception $e) {
+    setErrorMessage("エラーが発生しました: " . $e-&gt;getMessage());
+    $services = [];
+    $deviceTypes = [];
+}
+
+$errorMessage = getErrorMessage();
+$successMessage = getSuccessMessage();
+
+// 共通ヘッダーを読み込み
+require_once 'includes/header.php';
+?&gt;
+
+    &lt;div class="main-content"&gt;
+        &lt;div class="page-container"&gt;
+            &lt;div class="page-header"&gt;
+                &lt;h1 class="page-title"&gt;
+                    &lt;div class="page-title-icon black-svg"&gt;
+                        &lt;?php include 'svgs/download.svg'; ?&gt;
+                    &lt;/div&gt;
+                    CSVダウンロード
+                &lt;/h1&gt;
+            &lt;/div&gt;
+
+        &lt;?php if ($errorMessage): ?&gt;
+        &lt;div class="alert alert-error"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;エラー:&lt;/strong&gt; &lt;?= h($errorMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;?php if ($successMessage): ?&gt;
+        &lt;div class="alert alert-success"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;成功:&lt;/strong&gt; &lt;?= h($successMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;div class="alert alert-info"&gt;
+            &lt;h4&gt;📋 CSVダウンロード機能について&lt;/h4&gt;
+            &lt;p&gt;
+                サービス名と装置種別を選択すると、該当する装置データをCSV形式でダウンロードできます。
+                ダウンロード前にデータのプレビューを確認できます。
+            &lt;/p&gt;
+        &lt;/div&gt;
+        
+        &lt;!-- 検索・ダウンロードフォーム --&gt;
+        &lt;div class="form-section"&gt;
+            &lt;h3&gt;
+                &lt;div class="nav-icon"&gt;
+                    &lt;?php include 'svgs/search.svg'; ?&gt;
+                &lt;/div&gt;
+                ダウンロード対象の選択   
+            &lt;/h3&gt;
+            
+            &lt;form method="post" id="searchForm"&gt;
+                &lt;div class="form-group"&gt;
+                    &lt;label for="service_name"&gt;サービス名:&lt;/label&gt;
+                    &lt;select name="service_name" id="service_name" class="form-control" onchange="updateDeviceTypes()"&gt;
+                        &lt;option value=""&gt;-- サービス名を選択 --&lt;/option&gt;
+                        &lt;?php foreach ($services as $service): ?&gt;
+                        &lt;option value="&lt;?= h($service) ?&gt;" &lt;?= $service === $selectedService ? 'selected' : '' ?&gt;&gt;
+                            &lt;?= h($service) ?&gt;
+                        &lt;/option&gt;
+                        &lt;?php endforeach; ?&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+                
+                &lt;div class="form-group"&gt;
+                    &lt;label for="device_type"&gt;装置種別:&lt;/label&gt;
+                    &lt;select name="device_type" id="device_type" class="form-control" onchange="updatePreview()"&gt;
+                        &lt;option value=""&gt;-- 装置種別を選択 --&lt;/option&gt;
+                        &lt;?php foreach ($deviceTypes as $deviceType): ?&gt;
+                        &lt;option value="&lt;?= h($deviceType) ?&gt;" &lt;?= $deviceType === $selectedDeviceType ? 'selected' : '' ?&gt;&gt;
+                            &lt;?= h($deviceType) ?&gt;
+                        &lt;/option&gt;
+                        &lt;?php endforeach; ?&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+                
+                &lt;div class="form-group"&gt;
+                    &lt;button type="button" class="btn btn-primary" onclick="updatePreview()"&gt;
+                        👁️ プレビュー表示
+                    &lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+        
+        &lt;!-- データプレビュー --&gt;
+        &lt;?php if (!empty($selectedService) &amp;&amp; !empty($selectedDeviceType)): ?&gt;
+        &lt;div class="preview-section"&gt;
+            &lt;?php if ($deviceManager-&gt;dynamicTableExists($tableName)): ?&gt;
+            &lt;div class="table-info"&gt;
+                &lt;h4&gt;📊 テーブル情報&lt;/h4&gt;
+                &lt;p&gt;
+                    &lt;strong&gt;テーブル名:&lt;/strong&gt; &lt;?= h($tableName) ?&gt;&lt;br&gt;
+                    &lt;strong&gt;総データ数:&lt;/strong&gt; &lt;?= number_format($totalCount) ?&gt;件&lt;br&gt;
+                    &lt;strong&gt;プレビュー:&lt;/strong&gt; 最初の&lt;?= count($previewData) ?&gt;件を表示
+                &lt;/p&gt;
+            &lt;/div&gt;
+            
+            &lt;?php if (!empty($previewData)): ?&gt;
+            &lt;h4&gt;📋 データプレビュー&lt;/h4&gt;
+            &lt;div style="overflow-x: auto;"&gt;
+                &lt;table id="previewTable" class="preview-table transposed"&gt;
+                    &lt;?php
+                    // データを逆転させて表示
+                    if (!empty($previewData)) {
+                        $transposedData = [];
+                        
+                        // 各カラムのデータを集める
+                        foreach ($previewColumns as $colIndex =&gt; $columnName) {
+                            $transposedData[$columnName] = [];
+                            foreach ($previewData as $row) {
+                                $values = array_values($row);
+                                $transposedData[$columnName][] = $values[$colIndex] ?? '';
+                            }
+                        }
+                        
+                        // 逆転表示
+                        echo '&lt;thead&gt;&lt;tr&gt;';
+                        echo '&lt;th class="checkbox-header"&gt;&lt;input type="checkbox" id="select_all" checked onchange="toggleAllCheckboxes(this.checked)"&gt;&lt;/th&gt;';
+                        echo '&lt;th class="row-header"&gt;項目&lt;/th&gt;';
+                        for ($i = 0; $i &lt; count($previewData); $i++) {
+                            echo '&lt;th&gt;データ' . ($i + 1) . '&lt;/th&gt;';
+                        }
+                        echo '&lt;/tr&gt;&lt;/thead&gt;';
+                        
+                        echo '&lt;tbody&gt;';
+                        foreach ($transposedData as $fieldName =&gt; $fieldValues) {
+                            $fieldId = 'field_' . md5($fieldName); // ユニークなID生成
+                            echo '&lt;tr&gt;';
+                            echo '&lt;td class="checkbox-cell"&gt;&lt;input type="checkbox" id="' . $fieldId . '" name="selected_fields[]" value="' . h($fieldName) . '" checked&gt;&lt;/td&gt;';
+                            echo '&lt;th class="row-header"&gt;' . h($fieldName) . '&lt;/th&gt;';
+                            foreach ($fieldValues as $value) {
+                                echo '&lt;td title="' . h($value) . '"&gt;' . h($value) . '&lt;/td&gt;';
+                            }
+                            echo '&lt;/tr&gt;';
+                        }
+                        echo '&lt;/tbody&gt;';
+                    }
+                    ?&gt;
+                &lt;/table&gt;
+            &lt;/div&gt;
+            
+            &lt;!-- ダウンロードボタン --&gt;
+            &lt;div class="download-section"&gt;
+                &lt;h4&gt;📥 CSVダウンロード&lt;/h4&gt;
+                &lt;p id="download-info"&gt;全&lt;?= number_format($totalCount) ?&gt;件のデータをCSVファイルとしてダウンロードします。&lt;/p&gt;
+                
+                &lt;form method="post" id="downloadForm"&gt;
+                    &lt;input type="hidden" name="action" value="download_csv"&gt;
+                    &lt;input type="hidden" name="service_name" value="&lt;?= h($selectedService) ?&gt;"&gt;
+                    &lt;input type="hidden" name="device_type" value="&lt;?= h($selectedDeviceType) ?&gt;"&gt;
+                    
+                    &lt;!-- 選択されたフィールドをここに動的に追加 --&gt;
+                    
+                    &lt;button type="submit" class="btn btn-success"&gt;
+                        💾 CSV ダウンロード
+                    &lt;/button&gt;
+                &lt;/form&gt;
+            &lt;/div&gt;
+            
+            &lt;?php else: ?&gt;
+            &lt;div class="empty-state"&gt;
+                &lt;h3&gt;データがありません&lt;/h3&gt;
+                &lt;p&gt;選択されたサービス・装置種別に対応するデータが見つかりません。&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;?php endif; ?&gt;
+            
+            &lt;?php else: ?&gt;
+            &lt;div class="empty-state"&gt;
+                &lt;h3&gt;テーブルが存在しません&lt;/h3&gt;
+                &lt;p&gt;選択されたサービス・装置種別に対応するテーブルがまだ作成されていません。&lt;br&gt;
+                先にCSVファイルをアップロードしてデータを登録してください。&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;?php endif; ?&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;?php if (empty($selectedService) || empty($selectedDeviceType)): ?&gt;
+        &lt;div class="empty-state"&gt;
+            &lt;h3&gt;📋 使い方&lt;/h3&gt;
+            &lt;ol style="text-align: left; display: inline-block;"&gt;
+                &lt;li&gt;サービス名を選択してください&lt;/li&gt;
+                &lt;li&gt;装置種別を選択してください&lt;/li&gt;
+                &lt;li&gt;「プレビュー表示」ボタンでデータを確認&lt;/li&gt;
+                &lt;li&gt;「CSVダウンロード」ボタンでファイルを取得&lt;/li&gt;
+            &lt;/ol&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // 装置種別の更新
+        async function updateDeviceTypes() {
+            const serviceName = document.getElementById('service_name').value;
+            const deviceTypeSelect = document.getElementById('device_type');
+            
+            // 現在の選択値を保存
+            const currentValue = deviceTypeSelect.value;
+            
+            // 装置種別をリセット
+            deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- 装置種別を選択 --&lt;/option&gt;';
+            
+            if (serviceName) {
+                try {
+                    const response = await fetch(`ajax_api.php?action=get_device_types&amp;service_name=${encodeURIComponent(serviceName)}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        result.data.forEach(deviceType =&gt; {
+                            const option = document.createElement('option');
+                            option.value = deviceType;
+                            option.textContent = deviceType;
+                            // 以前の選択値と一致する場合は選択状態にする
+                            if (deviceType === currentValue) {
+                                option.selected = true;
+                            }
+                            deviceTypeSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('装置種別取得エラー:', error);
+                }
+            }
+        }
+
+        // プレビューの更新
+        function updatePreview() {
+            const serviceName = document.getElementById('service_name').value;
+            const deviceType = document.getElementById('device_type').value;
+            
+            if (serviceName &amp;&amp; deviceType) {
+                const params = new URLSearchParams();
+                params.append('service_name', serviceName);
+                params.append('device_type', deviceType);
+                
+                window.location.href = '?' + params.toString();
+            }
+        }
+        
+        // ページ読み込み時に装置種別を更新（選択状態を保持）
+        document.addEventListener('DOMContentLoaded', async function() {
+            const serviceName = document.getElementById('service_name').value;
+            const deviceTypeSelect = document.getElementById('device_type');
+            const selectedDeviceType = '&lt;?= h($selectedDeviceType) ?&gt;';
+            
+            if (serviceName &amp;&amp; selectedDeviceType) {
+                // プレビュー表示時は選択状態を保持するため、装置種別リストを更新
+                await updateDeviceTypes();
+            } else if (serviceName &amp;&amp; !selectedDeviceType) {
+                // プレビュー前は通常通り更新
+                await updateDeviceTypes();
+            }
+        });
+        
+        // チェックボックス関連機能
+        function toggleAllCheckboxes(checked) {
+            const checkboxes = document.querySelectorAll('input[name="selected_fields[]"]');
+            checkboxes.forEach(cb =&gt; cb.checked = checked);
+            updateDownloadButton();
+        }
+        
+        function updateDownloadButton() {
+            const selectedFields = getSelectedFields();
+            const downloadBtn = document.querySelector('#downloadForm button');
+            if (downloadBtn) {
+                const baseText = '💾 CSV ダウンロード';
+                const countText = selectedFields.length &gt; 0 ? ` (${selectedFields.length}項目)` : ' (項目未選択)';
+                downloadBtn.textContent = baseText + countText;
+            }
+        }
+        
+        function getSelectedFields() {
+            const checkboxes = document.querySelectorAll('input[name="selected_fields[]"]:checked');
+            return Array.from(checkboxes).map(cb =&gt; cb.value);
+        }
+        
+        function updateSelectedFields() {
+            // チェックボックス変更時にダウンロードボタンを更新
+            updateDownloadButton();
+        }
+        
+        // CSVダウンロード時のフィールド選択を考慮
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadForm = document.getElementById('downloadForm');
+            console.log('downloadForm found:', downloadForm);
+            
+            if (downloadForm) {
+                downloadForm.addEventListener('submit', function(e) {
+                    const selectedFields = getSelectedFields();
+                    console.log('Submit event - Selected fields:', selectedFields);
+                    
+                    if (selectedFields.length === 0) {
+                        alert('少なくとも1つの項目を選択してください。');
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    // 既存のhiddenフィールドをクリア
+                    const existingHidden = downloadForm.querySelectorAll('input[type="hidden"][name="selected_fields[]"]');
+                    console.log('Existing hidden fields to remove:', existingHidden.length);
+                    existingHidden.forEach(input =&gt; input.remove());
+                    
+                    // 選択されたフィールドをフォームに追加
+                    selectedFields.forEach(field =&gt; {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'selected_fields[]';
+                        input.value = field;
+                        downloadForm.appendChild(input);
+                        console.log('Added hidden field:', field);
+                    });
+                    
+                    // 最終的なフォームデータを確認
+                    const formData = new FormData(downloadForm);
+                    console.log('Final form data:');
+                    for (let pair of formData.entries()) {
+                        console.log(pair[0] + ': ' + pair[1]);
+                    }
+                });
+            }
+            
+            // チェックボックスにイベントリスナーを追加
+            const checkboxes = document.querySelectorAll('input[name="selected_fields[]"]');
+            checkboxes.forEach(checkbox =&gt; {
+                checkbox.addEventListener('change', updateSelectedFields);
+            });
+            
+            // 「すべて選択/解除」チェックボックスにもイベントリスナー
+            const selectAllCheckbox = document.getElementById('select_all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    toggleAllCheckboxes(this.checked);
+                    updateDownloadButton(); // ボタンも更新
+                });
+            }
+            
+            // 初期表示時にダウンロードボタンを更新
+            updateDownloadButton();
+        });
+    &lt;/script&gt;
+
+        &lt;/div&gt; &lt;!-- page-container --&gt;
+    &lt;/div&gt; &lt;!-- main-content --&gt;
+
+&lt;?php require_once 'includes/footer.php'; ?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="index">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">index.php</div></div>
+<div>246行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">CSVアップロードページ。ドラッグ&ドロップ対応。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+require_once 'config.php';
+
+$pageTitle = '装置情報管理システム - CSVアップロード';
+$errorMessage = getErrorMessage();
+$successMessage = getSuccessMessage();
+
+// 共通ヘッダーを読み込み
+require_once 'includes/header.php';
+?&gt;
+
+    &lt;div class="main-content"&gt;
+        &lt;div class="page-container"&gt;
+            &lt;div class="page-header"&gt;
+                &lt;h1 class="page-title"&gt;
+                    &lt;div class="page-title-icon black-svg"&gt;
+                        &lt;?php include 'svgs/upload.svg'; ?&gt;
+                    &lt;/div&gt;
+                    CSVファイルアップロード
+                &lt;/h1&gt;
+            &lt;/div&gt;
+
+        &lt;?php if ($errorMessage): ?&gt;
+        &lt;div class="alert alert-error"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;エラー:&lt;/strong&gt; &lt;?= h($errorMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;?php if ($successMessage): ?&gt;
+        &lt;div class="alert alert-success"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;成功:&lt;/strong&gt; &lt;?= h($successMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;div class="info-box"&gt;
+            &lt;h3&gt;
+                &lt;svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"&gt;
+                    &lt;path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/&gt;
+                &lt;/svg&gt;
+                CSVファイル形式について
+            &lt;/h3&gt;
+            &lt;p&gt;以下の形式のCSVファイルをアップロードしてください：&lt;/p&gt;
+            &lt;div class="csv-format"&gt;
+サービス名,装置種別,装置名称,装置IP,ユーザー名,パスワード,関連装置名称,関連装置IP,ポート番号
+サービスA,装置種別A,souchimei,198.1.1.1,admin,admin123,kanrensouchi,198.1.1.11,1
+サービスA,装置種別A,souchimei2,198.1.1.2,admin,admin123,kanrensouchi2,198.1.1.12,1
+            &lt;/div&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;strong&gt;必須項目:&lt;/strong&gt; サービス名、装置種別、装置名称、ユーザー名&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;主キー:&lt;/strong&gt; [サービス名]_[装置種別]_[装置名称]_[ユーザー名]&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;7行目以降のカラム:&lt;/strong&gt; 動的テーブルに格納されます&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;文字エンコーディング:&lt;/strong&gt; UTF-8&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;ファイルサイズ制限:&lt;/strong&gt; 最大10MB&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+        
+        &lt;form id="uploadForm" action="upload.php" method="POST" enctype="multipart/form-data"&gt;
+            &lt;input type="hidden" name="csrf_token" value="&lt;?= h(generateCsrfToken()) ?&gt;"&gt;
+            
+            &lt;div class="form-group flex-col"&gt;
+                &lt;label for="csvFile"&gt;CSVファイルを選択:&lt;/label&gt;
+                
+                &lt;!-- ドラッグ&amp;ドロップエリア --&gt;
+                &lt;div class="drag-drop-area" id="dragDropArea"&gt;
+                    &lt;div class="drag-drop-icon"&gt;
+                        &lt;svg viewBox="0 0 24 24" fill="currentColor"&gt;
+                            &lt;path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/&gt;
+                        &lt;/svg&gt;
+                    &lt;/div&gt;
+                    &lt;div class="drag-drop-text"&gt;
+                        CSVファイルをここにドラッグ&amp;ドロップ
+                    &lt;/div&gt;
+                    &lt;div class="drag-drop-subtext"&gt;
+                        または&lt;strong&gt;クリック&lt;/strong&gt;してファイルを選択
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                
+                &lt;!-- 隠されたファイル入力 --&gt;
+                &lt;input type="file" 
+                       id="csvFile" 
+                       name="csv_file" 
+                       accept=".csv,text/csv,application/csv" 
+                       class="file-input-hidden"&gt;
+                
+                &lt;!-- 選択されたファイル情報 --&gt;
+                &lt;div class="selected-file-info" id="selectedFileInfo"&gt;
+                    &lt;div class="file-details"&gt;
+                        &lt;div class="file-icon"&gt;
+                            &lt;svg viewBox="0 0 24 24" fill="currentColor"&gt;
+                                &lt;path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/&gt;
+                            &lt;/svg&gt;
+                        &lt;/div&gt;
+                        &lt;div class="file-info-text"&gt;
+                            &lt;div class="file-name" id="fileName"&gt;&lt;/div&gt;
+                            &lt;div class="file-size" id="fileSize"&gt;&lt;/div&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                
+                &lt;div class="file-info" style="margin-top: 10px;"&gt;
+                    ※ CSVファイル（.csv）のみアップロード可能です（最大10MB）
+                &lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div class="upload-progress" id="uploadProgress"&gt;
+                &lt;div class="progress-bar" id="progressBar"&gt;&lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div class="form-group"&gt;
+                &lt;button type="submit" class="btn" id="uploadBtn"&gt;
+                    CSVファイルをアップロード
+                &lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // ドラッグ&amp;ドロップ機能
+        const dragDropArea = document.getElementById('dragDropArea');
+        const fileInput = document.getElementById('csvFile');
+        const selectedFileInfo = document.getElementById('selectedFileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        let selectedFile = null; // DataTransfer API非対応環境用のファイル保持変数
+        
+        // ドラッグ&amp;ドロップエリアのクリックでファイル選択ダイアログを開く
+        dragDropArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // ドラッグオーバー
+        dragDropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+        
+        // ドラッグリーブ
+        dragDropArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+        });
+        
+        // ドロップ
+        dragDropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length &gt; 0) {
+                const file = files[0];
+                if (validateFile(file)) {
+                    // DataTransferオブジェクトを使ってファイルを設定
+                    // DataTransfer APIのサポート確認（コンストラクタとitemsプロパティの両方）
+                    const hasDataTransferSupport = typeof DataTransfer !== 'undefined' &amp;&amp; 
+                                                   DataTransfer.prototype &amp;&amp; 
+                                                   'items' in DataTransfer.prototype;
+                    
+                    if (hasDataTransferSupport) {
+                        try {
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileInput.files = dataTransfer.files;
+                            selectedFile = null; // DataTransferで設定できた場合はクリア
+                        } catch (error) {
+                            // DataTransfer利用時にエラーが発生した場合の代替
+                            selectedFile = file;
+                        }
+                    } else {
+                        // DataTransfer非対応ブラウザの場合
+                        selectedFile = file;
+                    }
+                    displayFileInfo(file);
+                }
+            }
+        });
+        
+        // ファイル選択（通常の方法）
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = null; // 通常の選択の場合はselectedFileをクリア
+                displayFileInfo(file);
+            }
+        });
+        
+        // ファイル情報を表示
+        function displayFileInfo(file) {
+            const fileSizeBytes = file.size;
+            let fileSizeText;
+            
+            if (fileSizeBytes === 0) {
+                fileSizeText = '0 KB (ファイルが空です)';
+            } else if (fileSizeBytes &lt; 1024) {
+                fileSizeText = fileSizeBytes + ' B';
+            } else if (fileSizeBytes &lt; 1024 * 1024) {
+                fileSizeText = (fileSizeBytes / 1024).toFixed(2) + ' KB';
+            } else {
+                fileSizeText = (fileSizeBytes / 1024 / 1024).toFixed(2) + ' MB';
+            }
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = fileSizeText;
+            
+            selectedFileInfo.classList.add('show');
+            dragDropArea.classList.add('has-file');
+            
+            // ドラッグエリアのテキストを更新
+            const dragDropText = dragDropArea.querySelector('.drag-drop-text');
+            const dragDropSubtext = dragDropArea.querySelector('.drag-drop-subtext');
+            dragDropText.textContent = 'ファイルが選択されました';
+            dragDropSubtext.innerHTML = '&lt;strong&gt;クリック&lt;/strong&gt;して別のファイルを選択';
+        }
+        
+        // ファイル検証
+        function validateFile(file) {
+            // ファイルサイズチェック
+            if (file.size &gt; &lt;?= UPLOAD_MAX_SIZE ?&gt;) {
+                alert('ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。');
+                return false;
+            }
+            
+            // ファイル形式チェック
+            const allowedTypes = ['text/csv', 'application/csv', 'text/plain'];
+            if (!allowedTypes.includes(file.type) &amp;&amp; !file.name.toLowerCase().endsWith('.csv')) {
+                alert('CSVファイルのみアップロード可能です。');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // フォーム送信
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // デフォルトのフォーム送信を防止
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            
+            // ファイルの取得（selectedFileまたはfileInput.files）
+            const getSelectedFile = function() {
+                return selectedFile || (fileInput.files.length &gt; 0 ? fileInput.files[0] : null);
+            };
+            
+            let file = getSelectedFile();
+            
+            if (!file) {
+                alert('CSVファイルを選択してください。');
+                return;
+            }
+            
+            if (!validateFile(file)) {
+                return;
+            }
+            
+            // アップロード開始
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'アップロード中...';
+            uploadProgress.style.display = 'block';
+            
+            // FormDataを作成
+            const formData = new FormData();
+            formData.append('csv_file', file);
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+            
+            // XMLHttpRequestでアップロード
+            const xhr = new XMLHttpRequest();
+            
+            // プログレスイベント
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                }
+            });
+            
+            // 完了イベント
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    progressBar.style.width = '100%';
+                    // XHRはサーバーのリダイレクトを自動的に追従するが、
+                    // ブラウザのロケーションは変更されないため、手動でリダイレクトが必要
+                    setTimeout(function() {
+                        window.location.href = 'index.php';
+                    }, 500);
+                } else {
+                    alert('アップロードエラーが発生しました。\n\nステータス: ' + xhr.status);
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'CSVファイルをアップロード';
+                    uploadProgress.style.display = 'none';
+                }
+            });
+            
+            // エラーイベント
+            xhr.addEventListener('error', function() {
+                alert('ネットワークエラーが発生しました。');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'CSVファイルをアップロード';
+                uploadProgress.style.display = 'none';
+            });
+            
+            // 送信
+            xhr.open('POST', 'upload.php', true);
+            xhr.send(formData);
+        });
+    &lt;/script&gt;
+
+        &lt;/div&gt; &lt;!-- page-container --&gt;
+    &lt;/div&gt; &lt;!-- main-content --&gt;
+
+&lt;?php require_once 'includes/footer.php'; ?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="search">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">search.php</div></div>
+<div>456行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">装置情報検索ページ。Ajax通信でリアルタイム検索。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+require_once 'config.php';
+
+$pageTitle = '装置情報検索 - 装置情報管理システム';
+
+// 初期データ取得用
+try {
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $deviceManager = new DeviceManager($database);
+    
+    // 統計情報を取得
+    $statistics = $deviceManager-&gt;getDeviceStatistics();
+    
+} catch (Exception $e) {
+    $statistics = null;
+    setErrorMessage("データベースエラー: " . $e-&gt;getMessage());
+}
+
+$errorMessage = getErrorMessage();
+$successMessage = getSuccessMessage();
+
+// 共通ヘッダーを読み込み
+require_once 'includes/header.php';
+?&gt;
+
+    &lt;div class="main-content"&gt;
+        &lt;div class="page-container"&gt;
+            &lt;div class="page-header"&gt;
+                &lt;h1 class="page-title"&gt;
+                    &lt;div class="page-title-icon black-svg"&gt;
+                        &lt;?php include 'svgs/search.svg'; ?&gt;
+                    &lt;/div&gt;
+                    装置情報検索
+                &lt;/h1&gt;
+            &lt;/div&gt;
+
+        &lt;?php if ($errorMessage): ?&gt;
+        &lt;div class="alert alert-error"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;エラー:&lt;/strong&gt; &lt;?= h($errorMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;?php if ($successMessage): ?&gt;
+        &lt;div class="alert alert-success"&gt;
+            &lt;svg class="alert-icon" viewBox="0 0 24 24" fill="currentColor"&gt;
+                &lt;path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;成功:&lt;/strong&gt; &lt;?= h($successMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+                
+        &lt;!-- 検索フォーム --&gt;   
+        &lt;form id="searchForm" class="search-form"&gt;
+            &lt;h3 class="form-section-title"&gt;                    
+                検索条件
+            &lt;/h3&gt;
+            
+            &lt;div class="form-row"&gt;
+                &lt;div class="form-group"&gt;
+                    &lt;label for="serviceName"&gt;サービス名:&lt;/label&gt;
+                    &lt;select id="serviceName" name="service_name"&gt;
+                        &lt;option value=""&gt;-- すべてのサービス --&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+                
+                &lt;div class="form-group"&gt;
+                    &lt;label for="deviceType"&gt;装置種別:&lt;/label&gt;
+                    &lt;select id="deviceType" name="device_type" disabled&gt;
+                        &lt;option value=""&gt;-- まずサービス名を選択してください --&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+                
+                &lt;div class="form-group"&gt;
+                    &lt;label for="deviceName"&gt;装置名:&lt;/label&gt;
+                    &lt;input type="text" id="deviceName" name="device_name" placeholder="装置名で検索（部分一致）"&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div class="search-buttons"&gt;
+                &lt;button type="button" id="clearBtn" class="btn btn-secondary"&gt;
+                    &lt;div class="btn-icon"&gt;
+                        &lt;?php include 'svgs/rotate.svg'; ?&gt;
+                    &lt;/div&gt; クリア
+                &lt;/button&gt;
+                &lt;button type="submit" id="searchBtn" class="btn btn-primary"&gt;                    &lt;div class="btn-icon"&gt;
+                        &lt;?php include 'svgs/search.svg'; ?&gt;
+                    &lt;/div&gt; 検索&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/form&gt;
+        
+        &lt;!-- 検索結果 --&gt;
+        &lt;div id="searchResults" class="search-results"&gt;
+            &lt;div class="results-header"&gt;
+                &lt;div class="results-info" id="resultsInfo"&gt;検索結果: 0件&lt;/div&gt;
+                &lt;div class="export-buttons"&gt;
+                    &lt;button class="btn-export" onclick="exportCSV()"&gt;📄 CSV出力&lt;/button&gt;
+                    &lt;button class="btn-export" onclick="exportExcel()"&gt;📊 Excel出力&lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div id="loadingIndicator" class="loading" style="display: none;"&gt;
+                &lt;div class="spinner"&gt;&lt;/div&gt;
+                &lt;div&gt;検索中...&lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div id="resultsContainer"&gt;
+                &lt;table class="results-table" id="resultsTable"&gt;
+                    &lt;thead&gt;
+                        &lt;tr&gt;
+                            &lt;th&gt;サービス名&lt;/th&gt;
+                            &lt;th&gt;装置種別&lt;/th&gt;
+                            &lt;th&gt;装置名称&lt;/th&gt;
+                            &lt;th&gt;装置IP&lt;/th&gt;
+                            &lt;th&gt;ユーザー名&lt;/th&gt;
+                            &lt;th&gt;パスワード&lt;/th&gt;
+                            &lt;th&gt;登録日時&lt;/th&gt;
+                            &lt;th&gt;更新日時&lt;/th&gt;
+                        &lt;/tr&gt;
+                    &lt;/thead&gt;
+                    &lt;tbody id="resultsTableBody"&gt;
+                    &lt;/tbody&gt;
+                &lt;/table&gt;
+            &lt;/div&gt;
+            
+            &lt;div class="pagination" id="paginationContainer"&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // グローバル変数
+        let currentPage = 1;
+        let currentSearchParams = {};
+        let allResults = [];
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadServices();
+            setupEventListeners();
+        });
+
+        // イベントリスナーの設定
+        function setupEventListeners() {
+            // サービス名変更時
+            document.getElementById('serviceName').addEventListener('change', function() {
+                loadDeviceTypes(this.value);
+            });
+
+            // 検索フォーム送信
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                performSearch(1);
+            });
+
+            // クリアボタン
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                clearForm();
+            });
+
+            // エンターキーでの検索
+            document.getElementById('deviceName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch(1);
+                }
+            });
+        }
+
+        // サービス名一覧を読み込み
+        async function loadServices() {
+            try {
+                const response = await fetch('ajax_api.php?action=get_services');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const select = document.getElementById('serviceName');
+                    select.innerHTML = '&lt;option value=""&gt;-- すべてのサービス --&lt;/option&gt;';
+                    
+                    result.data.forEach(service =&gt; {
+                        const option = document.createElement('option');
+                        option.value = service;
+                        option.textContent = service;
+                        select.appendChild(option);
+                    });
+                } else {
+                    showAlert('error', 'サービス名の読み込みに失敗しました: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                showAlert('error', 'サービス名の読み込み中にエラーが発生しました');
+            }
+        }
+
+        // 装置種別一覧を読み込み（サービス名でフィルタ）
+        async function loadDeviceTypes(serviceName) {
+            const deviceTypeSelect = document.getElementById('deviceType');
+            
+            if (!serviceName) {
+                deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- まずサービス名を選択してください --&lt;/option&gt;';
+                deviceTypeSelect.disabled = true;
+                return;
+            }
+
+            try {
+                deviceTypeSelect.disabled = true;
+                deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- 読み込み中... --&lt;/option&gt;';
+                
+                const response = await fetch(`ajax_api.php?action=get_device_types&amp;service_name=${encodeURIComponent(serviceName)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- すべての装置種別 --&lt;/option&gt;';
+                    
+                    result.data.forEach(deviceType =&gt; {
+                        const option = document.createElement('option');
+                        option.value = deviceType;
+                        option.textContent = deviceType;
+                        deviceTypeSelect.appendChild(option);
+                    });
+                    
+                    deviceTypeSelect.disabled = false;
+                } else {
+                    showAlert('error', '装置種別の読み込みに失敗しました: ' + result.message);
+                    deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- エラー --&lt;/option&gt;';
+                }
+            } catch (error) {
+                console.error('Error loading device types:', error);
+                showAlert('error', '装置種別の読み込み中にエラーが発生しました');
+                deviceTypeSelect.innerHTML = '&lt;option value=""&gt;-- エラー --&lt;/option&gt;';
+            }
+        }
+
+        // 検索実行
+        async function performSearch(page = 1) {
+            const formData = new FormData(document.getElementById('searchForm'));
+            const params = new URLSearchParams(formData);
+            params.append('action', 'search_devices');
+            params.append('page', page);
+            
+            // 現在の検索パラメータを保存
+            currentSearchParams = Object.fromEntries(formData);
+            currentPage = page;
+
+            try {
+                showLoading(true);
+                
+                const response = await fetch('ajax_api.php', {
+                    method: 'POST',
+                    body: params
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayResults(result.data);
+                    allResults = result.data.devices; // CSV出力用
+                } else {
+                    showAlert('error', '検索に失敗しました: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showAlert('error', '検索中にエラーが発生しました');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 検索結果表示
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('searchResults');
+            const tableBody = document.getElementById('resultsTableBody');
+            const resultsInfo = document.getElementById('resultsInfo');
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            // 結果情報の更新
+            resultsInfo.textContent = `検索結果: ${data.pagination.total_count}件（${data.pagination.current_page}/${data.pagination.total_pages}ページ）`;
+            
+            // テーブル内容をクリア
+            tableBody.innerHTML = '';
+            
+            if (data.devices.length === 0) {
+                tableBody.innerHTML = '&lt;tr&gt;&lt;td colspan="8" style="text-align: center; color: #6c757d;"&gt;検索条件に一致するデータが見つかりませんでした&lt;/td&gt;&lt;/tr&gt;';
+            } else {
+                data.devices.forEach(device =&gt; {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        &lt;td&gt;${escapeHtml(device.service_name)}&lt;/td&gt;
+                        &lt;td&gt;${escapeHtml(device.device_type)}&lt;/td&gt;
+                        &lt;td class="text-truncate" title="${escapeHtml(device.device_name)}"&gt;${escapeHtml(device.device_name)}&lt;/td&gt;
+                        &lt;td&gt;${escapeHtml(device.device_ip || '-')}&lt;/td&gt;
+                        &lt;td&gt;${escapeHtml(device.username)}&lt;/td&gt;
+                        &lt;td class="text-truncate" title="${escapeHtml(device.password || '-')}"&gt;${device.password ? '●●●●●●' : '-'}&lt;/td&gt;
+                        &lt;td&gt;${formatDateTime(device.created_at)}&lt;/td&gt;
+                        &lt;td&gt;${formatDateTime(device.updated_at)}&lt;/td&gt;
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // ページネーション表示
+            displayPagination(data.pagination);
+            
+            // 結果エリアを表示
+            resultsDiv.style.display = 'block';
+        }
+
+        // ページネーション表示
+        function displayPagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+            container.innerHTML = '';
+            
+            if (pagination.total_pages &lt;= 1) return;
+            
+            // 前へボタン
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '« 前へ';
+            prevBtn.disabled = pagination.current_page === 1;
+            prevBtn.onclick = () =&gt; performSearch(pagination.current_page - 1);
+            container.appendChild(prevBtn);
+            
+            // ページ番号ボタン
+            const start = Math.max(1, pagination.current_page - 2);
+            const end = Math.min(pagination.total_pages, pagination.current_page + 2);
+            
+            for (let i = start; i &lt;= end; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.onclick = () =&gt; performSearch(i);
+                
+                if (i === pagination.current_page) {
+                    pageBtn.className = 'current';
+                }
+                
+                container.appendChild(pageBtn);
+            }
+            
+            // 次へボタン
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = '次へ »';
+            nextBtn.disabled = pagination.current_page === pagination.total_pages;
+            nextBtn.onclick = () =&gt; performSearch(pagination.current_page + 1);
+            container.appendChild(nextBtn);
+        }
+
+        // フォームクリア
+        function clearForm() {
+            document.getElementById('searchForm').reset();
+            document.getElementById('deviceType').innerHTML = '&lt;option value=""&gt;-- まずサービス名を選択してください --&lt;/option&gt;';
+            document.getElementById('deviceType').disabled = true;
+            document.getElementById('searchResults').style.display = 'none';
+        }
+
+        // ローディング表示切り替え
+        function showLoading(show) {
+            const loading = document.getElementById('loadingIndicator');
+            const results = document.getElementById('resultsContainer');
+            
+            if (show) {
+                loading.style.display = 'block';
+                results.style.display = 'none';
+            } else {
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            }
+        }
+
+        // アラート表示
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `&lt;strong&gt;${type === 'error' ? 'エラー' : '情報'}:&lt;/strong&gt; ${message}`;
+            
+            const container = document.querySelector('.container');
+            const header = container.querySelector('.header');
+            container.insertBefore(alertDiv, header.nextSibling);
+            
+            // 5秒後に自動削除
+            setTimeout(() =&gt; {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // CSV出力
+        function exportCSV() {
+            if (allResults.length === 0) {
+                showAlert('error', '出力するデータがありません');
+                return;
+            }
+
+            const headers = ['サービス名', '装置種別', '装置名称', '装置IP', 'ユーザー名', 'パスワード', '登録日時', '更新日時'];
+            let csv = headers.join(',') + '\n';
+            
+            allResults.forEach(device =&gt; {
+                const row = [
+                    `"${device.service_name}"`,
+                    `"${device.device_type}"`,
+                    `"${device.device_name}"`,
+                    `"${device.device_ip || ''}"`,
+                    `"${device.username}"`,
+                    `"${device.password || ''}"`,
+                    `"${device.created_at}"`,
+                    `"${device.updated_at}"`
+                ];
+                csv += row.join(',') + '\n';
+            });
+            
+            downloadFile(csv, 'device_search_results.csv', 'text/csv;charset=utf-8;');
+        }
+
+        // Excel出力（簡易版）
+        function exportExcel() {
+            showAlert('info', 'Excel出力機能は開発中です。CSV出力をご利用ください。');
+        }
+
+        // ファイルダウンロード
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob(['\uFEFF' + content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // HTMLエスケープ
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 日時フォーマット
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP');
+        }
+    &lt;/script&gt;
+
+        &lt;/div&gt; &lt;!-- page-container --&gt;
+    &lt;/div&gt; &lt;!-- main-content --&gt;
+
+&lt;?php require_once 'includes/footer.php'; ?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="test_static">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">test-static.php</div></div>
+<div>115行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">静的ファイル読み込みテストページ。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="ja"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;静的ファイルテスト&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .test-item { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;静的ファイル読み込みテスト&lt;/h1&gt;
+    
+    &lt;div class="test-item"&gt;
+        &lt;h2&gt;1. CSS読み込みテスト&lt;/h2&gt;
+        &lt;link rel="stylesheet" href="css/styles.css"&gt;
+        &lt;div id="cssTest"&gt;CSSが読み込まれていません&lt;/div&gt;
+        &lt;script&gt;
+            const styles = window.getComputedStyle(document.body);
+            document.getElementById('cssTest').innerHTML = 
+                styles.backgroundColor ? 
+                '&lt;span class="success"&gt;✅ CSSが読み込まれています&lt;/span&gt;' : 
+                '&lt;span class="error"&gt;❌ CSSが読み込まれていません&lt;/span&gt;';
+        &lt;/script&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="test-item"&gt;
+        &lt;h2&gt;2. SVGファイルテスト&lt;/h2&gt;
+        &lt;p&gt;SVGファイルの読み込み:&lt;/p&gt;
+        &lt;?php
+        $svgPath = __DIR__ . '/svgs/upload.svg';
+        if (file_exists($svgPath)) {
+            echo '&lt;span class="success"&gt;✅ SVGファイルが存在します&lt;/span&gt;&lt;br&gt;';
+            echo '&lt;div style="width:50px;height:50px;"&gt;';
+            include $svgPath;
+            echo '&lt;/div&gt;';
+        } else {
+            echo '&lt;span class="error"&gt;❌ SVGファイルが見つかりません&lt;/span&gt;';
+        }
+        ?&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="test-item"&gt;
+        &lt;h2&gt;3. ファイルパーミッション&lt;/h2&gt;
+        &lt;?php
+        $dirs = ['css', 'svgs', 'uploads', 'logs', 'classes', 'includes'];
+        echo '&lt;ul&gt;';
+        foreach ($dirs as $dir) {
+            $path = __DIR__ . '/' . $dir;
+            if (file_exists($path)) {
+                $perms = substr(sprintf('%o', fileperms($path)), -4);
+                echo "&lt;li&gt;&lt;strong&gt;$dir/&lt;/strong&gt;: 存在 (権限: $perms)&lt;/li&gt;";
+            } else {
+                echo "&lt;li&gt;&lt;strong&gt;$dir/&lt;/strong&gt;: &lt;span class='error'&gt;存在しません&lt;/span&gt;&lt;/li&gt;";
+            }
+        }
+        
+        // CSSファイルの確認
+        $cssFile = __DIR__ . '/css/styles.css';
+        if (file_exists($cssFile)) {
+            $perms = substr(sprintf('%o', fileperms($cssFile)), -4);
+            $readable = is_readable($cssFile) ? '読み取り可能' : '読み取り不可';
+            echo "&lt;li&gt;&lt;strong&gt;css/styles.css&lt;/strong&gt;: 存在 (権限: $perms, $readable)&lt;/li&gt;";
+        } else {
+            echo "&lt;li&gt;&lt;strong&gt;css/styles.css&lt;/strong&gt;: &lt;span class='error'&gt;存在しません&lt;/span&gt;&lt;/li&gt;";
+        }
+        echo '&lt;/ul&gt;';
+        ?&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="test-item"&gt;
+        &lt;h2&gt;4. Apache設定確認&lt;/h2&gt;
+        &lt;?php
+        if (function_exists('apache_get_modules')) {
+            $modules = apache_get_modules();
+            echo '&lt;p&gt;mod_rewrite: ' . (in_array('mod_rewrite', $modules) ? 
+                '&lt;span class="success"&gt;有効&lt;/span&gt;' : 
+                '&lt;span class="error"&gt;無効&lt;/span&gt;') . '&lt;/p&gt;';
+        } else {
+            echo '&lt;p&gt;Apache関数が利用できません&lt;/p&gt;';
+        }
+        ?&gt;
+        &lt;p&gt;.htaccess: &lt;?= file_exists(__DIR__ . '/.htaccess') ? 
+            '&lt;span class="success"&gt;存在します&lt;/span&gt;' : 
+            '&lt;span class="error"&gt;存在しません&lt;/span&gt;' ?&gt;&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="test-item"&gt;
+        &lt;h2&gt;5. データベース接続テスト&lt;/h2&gt;
+        &lt;?php
+        if (file_exists(__DIR__ . '/config.php')) {
+            require_once __DIR__ . '/config.php';
+            try {
+                $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+                $pdo = new PDO($dsn, DB_USER, DB_PASS);
+                echo '&lt;span class="success"&gt;✅ データベース接続成功&lt;/span&gt;';
+                echo '&lt;br&gt;ホスト: ' . DB_HOST;
+            } catch (PDOException $e) {
+                echo '&lt;span class="error"&gt;❌ データベース接続エラー: ' . htmlspecialchars($e-&gt;getMessage()) . '&lt;/span&gt;';
+                echo '&lt;br&gt;ホスト: ' . DB_HOST;
+            }
+        } else {
+            echo '&lt;span class="error"&gt;❌ config.phpが見つかりません&lt;/span&gt;';
+        }
+        ?&gt;
+    &lt;/div&gt;
+    
+    &lt;hr&gt;
+    &lt;p&gt;&lt;a href="/"&gt;トップページに戻る&lt;/a&gt; | &lt;a href="debug.php"&gt;詳細デバッグページ&lt;/a&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="upload">
+<div class="file-header">
+<div><span class="directory-badge">ROOT</span><div class="filename">upload.php</div></div>
+<div>200行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">CSVアップロード処理。ファイル検証とDB登録を実行。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+require_once 'config.php';
+
+// POSTリクエストのみ受け付ける
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    setErrorMessage('不正なリクエストです');
+    header('Location: index.php');
+    exit;
+}
+
+// CSRFトークンの検証
+if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) {
+    setErrorMessage('CSRFトークンが無効です');
+    header('Location: index.php');
+    exit;
+}
+
+try {
+    // ファイルアップロードの検証
+    if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE =&gt; 'ファイルサイズが大きすぎます',
+            UPLOAD_ERR_FORM_SIZE =&gt; 'ファイルサイズが大きすぎます',
+            UPLOAD_ERR_PARTIAL =&gt; 'ファイルのアップロードが完了していません',
+            UPLOAD_ERR_NO_FILE =&gt; 'ファイルが選択されていません',
+            UPLOAD_ERR_NO_TMP_DIR =&gt; 'テンポラリディレクトリが見つかりません',
+            UPLOAD_ERR_CANT_WRITE =&gt; 'ファイルの書き込みに失敗しました',
+            UPLOAD_ERR_EXTENSION =&gt; 'ファイルのアップロードが停止されました'
+        ];
+        
+        $error_code = $_FILES['csv_file']['error'];
+        $error_message = isset($error_messages[$error_code]) ? 
+                        $error_messages[$error_code] : 
+                        '不明なアップロードエラーが発生しました';
+        
+        throw new Exception($error_message);
+    }
+    
+    $uploaded_file = $_FILES['csv_file'];
+    
+    // ファイルサイズの検証
+    if ($uploaded_file['size'] &gt; UPLOAD_MAX_SIZE) {
+        throw new Exception('ファイルサイズが制限を超えています（最大: ' . (UPLOAD_MAX_SIZE / 1024 / 1024) . 'MB）');
+    }
+    
+    // ファイル形式の検証
+    $file_info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($file_info, $uploaded_file['tmp_name']);
+    finfo_close($file_info);
+    
+    $file_extension = strtolower(pathinfo($uploaded_file['name'], PATHINFO_EXTENSION));
+    
+    if (!in_array($mime_type, UPLOAD_ALLOWED_TYPES) &amp;&amp; $file_extension !== 'csv') {
+        throw new Exception('CSVファイル以外はアップロードできません');
+    }
+    
+    // アップロードディレクトリの作成
+    if (!is_dir(UPLOAD_DIR)) {
+        if (!mkdir(UPLOAD_DIR, 0755, true)) {
+            throw new Exception('アップロードディレクトリの作成に失敗しました');
+        }
+    }
+    
+    // ファイル名のサニタイズ
+    $original_filename = $uploaded_file['name'];
+    $sanitized_filename = date('Y-m-d_H-i-s') . '_' . sanitizeFilename($original_filename);
+    $upload_path = UPLOAD_DIR . $sanitized_filename;
+    
+    // ファイルを移動
+    if (!move_uploaded_file($uploaded_file['tmp_name'], $upload_path)) {
+        throw new Exception('ファイルの保存に失敗しました');
+    }
+    
+    // CSVファイルの処理
+    $csv_processor = new CsvProcessor();
+    if (!$csv_processor-&gt;loadFile($upload_path)) {
+        $errors = $csv_processor-&gt;getErrors();
+        throw new Exception('CSVファイルの読み込みに失敗しました: ' . implode(', ', $errors));
+    }
+    
+    // CSVデータの検証
+    if (!$csv_processor-&gt;validate()) {
+        $errors = $csv_processor-&gt;getErrors();
+        throw new Exception('CSVデータの検証に失敗しました: ' . implode(', ', $errors));
+    }
+    
+    // データベース接続
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
+    $device_manager = new DeviceManager($database);
+    
+    // CSVデータをデータベースに登録
+    $results = $device_manager-&gt;processCsvData($csv_processor);
+    
+    // 処理結果の確認
+    if (!$results['success']) {
+        throw new Exception('データベースへの登録に失敗しました: ' . implode(', ', $results['errors']));
+    }
+    
+    // CSVデータからサービス-装置種別のリレーションを自動登録（別トランザクション）
+    $relationCount = 0;
+    try {
+        $csvData = $csv_processor-&gt;getData();
+        $processedRelations = [];
+        
+        error_log("Starting relation registration for " . count($csvData) . " records");
+        
+        foreach ($csvData as $row) {
+            $serviceName = $row['サービス名'];
+            $deviceType = $row['装置種別'];
+            
+            // 重複チェック（同一処理内での重複を避ける）
+            $relationKey = $serviceName . '|' . $deviceType;
+            if (!in_array($relationKey, $processedRelations)) {
+                try {
+                    $description = "CSV自動登録: " . date('Y-m-d H:i:s') . " - " . basename($original_filename);
+                    error_log("Registering relation: {$serviceName} -&gt; {$deviceType}");
+                    $device_manager-&gt;registerServiceDeviceTypeRelation($serviceName, $deviceType, $description);
+                    $relationCount++;
+                    $processedRelations[] = $relationKey;
+                    error_log("Successfully registered relation: {$relationKey}");
+                } catch (Exception $e) {
+                    // リレーション登録のエラーは警告として扱う（処理は継続）
+                    error_log("Relation registration warning for {$relationKey}: " . $e-&gt;getMessage());
+                }
+            } else {
+                error_log("Skipping duplicate relation: {$relationKey}");
+            }
+        }
+        
+        error_log("Completed relation registration. Total: {$relationCount} relations");
+    } catch (Exception $e) {
+        // リレーション登録エラーは警告として扱う
+        error_log("Relation registration process error: " . $e-&gt;getMessage());
+        $relationCount = 0;
+    }
+    
+    // 統計情報の取得
+    $statistics = $csv_processor-&gt;getStatistics();
+    
+    // 成功メッセージの設定
+    $success_message = "CSVファイルの処理が完了しました。\n";
+    $success_message .= "- 処理レコード数: " . $results['device_info_count'] . "件\n";
+    $success_message .= "- 作成された動的テーブル: " . count($results['dynamic_tables_created']) . "個\n";
+    
+    if (!empty($results['dynamic_tables_created'])) {
+        $success_message .= "- テーブル名: " . implode(', ', $results['dynamic_tables_created']) . "\n";
+    }
+    
+    $success_message .= "- サービス数: " . count($statistics['services']) . "種類\n";
+    $success_message .= "- 装置種別数: " . count($statistics['device_types']) . "種類\n";
+    $success_message .= "- 自動登録されたリレーション: " . $relationCount . "件";
+    
+    setSuccessMessage($success_message);
+    
+    // アップロードされたファイルを削除（オプション）
+    // unlink($upload_path);
+    
+} catch (Exception $e) {
+    // 詳細なエラー情報をログに記録
+    $errorDetails = [
+        'message' =&gt; $e-&gt;getMessage(),
+        'file' =&gt; $e-&gt;getFile(),
+        'line' =&gt; $e-&gt;getLine(),
+        'trace' =&gt; $e-&gt;getTraceAsString()
+    ];
+    error_log("Upload error details: " . json_encode($errorDetails, JSON_UNESCAPED_UNICODE));
+    
+    setErrorMessage("アップロード処理中にエラーが発生しました: " . $e-&gt;getMessage());
+    
+    // データベースのトランザクション状態を確認してロールバック
+    if (isset($database)) {
+        try {
+            if ($database-&gt;inTransaction()) {
+                $database-&gt;rollBack();
+                error_log("Transaction rolled back due to error");
+            }
+        } catch (Exception $rollbackError) {
+            error_log("Rollback error: " . $rollbackError-&gt;getMessage());
+        }
+    }
+    
+    // エラー時はアップロードされたファイルを削除
+    if (isset($upload_path) &amp;&amp; file_exists($upload_path)) {
+        unlink($upload_path);
+    }
+} finally {
+    // データベース接続を閉じる
+    if (isset($database)) {
+        try {
+            $database-&gt;close();
+        } catch (Exception $closeError) {
+            error_log("Database close error: " . $closeError-&gt;getMessage());
+        }
+    }
+}
+
+// 結果ページにリダイレクト
+header('Location: index.php');
+exit;
+?&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="header">
+<div class="file-header">
+<div><span class="directory-badge"> includes</span><div class="filename">header.php</div></div>
+<div>78行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">共通ヘッダーテンプレート。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * 共通ヘッダー - ナビゲーションメニュー付き
+ */
+
+// 現在のページを判定
+$currentPage = basename($_SERVER['PHP_SELF'], '.php');
+?&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ja"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;&lt;?= $pageTitle ?? '装置情報管理システム' ?&gt;&lt;/title&gt;
+    &lt;link rel="stylesheet" href="css/styles.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;!-- メインナビゲーションバー --&gt;
+    &lt;nav class="main-navbar"&gt;
+        &lt;div class="navbar-container"&gt;
+            &lt;!-- ブランドロゴ --&gt;
+            &lt;a href="index.php" class="navbar-brand"&gt;
+                &lt;?php include 'svgs/brand.svg'; ?&gt;
+                装置情報管理システム
+            &lt;/a&gt;
+            
+
+            &lt;!-- ナビゲーションメニュー --&gt;
+            &lt;ul class="navbar-nav" id="navbarNav"&gt;
+                &lt;li class="nav-item"&gt;
+                    &lt;a href="search.php" class="nav-link &lt;?= $currentPage === 'search' ? 'active' : '' ?&gt;"&gt;
+                        &lt;div class="nav-icon"&gt;
+                            &lt;?php include 'svgs/search.svg'; ?&gt;
+                        &lt;/div&gt;
+                        装置検索
+                    &lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class="nav-item"&gt;
+                    &lt;a href="index.php" class="nav-link &lt;?= $currentPage === 'index' ? 'active' : '' ?&gt;"&gt;
+                        &lt;div class="nav-icon"&gt;
+                            &lt;?php include 'svgs/upload.svg'; ?&gt;
+                        &lt;/div&gt;
+                        CSVアップロード
+                    &lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class="nav-item"&gt;
+                    &lt;a href="download.php" class="nav-link &lt;?= $currentPage === 'download' ? 'active' : '' ?&gt;"&gt;
+                        &lt;div class="nav-icon"&gt;
+                            &lt;?php include 'svgs/download.svg'; ?&gt;
+                        &lt;/div&gt;
+                        CSVダウンロード
+                    &lt;/a&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;script&gt;
+
+        
+        // ウィンドウサイズ変更時にモバイルメニューを閉じる
+        window.addEventListener('resize', function() {
+            if (window.innerWidth &gt; 768) {
+                const nav = document.getElementById('navbarNav');
+                nav.classList.remove('show');
+            }
+        });
+        
+        // 外部クリック時にモバイルメニューを閉じる
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('navbarNav');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!nav.contains(event.target) &amp;&amp; !toggle.contains(event.target)) {
+                nav.classList.remove('show');
+            }
+        });
+    &lt;/script&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="footer">
+<div class="file-header">
+<div><span class="directory-badge"> includes</span><div class="filename">footer.php</div></div>
+<div>18行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">共通フッターテンプレート。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+/**
+ * 共通フッター
+ */
+?&gt;
+    &lt;/div&gt; &lt;!-- main-content の終了 --&gt;
+    
+    &lt;!-- フッター --&gt;
+    &lt;footer class="main-footer"&gt;
+        &lt;div class="footer-content"&gt;
+            &lt;p&gt;&amp;copy; &lt;?= date('Y') ?&gt; 装置情報管理システム. All rights reserved.&lt;/p&gt;
+            &lt;p class="footer-version"&gt;
+                Built with PHP &amp; MySQL | Version 1.0
+            &lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</div>
+</div>
+
+<div class="file-section" id="admin_tables">
+<div class="file-header">
+<div><span class="directory-badge"> admin</span><div class="filename">admin_tables.php</div></div>
+<div>247行</div>
+</div>
+<div class="role"><div class="role-title"> 役割</div><div class="role-description">管理者用テーブル管理ページ。</div></div>
+<div class="code-container">
+<button class="copy-button" onclick="copyCode(this)">コピー</button>
+<pre><code>&lt;?php
+require_once '../config.php';
+>>>>>>> 09bd7067d280bc8c898313ab2c4fd14e4040068f
 
 // 管理者用：テーブル管理ページ
 ini_set(&#x27;display_errors&#x27;, 1);
