@@ -390,12 +390,19 @@ class DeviceManager {
             // ここまでの変更をコミット（PostgreSQLの場合、テーブル定義変更を確定）
             if ($isPgsql) {
                 $this->database->commit();
-                $this->database->beginTransaction();
                 error_log("Table structure changes committed");
+            } else {
+                // MySQLの場合は1つのトランザクションで処理を続ける
             }
             
             // データを処理
             foreach ($data as $rowIndex => $row) {
+                // PostgreSQLの場合は各行ごとに新しいトランザクションを開始
+                if ($isPgsql) {
+                    $this->database->beginTransaction();
+                    error_log("Started new transaction for row {$rowIndex}");
+                }
+                
                 error_log("Processing row {$rowIndex}: " . json_encode($row, JSON_UNESCAPED_UNICODE));
                 
                 try {
@@ -419,6 +426,13 @@ class DeviceManager {
                 } catch (Exception $e) {
                     error_log("Row {$rowIndex} - device_info insert error: " . $e->getMessage());
                     error_log("Stack trace: " . $e->getTraceAsString());
+                    
+                    // PostgreSQLの場合はロールバックして次の行へ
+                    if ($isPgsql) {
+                        $this->database->rollback();
+                        error_log("Transaction rolled back for row {$rowIndex}");
+                    }
+                    
                     throw new Exception("行" . ($rowIndex + 2) . "のdevice_info登録でエラー: " . $e->getMessage());
                 }
                 
@@ -466,17 +480,39 @@ class DeviceManager {
                 } catch (Exception $e) {
                     error_log("Row {$rowIndex} - dynamic table insert error: " . $e->getMessage());
                     error_log("Stack trace: " . $e->getTraceAsString());
+                    
+                    // PostgreSQLの場合はロールバックして次の行へ
+                    if ($isPgsql) {
+                        $this->database->rollback();
+                        error_log("Transaction rolled back for row {$rowIndex}");
+                    }
+                    
                     throw new Exception("行" . ($rowIndex + 2) . "の動的テーブル登録でエラー: " . $e->getMessage());
+                }
+                
+                // PostgreSQLの場合は各行の処理後にコミット
+                if ($isPgsql) {
+                    $this->database->commit();
+                    error_log("Transaction committed for row {$rowIndex}");
                 }
             }
             
-            // コミット
-            $this->database->commit();
+            // MySQLの場合のみ最終コミット（PostgreSQLは各行でコミット済み）
+            if (!$isPgsql) {
+                $this->database->commit();
+            }
             $results['success'] = true;
             
         } catch (Exception $e) {
-            // ロールバック
-            $this->database->rollBack();
+            // ロールバック（トランザクションがアクティブな場合のみ）
+            try {
+                if ($this->database->inTransaction()) {
+                    $this->database->rollBack();
+                    error_log("Transaction rolled back due to error");
+                }
+            } catch (Exception $rollbackEx) {
+                error_log("Rollback failed: " . $rollbackEx->getMessage());
+            }
             $results['errors'][] = $e->getMessage();
             throw $e;
         }
