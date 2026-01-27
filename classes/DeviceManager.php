@@ -378,20 +378,26 @@ class DeviceManager {
             }
             
             // データを処理
-            foreach ($data as $row) {
-                // 装置情報テーブルに挿入（拡張カラムも含む）
-                $deviceInfo = $csvProcessor->convertToDeviceInfo($row);
-                
-                // 拡張カラムの中でdevice_infoに存在するカラムを抽出
-                $additionalDeviceInfoData = [];
-                foreach ($extendedColumns as $column) {
-                    if (in_array($column, $deviceInfoExistingColumns)) {
-                        $additionalDeviceInfoData[$column] = isset($row[$column]) ? $row[$column] : null;
+            foreach ($data as $rowIndex => $row) {
+                try {
+                    // 装置情報テーブルに挿入（拡張カラムも含む）
+                    $deviceInfo = $csvProcessor->convertToDeviceInfo($row);
+                    
+                    // 拡張カラムの中でdevice_infoに存在するカラムを抽出
+                    $additionalDeviceInfoData = [];
+                    foreach ($extendedColumns as $column) {
+                        if (in_array($column, $deviceInfoExistingColumns)) {
+                            $additionalDeviceInfoData[$column] = isset($row[$column]) ? $row[$column] : null;
+                        }
                     }
+                    
+                    $this->insertOrUpdateDeviceInfo($deviceInfo, $additionalDeviceInfoData);
+                    $results['device_info_count']++;
+                    
+                } catch (Exception $e) {
+                    error_log("Row {$rowIndex} - device_info insert error: " . $e->getMessage());
+                    throw new Exception("行" . ($rowIndex + 2) . "のdevice_info登録でエラー: " . $e->getMessage());
                 }
-                
-                $this->insertOrUpdateDeviceInfo($deviceInfo, $additionalDeviceInfoData);
-                $results['device_info_count']++;
                 
                 // サービス名と装置種別のリレーションを登録
                 try {
@@ -406,28 +412,30 @@ class DeviceManager {
                 }
                 
                 // 動的テーブルに挿入
-                $tableName = $csvProcessor->generateTableName($row);
-                
-                // device_infoに存在するカラムと、動的テーブルに存在するカラムを分離
-                $deviceInfoColumns = $csvProcessor->getDeviceInfoColumns();
-                $deviceInfoExistingColumns = $this->getTableColumns('device_info');
-                
-                // 動的テーブル用のデータを作成
-                $dynamicData = [];
-                $dynamicData[$csvProcessor->generatePrimaryKeyColumnName($row)] = $csvProcessor->generatePrimaryKey($row);
-                
-                foreach ($extendedColumns as $column) {
-                    // device_infoに存在するカラムはdevice_infoに、それ以外は動的テーブルに
-                    if (!in_array($column, $deviceInfoExistingColumns)) {
-                        // 動的テーブルのカラムとして登録
-                        $dynamicData[$column] = isset($row[$column]) ? $row[$column] : null;
+                try {
+                    $tableName = $csvProcessor->generateTableName($row);
+                    
+                    // 動的テーブル用のデータを作成
+                    $dynamicData = [];
+                    $dynamicData[$csvProcessor->generatePrimaryKeyColumnName($row)] = $csvProcessor->generatePrimaryKey($row);
+                    
+                    foreach ($extendedColumns as $column) {
+                        // device_infoに存在するカラムはdevice_infoに、それ以外は動的テーブルに
+                        if (!in_array($column, $deviceInfoExistingColumns)) {
+                            // 動的テーブルのカラムとして登録
+                            $dynamicData[$column] = isset($row[$column]) ? $row[$column] : null;
+                        }
                     }
-                }
-                
-                // 動的テーブルに挿入（動的テーブル用のデータが存在する場合のみ）
-                if (count($dynamicData) > 1) { // primary_key以外のカラムがある場合
-                    $this->insertOrUpdateDynamicData($tableName, $dynamicData);
-                    $results['dynamic_data_count']++;
+                    
+                    // 動的テーブルに挿入（動的テーブル用のデータが存在する場合のみ）
+                    if (count($dynamicData) > 1) { // primary_key以外のカラムがある場合
+                        $this->insertOrUpdateDynamicData($tableName, $dynamicData);
+                        $results['dynamic_data_count']++;
+                    }
+                    
+                } catch (Exception $e) {
+                    error_log("Row {$rowIndex} - dynamic table insert error: " . $e->getMessage());
+                    throw new Exception("行" . ($rowIndex + 2) . "の動的テーブル登録でエラー: " . $e->getMessage());
                 }
             }
             
