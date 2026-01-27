@@ -318,7 +318,15 @@ class DeviceManager {
             'errors' => []
         ];
         
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
         try {
+            // PostgreSQLの場合、エラーハンドリングを改善
+            if ($isPgsql) {
+                // 各ステップを個別のトランザクションで処理
+                error_log("PostgreSQL mode: Using individual transactions");
+            }
+            
             // トランザクション開始
             $this->database->beginTransaction();
             
@@ -375,6 +383,13 @@ class DeviceManager {
             // リレーションテーブルが存在しない場合は作成
             if (!$this->relationTableExists()) {
                 $this->createRelationTable();
+            }
+            
+            // ここまでの変更をコミット（PostgreSQLの場合、テーブル定義変更を確定）
+            if ($isPgsql) {
+                $this->database->commit();
+                $this->database->beginTransaction();
+                error_log("Table structure changes committed");
             }
             
             // データを処理
