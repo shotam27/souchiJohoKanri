@@ -9,20 +9,38 @@ services:
     dockerContext: .
     envVars:
       - key: DB_TYPE
-        value: mysql
+        value: pgsql
       - key: DB_HOST
-        value: freedb.tech
+        fromDatabase:
+          name: device-postgres
+          property: host
       - key: DB_PORT
-        value: 3306
+        fromDatabase:
+          name: device-postgres
+          property: port
       - key: DB_NAME
-        value: freedb_mysqltestdb
+        fromDatabase:
+          name: device-postgres
+          property: database
       - key: DB_USER
-        value: freedb_neshotam27
+        fromDatabase:
+          name: device-postgres
+          property: user
       - key: DB_PASS
-        value: QAETdc3xq$g$NSV
+        fromDatabase:
+          name: device-postgres
+          property: password
     # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
     # 無料プランの場合は以下をコメントアウト
     # disk:
     #   name: fusion-uploads
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
+
+  # PostgreSQLデータベース
+databases:
+  - name: device-postgres
+    databaseName: device_management
+    user: admin
+    region: singapore  # Webサービスと同じリージョン
+    plan: free  # 無料プラン（90日間アクティブ）
