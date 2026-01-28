@@ -11,7 +11,7 @@ services:
       - key: DB_TYPE
         value: mysql
       - key: DB_HOST
-        value: sql.freedb.tech
+        value: freedb.tech
       - key: DB_PORT
         value: 3306
       - key: DB_NAME
