@@ -1,7 +1,7 @@
 services:
   # PHPウェブサービス
   - type: web
-    name: fusion-device-manager
+    name: device-manager
     env: docker
     region: singapore  # またはお好みのリージョン
     plan: free  # または starter / standard
@@ -9,38 +9,20 @@ services:
     dockerContext: .
     envVars:
       - key: DB_TYPE
-        value: pgsql
+        value: mysql
       - key: DB_HOST
-        fromDatabase:
-          name: fusion-mysql
-          property: host
+        value: sql.freedb.tech
       - key: DB_PORT
-        fromDatabase:
-          name: fusion-mysql
-          property: port
+        value: 3306
       - key: DB_NAME
-        fromDatabase:
-          name: fusion-mysql
-          property: database
+        value: freedb_mysqltestdb
       - key: DB_USER
-        fromDatabase:
-          name: fusion-mysql
-          property: user
+        value: freedb_neshotam27
       - key: DB_PASS
-        fromDatabase:
-          name: fusion-mysql
-          property: password
+        value: QAETdc3xq$g$NSV
     # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
     # 無料プランの場合は以下をコメントアウト
     # disk:
     #   name: fusion-uploads
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
-
-  # PostgreSQLデータベース（名前はfusion-mysqlだが実体はPostgreSQL）
-databases:
-  - name: fusion-mysql
-    databaseName: device_management
-    user: admin
-    region: singapore  # Webサービスと同じリージョン
-    plan: free  # 無料プラン（90日間アクティブ）
