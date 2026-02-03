@@ -5,7 +5,9 @@ $pageTitle = '装置情報検索 - 装置情報管理システム';
 
 // 初期データ取得用
 try {
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, defined('DB_TYPE') ? DB_TYPE : 'mysql', defined('DB_PORT') ? DB_PORT : null);
+    $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
+    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
     $deviceManager = new DeviceManager($database);
     
     // 統計情報を取得

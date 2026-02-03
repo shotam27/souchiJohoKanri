@@ -85,7 +85,9 @@ try {
     }
     
     // データベース接続
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, defined('DB_TYPE') ? DB_TYPE : 'mysql', defined('DB_PORT') ? DB_PORT : null);
+    $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
+    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
     
     // データベース初期化（必須テーブルの存在確認と作成）
     $db_initializer = new DatabaseInitializer($database);

@@ -11,7 +11,7 @@ define('DB_PORT', getenv('DB_PORT') ?: '5432'); // PostgreSQL: 5432, MySQL: 3306
 define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
 define('DB_USER', getenv('DB_USER') ?: 'postgres');
 define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', 'utf8mb4'); // MySQLのみ使用
+define('DB_CHARSET', 'utf8'); // PostgreSQL: utf8, MySQL: utf8mb4
 
 // アップロード設定
 define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
