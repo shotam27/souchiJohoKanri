@@ -52,9 +52,21 @@ RUN chmod -R 755 /var/www/html \
 # 本番環境用のconfig.phpを使用
 RUN cp /var/www/html/config.render.php /var/www/html/config.php
 
-# Apacheのポート80を公開
-EXPOSE 80
+# 環境変数PORTを使用（Renderが提供）
+ENV PORT=80
 
-# ヘルスチェックコマンド
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+# Apacheのポートを公開
+EXPOSE ${PORT}
+
+# Apacheの起動スクリプトを作成
+RUN echo '#!/bin/bash\n\
+# Renderの環境変数PORTを使用してApacheを設定\n\
+if [ -n "$PORT" ]; then\n\
+    sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf\n\
+    sed -i "s/:80>/:$PORT>/g" /etc/apache2/sites-available/000-default.conf\n\
+fi\n\
+exec apache2-foreground' > /usr/local/bin/start.sh \
+    && chmod +x /usr/local/bin/start.sh
+
+# CMD設定
+CMD ["/usr/local/bin/start.sh"]
