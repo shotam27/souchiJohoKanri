@@ -24,7 +24,12 @@ body {
 /* ===================================
    ナビゲーションバー
    =================================== */
-.main-navbar {
+.navbar-menu {
+    display: flex;
+    align-items: center;
+}
+
+   .main-navbar {
     background: #004eb1;
     box-shadow: 0 2px 20px rgba(0,0,0,0.1);
     position: sticky;
@@ -80,14 +85,17 @@ body {
     color: white;
     text-decoration: none;
     border-radius: 8px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, justify-content 0.3s;
     font-weight: 500;
     background: rgba(255,255,255,0.1);
     margin: 0 2px;
+    min-width: 44px;
+    justify-content: center;
 }
 
 .nav-link:hover {
     background: rgba(255,255,255,0.2);
+    justify-content: flex-start;
 }
 
 .nav-link.active {
@@ -172,6 +180,11 @@ body {
     fill: currentColor;
     flex-shrink: 0;
     margin-top: 2px;
+}
+
+/* 見出し内のSVGアイコン */
+h2 svg, h3 svg, h4 svg {
+    fill: currentColor;
 }
 
 /* ===================================
@@ -829,4 +842,86 @@ input[type="file"]:hover {
     background-color: #007acc;
     border-radius: 5px;
     transition: width 0.3s;
+}
+
+/* ===================================
+   ユーザー認証関連のスタイル
+   =================================== */
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-left: 20px;
+    margin-left: 20px;
+    border-left: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+/* ユーザーアイコン */
+.user-icon {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ユーザー名表示は常に左揃え */
+.user-name-display {
+    justify-content: flex-start !important;
+}
+
+/* ホバー前に非表示にするテキスト */
+.nav-text-hidden {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 0.3s ease, opacity 0.3s ease;
+    vertical-align: middle;
+}
+
+/* ホバー時にテキストを表示 */
+.nav-link:hover .nav-text-hidden {
+    max-width: 150px;
+    opacity: 1;
+}
+
+/* 認証リンクの色設定 */
+.logout-link,
+.login-link {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.logout-link:hover,
+.login-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.register-link {
+    background: #4CAF50;
+}
+
+.register-link:hover {
+    background: #45a049;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .navbar-user {
+        gap: 5px;
+        padding-left: 10px;
+        margin-left: 10px;
+    }
+    
+    .user-name-display .nav-text {
+        display: none;
+    }
+    
+    .nav-text-hidden {
+        display: none;
+    }
+    
+    .nav-link:hover .nav-text-hidden {
+        display: none;
+    }
 }

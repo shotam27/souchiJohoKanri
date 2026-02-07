@@ -1,5 +1,9 @@
 <?php
 require_once 'config.php';
+require_once __DIR__ . '/includes/auth_helper.php';
+
+// ログイン必須
+requireLogin();
 
 $pageTitle = 'CSVダウンロード - 装置情報管理システム';
 
@@ -228,7 +232,10 @@ require_once 'includes/header.php';
         <?php endif; ?>
         
         <div class="alert alert-info">
-            <h4>📋 CSVダウンロード機能について</h4>
+            <h4 style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 20px; height: 20px; display: inline-flex;"><?php include 'svgs/info.svg'; ?></span>
+                CSVダウンロード機能について
+            </h4>
             <p>
                 サービス名と装置種別を選択すると、該当する装置データをCSV形式でダウンロードできます。
                 ダウンロード前にデータのプレビューを確認できます。
@@ -271,7 +278,7 @@ require_once 'includes/header.php';
                 
                 <div class="form-group">
                     <button type="button" class="btn btn-primary" onclick="updatePreview()">
-                        👁️ プレビュー表示
+                        プレビュー表示
                     </button>
                 </div>
             </form>
@@ -291,7 +298,10 @@ require_once 'includes/header.php';
             </div>
             
             <?php if (!empty($previewData)): ?>
-            <h4>📋 データプレビュー</h4>
+            <h4 style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 20px; height: 20px; display: inline-flex;"><?php include 'svgs/info.svg'; ?></span>
+                データプレビュー
+            </h4>
             <div style="overflow-x: auto;">
                 <table id="previewTable" class="preview-table transposed">
                     <?php
@@ -371,7 +381,10 @@ require_once 'includes/header.php';
         
         <?php if (empty($selectedService) || empty($selectedDeviceType)): ?>
         <div class="empty-state">
-            <h3>📋 使い方</h3>
+            <h3 style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                <span style="width: 24px; height: 24px; display: inline-flex;"><?php include 'svgs/info.svg'; ?></span>
+                使い方
+            </h3>
             <ol style="text-align: left; display: inline-block;">
                 <li>サービス名を選択してください</li>
                 <li>装置種別を選択してください</li>

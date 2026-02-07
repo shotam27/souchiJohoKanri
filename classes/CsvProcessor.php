@@ -149,9 +149,27 @@ class CsvProcessor {
             'サービス名',
             '装置種別', 
             '装置名称',
-            '装置IP',
-            'ユーザー名',
-            'パスワード'
+            'ログインIP',
+            'ユーザー名1',
+            'パスワード1',
+            'ユーザー名2',
+            'パスワード2',
+            'ユーザー名3',
+            'パスワード3',
+            'ユーザー名4',
+            'パスワード4',
+            'ユーザー名5',
+            'パスワード5',
+            'ユーザー名6',
+            'パスワード6',
+            'ユーザー名7',
+            'パスワード7',
+            'ユーザー名8',
+            'パスワード8',
+            'ユーザー名9',
+            'パスワード9',
+            'ユーザー名10',
+            'パスワード10'
         ];
     }
     
@@ -217,15 +235,23 @@ class CsvProcessor {
      * @return array
      */
     public function convertToDeviceInfo($rowData) {
-        return [
+        $result = [
             'primary_key' => $this->generatePrimaryKey($rowData),
             'service_name' => $rowData['サービス名'],
             'device_type' => $rowData['装置種別'],
             'device_name' => $rowData['装置名称'],
-            'device_ip' => isset($rowData['装置IP']) ? $rowData['装置IP'] : null,
-            'username' => $rowData['ユーザー名'],
-            'password' => isset($rowData['パスワード']) ? $rowData['パスワード'] : null
+            'login_ip' => isset($rowData['ログインIP']) ? $rowData['ログインIP'] : null,
+            'username1' => $rowData['ユーザー名1'],
+            'password1' => isset($rowData['パスワード1']) ? $rowData['パスワード1'] : null
         ];
+        
+        // ユーザー名2-10、パスワード2-10を追加
+        for ($i = 2; $i <= 10; $i++) {
+            $result["username{$i}"] = isset($rowData["ユーザー名{$i}"]) ? $rowData["ユーザー名{$i}"] : null;
+            $result["password{$i}"] = isset($rowData["パスワード{$i}"]) ? $rowData["パスワード{$i}"] : null;
+        }
+        
+        return $result;
     }
     
     /**
@@ -314,8 +340,8 @@ class CsvProcessor {
         
         // IPアドレス形式のチェック（存在する場合のみ）
         foreach ($this->data as $index => $row) {
-            if (!empty($row['装置IP']) && !filter_var($row['装置IP'], FILTER_VALIDATE_IP)) {
-                $this->errors[] = "行" . ($index + 2) . ": 装置IPの形式が不正です - " . $row['装置IP'];
+            if (!empty($row['ログインIP']) && !filter_var($row['ログインIP'], FILTER_VALIDATE_IP)) {
+                $this->errors[] = "行" . ($index + 2) . ": ログインIPの形式が不正です - " . $row['ログインIP'];
             }
         }
         

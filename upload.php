@@ -1,5 +1,9 @@
 <?php
 require_once 'config.php';
+require_once __DIR__ . '/includes/auth_helper.php';
+
+// ログイン必須
+requireLogin();
 
 // POSTリクエストのみ受け付ける
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

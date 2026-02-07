@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import html
+from datetime import datetime
 
 def find_php_files(directory):
     """指定されたディレクトリからすべてのPHPファイルを再帰的に検索"""
@@ -12,7 +13,8 @@ def find_php_files(directory):
         for file in files:
             if file.endswith('.php'):
                 php_files.append(os.path.join(root, file))
-    return sorted(php_files)
+    # 最終更新日時で降順にソート（新しい順）
+    return sorted(php_files, key=lambda x: os.path.getmtime(x), reverse=True)
 
 def generate_html(php_files, base_dir):
     """PHPファイルの内容を含むHTMLを生成"""
@@ -185,8 +187,12 @@ def generate_html(php_files, base_dir):
         relative_path = os.path.relpath(php_file, base_dir)
         file_id = f"file-{i}"
         
+        # ファイルの最終更新日時を取得
+        modified_time = os.path.getmtime(php_file)
+        modified_date = datetime.fromtimestamp(modified_time).strftime('%Y-%m-%d %H:%M:%S')
+        
         # 目次項目
-        toc_items.append(f'                <li><a href="#{file_id}">{html.escape(relative_path)}</a></li>')
+        toc_items.append(f'                <li><a href="#{file_id}">{html.escape(relative_path)}</a> <span style="color: #666; font-size: 0.9em;">(最終更新: {modified_date})</span></li>')
         
         # ファイルセクション
         try:
@@ -206,7 +212,7 @@ def generate_html(php_files, base_dir):
         <div class="file-section" id="{file_id}">
             <div class="file-header">
                 <h2>{html.escape(os.path.basename(php_file))}</h2>
-                <div class="file-path">📂 {html.escape(relative_path)} | 行数: {line_count}</div>
+                <div class="file-path">📂 {html.escape(relative_path)} | 行数: {line_count} | 最終更新: {modified_date}</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -217,7 +223,6 @@ def generate_html(php_files, base_dir):
         file_sections.append(file_section)
     
     # タイムスタンプ
-    from datetime import datetime
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     # HTMLを組み立て

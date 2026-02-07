@@ -33,9 +33,27 @@ class DeviceManager {
                     service_name VARCHAR(100) NOT NULL,
                     device_type VARCHAR(100) NOT NULL,
                     device_name VARCHAR(100) NOT NULL,
-                    device_ip VARCHAR(45),
-                    username VARCHAR(100) NOT NULL,
-                    password VARCHAR(255),
+                    login_ip VARCHAR(45),
+                    username1 VARCHAR(100) NOT NULL,
+                    password1 VARCHAR(255),
+                    username2 VARCHAR(100),
+                    password2 VARCHAR(255),
+                    username3 VARCHAR(100),
+                    password3 VARCHAR(255),
+                    username4 VARCHAR(100),
+                    password4 VARCHAR(255),
+                    username5 VARCHAR(100),
+                    password5 VARCHAR(255),
+                    username6 VARCHAR(100),
+                    password6 VARCHAR(255),
+                    username7 VARCHAR(100),
+                    password7 VARCHAR(255),
+                    username8 VARCHAR(100),
+                    password8 VARCHAR(255),
+                    username9 VARCHAR(100),
+                    password9 VARCHAR(255),
+                    username10 VARCHAR(100),
+                    password10 VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -43,7 +61,7 @@ class DeviceManager {
             $this->database->execute($sql);
             // インデックス作成
             $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_device_type ON device_info (service_name, device_type)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_info ON device_info (service_name, device_type, device_name, username)");
+            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_info ON device_info (service_name, device_type, device_name, username1)");
         } else {
             // MySQL用SQL
             $sql = "
@@ -52,13 +70,31 @@ class DeviceManager {
                     service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
                     device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
                     device_name VARCHAR(100) NOT NULL COMMENT '装置名称',
-                    device_ip VARCHAR(45) COMMENT '装置IP',
-                    username VARCHAR(100) NOT NULL COMMENT 'ユーザー名',
-                    password VARCHAR(255) COMMENT 'パスワード',
+                    login_ip VARCHAR(45) COMMENT 'ログインIP',
+                    username1 VARCHAR(100) NOT NULL COMMENT 'ユーザー名1',
+                    password1 VARCHAR(255) COMMENT 'パスワード1',
+                    username2 VARCHAR(100) COMMENT 'ユーザー名2',
+                    password2 VARCHAR(255) COMMENT 'パスワード2',
+                    username3 VARCHAR(100) COMMENT 'ユーザー名3',
+                    password3 VARCHAR(255) COMMENT 'パスワード3',
+                    username4 VARCHAR(100) COMMENT 'ユーザー名4',
+                    password4 VARCHAR(255) COMMENT 'パスワード4',
+                    username5 VARCHAR(100) COMMENT 'ユーザー名5',
+                    password5 VARCHAR(255) COMMENT 'パスワード5',
+                    username6 VARCHAR(100) COMMENT 'ユーザー名6',
+                    password6 VARCHAR(255) COMMENT 'パスワード6',
+                    username7 VARCHAR(100) COMMENT 'ユーザー名7',
+                    password7 VARCHAR(255) COMMENT 'パスワード7',
+                    username8 VARCHAR(100) COMMENT 'ユーザー名8',
+                    password8 VARCHAR(255) COMMENT 'パスワード8',
+                    username9 VARCHAR(100) COMMENT 'ユーザー名9',
+                    password9 VARCHAR(255) COMMENT 'パスワード9',
+                    username10 VARCHAR(100) COMMENT 'ユーザー名10',
+                    password10 VARCHAR(255) COMMENT 'パスワード10',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
                     INDEX idx_service_device_type (service_name, device_type),
-                    INDEX idx_device_info (service_name, device_type, device_name, username)
+                    INDEX idx_device_info (service_name, device_type, device_name, username1)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='装置基本情報テーブル'
             ";
             $this->database->execute($sql);
@@ -145,9 +181,15 @@ class DeviceManager {
         $isPgsql = $this->database->getDbType() === 'pgsql';
         
         // 基本カラム
-        $columns = ['primary_key', 'service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password'];
-        $placeholders = [':primary_key', ':service_name', ':device_type', ':device_name', ':device_ip', ':username', ':password'];
-        $updateColumns = ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password'];
+        $baseColumns = ['primary_key', 'service_name', 'device_type', 'device_name', 'login_ip', 'username1', 'password1'];
+        for ($i = 2; $i <= 10; $i++) {
+            $baseColumns[] = "username{$i}";
+            $baseColumns[] = "password{$i}";
+        }
+        
+        $columns = $baseColumns;
+        $placeholders = array_map(function($col) { return ":{$col}"; }, $columns);
+        $updateColumns = array_diff($columns, ['primary_key']);
         
         $params = $deviceData;
         
@@ -168,7 +210,8 @@ class DeviceManager {
             // PostgreSQL用: ON CONFLICT ... DO UPDATE
             $updateClauses = [];
             foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password']) 
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip']) ||
+                             preg_match('/^(username|password)\d+$/', $col)
                     ? $col 
                     : "\"{$col}\"";
                 $updateClauses[] = "{$quotedCol} = EXCLUDED.{$quotedCol}";
@@ -186,7 +229,8 @@ class DeviceManager {
             // MySQL用: ON DUPLICATE KEY UPDATE
             $updateClauses = [];
             foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'device_ip', 'username', 'password']) 
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip']) ||
+                             preg_match('/^(username|password)\d+$/', $col)
                     ? $col 
                     : "`{$col}`";
                 $updateClauses[] = "{$quotedCol} = VALUES({$quotedCol})";
