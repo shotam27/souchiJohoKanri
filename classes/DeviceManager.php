@@ -597,7 +597,7 @@ class DeviceManager {
         $sql = "
             SELECT * FROM device_info 
             {$whereClause}
-            ORDER BY service_name, device_type, device_name, username
+            ORDER BY service_name, device_type, device_name, username1
             LIMIT :limit OFFSET :offset
         ";
         
@@ -747,14 +747,32 @@ class DeviceManager {
                 service_name,
                 device_type,
                 device_name,
-                device_ip,
-                username,
-                password,
+                login_ip,
+                username1,
+                password1,
+                username2,
+                password2,
+                username3,
+                password3,
+                username4,
+                password4,
+                username5,
+                password5,
+                username6,
+                password6,
+                username7,
+                password7,
+                username8,
+                password8,
+                username9,
+                password9,
+                username10,
+                password10,
                 created_at,
                 updated_at
             FROM device_info 
             {$whereClause}
-            ORDER BY service_name, device_type, device_name, username
+            ORDER BY service_name, device_type, device_name, username1
             LIMIT :limit OFFSET :offset
         ";
         

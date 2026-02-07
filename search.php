@@ -123,7 +123,7 @@ require_once 'includes/header.php';
                             <th>サービス名</th>
                             <th>装置種別</th>
                             <th>装置名称</th>
-                            <th>装置IP</th>
+                            <th>ログインIP</th>
                             <th>ユーザー名</th>
                             <th>パスワード</th>
                             <th>登録日時</th>
@@ -301,14 +301,14 @@ require_once 'includes/header.php';
                         <td>${escapeHtml(device.service_name)}</td>
                         <td>${escapeHtml(device.device_type)}</td>
                         <td class="text-truncate" title="${escapeHtml(device.device_name)}">${escapeHtml(device.device_name)}</td>
-                        <td>${escapeHtml(device.device_ip || '-')}</td>
-                        <td>${escapeHtml(device.username)}</td>
-                        <td class="text-truncate" title="${escapeHtml(device.password || '-')}">${device.password ? '●●●●●●' : '-'}</td>
+                        <td>${escapeHtml(device.login_ip || '-')}</td>
+                        <td>${escapeHtml(device.username1)}</td>
+                        <td class="text-truncate" title="${escapeHtml(device.password1 || '-')}">${device.password1 ? '●●●●●●' : '-'}</td>
                         <td>${formatDateTime(device.created_at)}</td>
                         <td>${formatDateTime(device.updated_at)}</td>
                         <td>
-                            <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.device_ip || '')}', '${escapeHtml(device.username)}', '${escapeHtml(device.password || '')}', '${escapeHtml(device.device_name)}')" 
-                                    ${!device.device_ip || !device.username || !device.password ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
+                            <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
+                                    ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
                                 🔧 マクロ
                             </button>
                         </td>
@@ -417,9 +417,27 @@ require_once 'includes/header.php';
                     `"${device.service_name}"`,
                     `"${device.device_type}"`,
                     `"${device.device_name}"`,
-                    `"${device.device_ip || ''}"`,
-                    `"${device.username}"`,
-                    `"${device.password || ''}"`,
+                    `"${device.login_ip || ''}"`,
+                    `"${device.username1}"`,
+                    `"${device.password1 || ''}"`,
+                    `"${device.username2 || ''}"`,
+                    `"${device.password2 || ''}"`,
+                    `"${device.username3 || ''}"`,
+                    `"${device.password3 || ''}"`,
+                    `"${device.username4 || ''}"`,
+                    `"${device.password4 || ''}"`,
+                    `"${device.username5 || ''}"`,
+                    `"${device.password5 || ''}"`,
+                    `"${device.username6 || ''}"`,
+                    `"${device.password6 || ''}"`,
+                    `"${device.username7 || ''}"`,
+                    `"${device.password7 || ''}"`,
+                    `"${device.username8 || ''}"`,
+                    `"${device.password8 || ''}"`,
+                    `"${device.username9 || ''}"`,
+                    `"${device.password9 || ''}"`,
+                    `"${device.username10 || ''}"`,
+                    `"${device.password10 || ''}"`,
                     `"${device.created_at}"`,
                     `"${device.updated_at}"`
                 ];

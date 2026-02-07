@@ -44,7 +44,17 @@ try {
             
             // プレビュー用のカラムヘッダーを作成
             $previewColumns = [
-                'サービス名', '装置種別', '装置名称', '装置IP', 'ユーザー名', 'パスワード'
+                'サービス名', '装置種別', '装置名称', 'ログインIP',
+                'ユーザー名1', 'パスワード1',
+                'ユーザー名2', 'パスワード2',
+                'ユーザー名3', 'パスワード3',
+                'ユーザー名4', 'パスワード4',
+                'ユーザー名5', 'パスワード5',
+                'ユーザー名6', 'パスワード6',
+                'ユーザー名7', 'パスワード7',
+                'ユーザー名8', 'パスワード8',
+                'ユーザー名9', 'パスワード9',
+                'ユーザー名10', 'パスワード10'
             ];
             $previewColumns = array_merge($previewColumns, $extendedColumns);
             
@@ -60,9 +70,27 @@ try {
                     di.service_name as 'サービス名',
                     di.device_type as '装置種別',
                     di.device_name as '装置名称',
-                    di.device_ip as '装置IP',
-                    di.username as 'ユーザー名',
-                    di.password as 'パスワード'
+                    di.login_ip as 'ログインIP',
+                    di.username1 as 'ユーザー名1',
+                    di.password1 as 'パスワード1',
+                    di.username2 as 'ユーザー名2',
+                    di.password2 as 'パスワード2',
+                    di.username3 as 'ユーザー名3',
+                    di.password3 as 'パスワード3',
+                    di.username4 as 'ユーザー名4',
+                    di.password4 as 'パスワード4',
+                    di.username5 as 'ユーザー名5',
+                    di.password5 as 'パスワード5',
+                    di.username6 as 'ユーザー名6',
+                    di.password6 as 'パスワード6',
+                    di.username7 as 'ユーザー名7',
+                    di.password7 as 'パスワード7',
+                    di.username8 as 'ユーザー名8',
+                    di.password8 as 'パスワード8',
+                    di.username9 as 'ユーザー名9',
+                    di.password9 as 'パスワード9',
+                    di.username10 as 'ユーザー名10',
+                    di.password10 as 'パスワード10'
                     {$dynamicColumnStr}
                 FROM device_info di
                 LEFT JOIN `{$tableName}` dt ON di.primary_key = dt.primary_key
@@ -113,9 +141,27 @@ try {
                         di.service_name as 'サービス名',
                         di.device_type as '装置種別',
                         di.device_name as '装置名称',
-                        di.device_ip as '装置IP',
-                        di.username as 'ユーザー名',
-                        di.password as 'パスワード'
+                        di.login_ip as 'ログインIP',
+                        di.username1 as 'ユーザー名1',
+                        di.password1 as 'パスワード1',
+                        di.username2 as 'ユーザー名2',
+                        di.password2 as 'パスワード2',
+                        di.username3 as 'ユーザー名3',
+                        di.password3 as 'パスワード3',
+                        di.username4 as 'ユーザー名4',
+                        di.password4 as 'パスワード4',
+                        di.username5 as 'ユーザー名5',
+                        di.password5 as 'パスワード5',
+                        di.username6 as 'ユーザー名6',
+                        di.password6 as 'パスワード6',
+                        di.username7 as 'ユーザー名7',
+                        di.password7 as 'パスワード7',
+                        di.username8 as 'ユーザー名8',
+                        di.password8 as 'パスワード8',
+                        di.username9 as 'ユーザー名9',
+                        di.password9 as 'パスワード9',
+                        di.username10 as 'ユーザー名10',
+                        di.password10 as 'パスワード10'
                         {$dynamicColumnStr}
                     FROM device_info di
                     LEFT JOIN `{$tableName}` dt ON di.primary_key = dt.primary_key
