@@ -431,13 +431,13 @@ require_once 'includes/header.php';
                             <td>
                                 <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
                                         ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
-                                    🔧 マクロ
+                                    マクロ
                                 </button>
                                 <button class="btn-edit" onclick="openEditModal('${escapeHtml(device.primary_key)}')">
-                                    ✏️ 編集
+                                    編集
                                 </button>
                                 <button class="btn-delete" onclick="confirmDelete('${escapeHtml(device.primary_key)}', '${escapeHtml(device.device_name)}', '${escapeHtml(device.service_name)}', '${escapeHtml(device.device_type)}')">
-                                    🗑️ 削除
+                                    削除
                                 </button>
                             </td>
                         `;

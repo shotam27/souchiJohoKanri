@@ -124,13 +124,13 @@
         <h1>📁 PHP Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 32 ファイル<br>
-            <strong>生成日時:</strong> 2026-02-10 12:37:03
+            <strong>生成日時:</strong> 2026-02-10 12:42:45
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:35:47)</span></li>
+                <li><a href="#file-1">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:38:10)</span></li>
                 <li><a href="#file-2">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:35:47)</span></li>
                 <li><a href="#file-3">search.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:35:47)</span></li>
                 <li><a href="#file-4">classes\DeviceManager.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:24:48)</span></li>
@@ -169,7 +169,7 @@
         <div class="file-section" id="file-1">
             <div class="file-header">
                 <h2>manage.php</h2>
-                <div class="file-path">📂 manage.php | 行数: 843 | 最終更新: 2026-02-10 12:35:47</div>
+                <div class="file-path">📂 manage.php | 行数: 843 | 最終更新: 2026-02-10 12:38:10</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -606,13 +606,13 @@ require_once &#x27;includes/header.php&#x27;;
                             &lt;td&gt;
                                 &lt;button class=&quot;btn-macro&quot; onclick=&quot;downloadTeratermMacro(&#x27;${escapeHtml(device.login_ip || &#x27;&#x27;)}&#x27;, &#x27;${escapeHtml(device.username1)}&#x27;, &#x27;${escapeHtml(device.password1 || &#x27;&#x27;)}&#x27;, &#x27;${escapeHtml(device.device_name)}&#x27;)&quot; 
                                         ${!device.login_ip || !device.username1 || !device.password1 ? &#x27;disabled title=&quot;IPアドレス、ユーザー名、パスワードが必要です&quot;&#x27; : &#x27;&#x27;}&gt;
-                                    🔧 マクロ
+                                    マクロ
                                 &lt;/button&gt;
                                 &lt;button class=&quot;btn-edit&quot; onclick=&quot;openEditModal(&#x27;${escapeHtml(device.primary_key)}&#x27;)&quot;&gt;
-                                    ✏️ 編集
+                                    編集
                                 &lt;/button&gt;
                                 &lt;button class=&quot;btn-delete&quot; onclick=&quot;confirmDelete(&#x27;${escapeHtml(device.primary_key)}&#x27;, &#x27;${escapeHtml(device.device_name)}&#x27;, &#x27;${escapeHtml(device.service_name)}&#x27;, &#x27;${escapeHtml(device.device_type)}&#x27;)&quot;&gt;
-                                    🗑️ 削除
+                                    削除
                                 &lt;/button&gt;
                             &lt;/td&gt;
                         `;
