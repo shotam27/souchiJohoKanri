@@ -205,9 +205,29 @@ try {
                 throw new Exception('指定された装置情報が見つかりません');
             }
             
+            // 動的テーブルのデータも取得
+            $tableName = sanitizeTableName($device['service_name'] . '_' . $device['device_type']);
+            $extendedData = [];
+            $extendedColumns = [];
+            
+            if ($deviceManager->dynamicTableExists($tableName)) {
+                $dynamicData = $deviceManager->getDynamicTableData($tableName, $primaryKey);
+                if ($dynamicData) {
+                    $extendedColumns = $deviceManager->getDynamicTableExtendedColumns($tableName);
+                    // 拡張列のデータのみを抽出
+                    foreach ($extendedColumns as $col) {
+                        $extendedData[$col] = $dynamicData[$col] ?? null;
+                    }
+                }
+            }
+            
             $response = [
                 'success' => true,
-                'data' => $device,
+                'data' => [
+                    'device' => $device,
+                    'extended_data' => $extendedData,
+                    'extended_columns' => $extendedColumns
+                ],
                 'message' => '装置情報を取得しました'
             ];
             break;
@@ -215,6 +235,8 @@ try {
         case 'update_device':
             // 装置情報を更新
             $primaryKey = $_POST['primary_key'] ?? '';
+            $oldServiceName = $_POST['old_service_name'] ?? '';
+            $oldDeviceType = $_POST['old_device_type'] ?? '';
             
             if (empty($primaryKey)) {
                 throw new Exception('Primary keyが指定されていません');
@@ -242,7 +264,48 @@ try {
                 throw new Exception('サービス名、装置種別、装置名称、ユーザー名1は必須です');
             }
             
+            // device_infoテーブルを更新
             $deviceManager->updateDeviceInfo($primaryKey, $updateData);
+            
+            // 動的テーブルも更新
+            $oldTableName = sanitizeTableName($oldServiceName . '_' . $oldDeviceType);
+            $newTableName = sanitizeTableName($updateData['service_name'] . '_' . $updateData['device_type']);
+            
+            // サービス名または装置種別が変更された場合、古いテーブルから削除
+            if ($oldTableName !== $newTableName && !empty($oldServiceName) && !empty($oldDeviceType)) {
+                if ($deviceManager->dynamicTableExists($oldTableName)) {
+                    $deviceManager->deleteFromDynamicTable($oldTableName, $primaryKey);
+                }
+            }
+            
+            // 新しい動的テーブルに挿入または更新
+            if ($deviceManager->dynamicTableExists($newTableName)) {
+                // 動的テーブル用のデータを準備
+                $dynamicData = [
+                    'primary_key' => $primaryKey,
+                    'device_name' => $updateData['device_name'],
+                    'login_ip' => $updateData['login_ip'],
+                    'username1' => $updateData['username1'],
+                    'password1' => $updateData['password1']
+                ];
+                
+                // username2-10, password2-10を追加
+                for ($i = 2; $i <= 10; $i++) {
+                    $dynamicData["username{$i}"] = $updateData["username{$i}"];
+                    $dynamicData["password{$i}"] = $updateData["password{$i}"];
+                }
+                
+                // 拡張列のデータを追加（extended_で始まるPOSTパラメータ）
+                $extendedColumns = $deviceManager->getDynamicTableExtendedColumns($newTableName);
+                foreach ($extendedColumns as $col) {
+                    $postKey = "extended_{$col}";
+                    if (isset($_POST[$postKey])) {
+                        $dynamicData[$col] = $_POST[$postKey];
+                    }
+                }
+                
+                $deviceManager->insertOrUpdateDynamicData($newTableName, $dynamicData);
+            }
             
             $response = [
                 'success' => true,

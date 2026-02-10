@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>manage.php デバッグ</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f5f5f5; }
+        .log { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #3498db; }
+        .error { border-left-color: #e74c3c; background: #fadbd8; }
+        .success { border-left-color: #27ae60; background: #d5f4e6; }
+        .warning { border-left-color: #f39c12; background: #fef5e7; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        h2 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <h1>🔍 manage.php デバッグツール</h1>
+    <div id="logs"></div>
+
+    <script>
+        const logs = document.getElementById('logs');
+        
+        function addLog(message, type = 'log') {
+            const div = document.createElement('div');
+            div.className = 'log ' + type;
+            div.innerHTML = '<strong>' + new Date().toLocaleTimeString() + '</strong> ' + message;
+            logs.appendChild(div);
+            console.log(message);
+        }
+
+        // 1. ページ読み込み開始
+        addLog('ページ読み込み開始', 'log');
+
+        // 2. サービス名取得テスト
+        async function testLoadServices() {
+            addLog('サービス名取得開始...', 'log');
+            
+            try {
+                const response = await fetch('ajax_api.php?action=get_services');
+                addLog('Response status: ' + response.status, 'log');
+                
+                const text = await response.text();
+                addLog('Response length: ' + text.length + ' bytes', 'log');
+                
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    addLog('❌ JSON parse error: ' + e.message, 'error');
+                    addLog('Response: ' + text.substring(0, 500), 'error');
+                    return;
+                }
+                
+                if (result.success) {
+                    addLog('✅ サービス名取得成功: ' + result.data.length + '件', 'success');
+                    addLog('サービス名: ' + result.data.join(', '), 'success');
+                } else {
+                    addLog('❌ サービス名取得失敗: ' + result.message, 'error');
+                }
+            } catch (error) {
+                addLog('❌ Fetch error: ' + error.message, 'error');
+            }
+        }
+
+        // 3. 検索APIテスト（空の条件）
+        async function testSearchDevices() {
+            addLog('検索API呼び出し開始（条件なし）...', 'log');
+            
+            try {
+                const params = new URLSearchParams({
+                    action: 'search_devices',
+                    service_name: '',
+                    device_type: '',
+                    device_name: '',
+                    page: 1
+                });
+                
+                const url = 'ajax_api.php?' + params.toString();
+                addLog('Request URL: ' + url, 'log');
+                
+                const response = await fetch(url);
+                addLog('Response status: ' + response.status, 'log');
+                
+                const text = await response.text();
+                addLog('Response length: ' + text.length + ' bytes', 'log');
+                
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    addLog('❌ JSON parse error: ' + e.message, 'error');
+                    addLog('Response: ' + text.substring(0, 500), 'error');
+                    return;
+                }
+                
+                if (result.success && result.data) {
+                    const count = result.data.pagination.total_count;
+                    const devices = result.data.devices.length;
+                    addLog('✅ 検索成功: 総件数 ' + count + ' 件、取得 ' + devices + ' 件', 'success');
+                    
+                    if (count > 0 && devices > 0) {
+                        const first = result.data.devices[0];
+                        addLog('最初のデータ: ' + first.service_name + ' / ' + first.device_type + ' / ' + first.device_name, 'success');
+                    } else {
+                        addLog('⚠️ データが0件です', 'warning');
+                    }
+                } else {
+                    addLog('❌ 検索失敗: ' + (result.message || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                addLog('❌ Fetch error: ' + error.message, 'error');
+            }
+        }
+
+        // 4. manage.phpの実際のコードをシミュレート
+        async function simulateManagePage() {
+            addLog('<h2>manage.php のロジックをシミュレート</h2>', 'log');
+            
+            // DOMContentLoaded相当
+            addLog('DOMContentLoaded 発火', 'log');
+            
+            // loadServices() と searchDevices() を同時実行
+            addLog('loadServices() と searchDevices() を並行実行', 'log');
+            
+            const start = Date.now();
+            await Promise.all([
+                testLoadServices(),
+                testSearchDevices()
+            ]);
+            const elapsed = Date.now() - start;
+            
+            addLog('並行実行完了: ' + elapsed + 'ms', 'success');
+        }
+
+        // 実行
+        window.addEventListener('DOMContentLoaded', async function() {
+            addLog('DOMContentLoaded イベント発火', 'log');
+            
+            await simulateManagePage();
+            
+            addLog('<h2>📊 診断結果</h2>', 'log');
+            addLog('manage.phpで検索できない場合、以下を確認してください：', 'warning');
+            addLog('1. サービス名取得APIが成功しているか', 'warning');
+            addLog('2. 検索APIが成功しているか', 'warning');
+            addLog('3. データが0件でないか', 'warning');
+            addLog('4. manage.phpのブラウザコンソールにエラーがないか（F12で確認）', 'warning');
+            
+            addLog('<h2>🔗 次のステップ</h2>', 'log');
+            addLog('<a href="manage.php" target="_blank">manage.php を開いてF12でコンソールを確認</a>', 'log');
+        });
+    </script>
+</body>
+</html>

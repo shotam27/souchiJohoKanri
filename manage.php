@@ -86,10 +86,11 @@ require_once 'includes/header.php';
             </div>
             
             <div class="form-row">
-                <button type="submit" class="btn-search">
-                    <div class="nav-icon">
+                <button type="submit" id="searchBtn" class="btn btn-primary">
+                    <div class="btn-icon">
                         <?php include 'svgs/search.svg'; ?>
-                    </div> 検索</button>
+                    </div> 検索
+                </button>
             </div>
         </form>
         
@@ -180,6 +181,11 @@ require_once 'includes/header.php';
                     追加の認証情報を表示/非表示
                 </button>
                 
+                <!-- 動的テーブルの拡張列フィールド -->
+                <div id="extendedFields">
+                    <!-- 動的テーブルの拡張列がここに追加されます -->
+                </div>
+                
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">保存</button>
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
@@ -223,12 +229,22 @@ require_once 'includes/header.php';
 
         // サービス名一覧を読み込み
         async function loadServices() {
+            console.log('🔄 loadServices 開始');
             try {
                 const response = await fetch('ajax_api.php?action=get_services');
+                console.log('📥 loadServices response status:', response.status);
+                
                 const result = await response.json();
+                console.log('📄 loadServices result:', result);
                 
                 if (result.success) {
                     const select = document.getElementById('serviceName');
+                    
+                    if (!select) {
+                        console.error('❌ serviceName セレクトが見つかりません');
+                        return;
+                    }
+                    
                     select.innerHTML = '<option value="">-- すべてのサービス --</option>';
                     
                     result.data.forEach(service => {
@@ -237,11 +253,14 @@ require_once 'includes/header.php';
                         option.textContent = service;
                         select.appendChild(option);
                     });
+                    
+                    console.log('✅ loadServices 完了:', result.data.length, '件');
                 } else {
+                    console.error('❌ loadServices 失敗:', result.message);
                     showAlert('error', 'サービス名の読み込みに失敗しました: ' + result.message);
                 }
             } catch (error) {
-                console.error('Error loading services:', error);
+                console.error('❌ Error loading services:', error);
                 showAlert('error', 'サービス名の読み込み中にエラーが発生しました');
             }
         }
@@ -290,6 +309,8 @@ require_once 'includes/header.php';
             const deviceType = document.getElementById('deviceType').value;
             const deviceName = document.getElementById('deviceName').value;
             
+            console.log('🔍 searchDevices 開始', { serviceName, deviceType, deviceName, page });
+            
             currentSearchParams = {
                 service_name: serviceName,
                 device_type: deviceType,
@@ -297,8 +318,12 @@ require_once 'includes/header.php';
                 page: page
             };
             
+            const searchResults = document.getElementById('searchResults');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const resultsContainer = document.getElementById('resultsContainer');
+            
+            // 検索結果エリア全体を表示
+            searchResults.style.display = 'block';
             
             loadingIndicator.style.display = 'flex';
             resultsContainer.style.display = 'none';
@@ -307,66 +332,144 @@ require_once 'includes/header.php';
                 const params = new URLSearchParams(currentSearchParams);
                 params.append('action', 'search_devices');
                 
-                const response = await fetch('ajax_api.php?' + params.toString());
-                const result = await response.json();
+                const url = 'ajax_api.php?' + params.toString();
+                console.log('📡 Request URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response status:', response.status);
+                
+                const text = await response.text();
+                console.log('📄 Response text length:', text.length);
+                
+                let result;
+                try {
+                    result = JSON.parse(text);
+                    console.log('✅ JSON parse success:', result);
+                } catch (e) {
+                    console.error('❌ JSON parse error:', e);
+                    console.error('Response text:', text.substring(0, 500));
+                    throw new Error('JSONパースエラー: ' + e.message);
+                }
                 
                 if (result.success) {
+                    console.log('✅ 検索成功:', result.data.pagination.total_count, '件');
                     displayResults(result.data);
+                    console.log('✅ displayResults から戻りました');
                     currentPage = page;
                 } else {
+                    console.error('❌ 検索失敗:', result.message);
                     showAlert('error', '検索に失敗しました: ' + result.message);
                 }
             } catch (error) {
-                console.error('Error searching devices:', error);
-                showAlert('error', '検索中にエラーが発生しました');
+                console.error('❌ Error searching devices:', error);
+                showAlert('error', '検索中にエラーが発生しました: ' + error.message);
             } finally {
+                console.log('🏁 finally ブロック: loadingIndicator非表示、resultsContainer表示');
                 loadingIndicator.style.display = 'none';
                 resultsContainer.style.display = 'block';
+                
+                console.log('🔍 finally後のDOM状態:');
+                console.log('  searchResults.style.display:', searchResults.style.display);
+                console.log('  loadingIndicator.style.display:', loadingIndicator.style.display);
+                console.log('  resultsContainer.style.display:', resultsContainer.style.display);
+                console.log('  searchResults.offsetHeight:', searchResults.offsetHeight);
+                console.log('  resultsContainer.offsetHeight:', resultsContainer.offsetHeight);
+                
+                console.log('🏁 searchDevices 完了');
             }
         }
 
         // 検索結果を表示
         function displayResults(data) {
+            console.log('📊 displayResults 開始', data);
+            console.log('  devices:', data.devices);
+            console.log('  devices[0]:', data.devices[0]);
+            
             const tableBody = document.getElementById('resultsTableBody');
             const resultsInfo = document.getElementById('resultsInfo');
             const paginationContainer = document.getElementById('paginationContainer');
+            
+            if (!tableBody) {
+                console.error('❌ resultsTableBody が見つかりません');
+                return;
+            }
+            if (!resultsInfo) {
+                console.error('❌ resultsInfo が見つかりません');
+                return;
+            }
+            if (!paginationContainer) {
+                console.error('❌ paginationContainer が見つかりません');
+                return;
+            }
+            
+            console.log('✅ DOM要素すべて存在');
             
             resultsInfo.textContent = `検索結果: ${data.pagination.total_count}件（${data.pagination.current_page}/${data.pagination.total_pages}ページ）`;
             
             tableBody.innerHTML = '';
             
             if (data.devices.length === 0) {
+                console.log('⚠️ 検索結果0件');
                 tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
             } else {
-                data.devices.forEach(device => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${escapeHtml(device.service_name)}</td>
-                        <td>${escapeHtml(device.device_type)}</td>
-                        <td class="text-truncate" title="${escapeHtml(device.device_name)}">${escapeHtml(device.device_name)}</td>
-                        <td>${escapeHtml(device.login_ip || '-')}</td>
-                        <td>${escapeHtml(device.username1)}</td>
-                        <td>${formatDateTime(device.created_at)}</td>
-                        <td>${formatDateTime(device.updated_at)}</td>
-                        <td>
-                            <button class="btn-edit" onclick="openEditModal('${escapeHtml(device.primary_key)}')">
-                                ✏️ 編集
-                            </button>
-                            <button class="btn-delete" onclick="confirmDelete('${escapeHtml(device.primary_key)}', '${escapeHtml(device.device_name)}', '${escapeHtml(device.service_name)}', '${escapeHtml(device.device_type)}')">
-                                🗑️ 削除
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                console.log('✅ 検索結果あり:', data.devices.length, '件');
+                data.devices.forEach((device, index) => {
+                    console.log(`🔄 デバイス${index + 1}処理開始:`, device.device_name);
+                    
+                    try {
+                        const row = document.createElement('tr');
+                        console.log('  ✓ tr要素作成');
+                        
+                        row.innerHTML = `
+                            <td>${escapeHtml(device.service_name)}</td>
+                            <td>${escapeHtml(device.device_type)}</td>
+                            <td class="text-truncate" title="${escapeHtml(device.device_name)}">${escapeHtml(device.device_name)}</td>
+                            <td>${escapeHtml(device.login_ip || '-')}</td>
+                            <td>${escapeHtml(device.username1)}</td>
+                            <td>${formatDateTime(device.created_at)}</td>
+                            <td>${formatDateTime(device.updated_at)}</td>
+                            <td>
+                                <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
+                                        ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
+                                    🔧 マクロ
+                                </button>
+                                <button class="btn-edit" onclick="openEditModal('${escapeHtml(device.primary_key)}')">
+                                    ✏️ 編集
+                                </button>
+                                <button class="btn-delete" onclick="confirmDelete('${escapeHtml(device.primary_key)}', '${escapeHtml(device.device_name)}', '${escapeHtml(device.service_name)}', '${escapeHtml(device.device_type)}')">
+                                    🗑️ 削除
+                                </button>
+                            </td>
+                        `;
+                        console.log('  ✓ innerHTML設定');
+                        
+                        tableBody.appendChild(row);
+                        console.log('  ✓ 行追加完了');
+                    } catch (error) {
+                        console.error(`  ❌ デバイス${index + 1}処理エラー:`, error);
+                    }
                 });
+                console.log('✅ forEach完了');
             }
             
             // ページネーション表示
+            console.log('📄 ページネーション表示開始');
             displayPagination(data.pagination);
+            
+            // デバッグ: DOM状態確認
+            console.log('🔍 DOM状態確認:');
+            console.log('  tableBody.children.length:', tableBody.children.length);
+            console.log('  tableBody.innerHTML.length:', tableBody.innerHTML.length);
+            console.log('  resultsContainer.style.display:', resultsContainer.style.display);
+            console.log('  resultsContainer.offsetHeight:', resultsContainer.offsetHeight);
+            console.log('  resultsContainer.offsetWidth:', resultsContainer.offsetWidth);
+            
+            console.log('✅ displayResults 完了');
         }
 
         // ページネーション表示
         function displayPagination(pagination) {
+            console.log('📄 displayPagination 開始:', pagination);
             const container = document.getElementById('paginationContainer');
             
             if (pagination.total_pages <= 1) {
@@ -397,6 +500,7 @@ require_once 'includes/header.php';
             
             html += '</div>';
             container.innerHTML = html;
+            console.log('✅ displayPagination 完了');
         }
 
         // 編集モーダルを開く
@@ -406,7 +510,9 @@ require_once 'includes/header.php';
                 const result = await response.json();
                 
                 if (result.success) {
-                    const device = result.data;
+                    const device = result.data.device;
+                    const extendedData = result.data.extended_data || {};
+                    const extendedColumns = result.data.extended_columns || [];
                     
                     // フォームに値をセット
                     document.getElementById('edit_primary_key').value = device.primary_key;
@@ -423,6 +529,25 @@ require_once 'includes/header.php';
                     for (let i = 2; i <= 10; i++) {
                         document.getElementById(`edit_username${i}`).value = device[`username${i}`] || '';
                         document.getElementById(`edit_password${i}`).value = device[`password${i}`] || '';
+                    }
+                    
+                    // 動的テーブルの拡張列フィールドを生成
+                    const extendedFieldsContainer = document.getElementById('extendedFields');
+                    if (extendedColumns.length > 0) {
+                        let html = '<h4 style="margin-top: 20px; margin-bottom: 10px;">動的テーブル拡張列</h4>';
+                        
+                        extendedColumns.forEach(col => {
+                            html += `
+                                <div class="form-group">
+                                    <label for="extended_${escapeHtml(col)}">${escapeHtml(col)}:</label>
+                                    <input type="text" id="extended_${escapeHtml(col)}" name="extended_${escapeHtml(col)}" value="${escapeHtml(extendedData[col] || '')}">
+                                </div>
+                            `;
+                        });
+                        
+                        extendedFieldsContainer.innerHTML = html;
+                    } else {
+                        extendedFieldsContainer.innerHTML = '';
                     }
                     
                     // モーダルを表示
@@ -531,6 +656,45 @@ require_once 'includes/header.php';
             } catch (error) {
                 console.error('Error deleting device:', error);
                 showAlert('error', '削除中にエラーが発生しました');
+            }
+        }
+
+        // Teratermマクロダウンロード
+        async function downloadTeratermMacro(deviceIp, username, password, deviceName) {
+            if (!deviceIp || !username || !password) {
+                showAlert('error', 'IPアドレス、ユーザー名、パスワードが必要です');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    action: 'generate_teraterm_macro',
+                    device_ip: deviceIp,
+                    username: username,
+                    password: password,
+                    device_name: deviceName
+                });
+
+                const response = await fetch('ajax_api.php?' + params.toString());
+                
+                if (!response.ok) {
+                    throw new Error('マクロの生成に失敗しました');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${deviceName}_${deviceIp}.ttl`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert('success', 'Teratermマクロをダウンロードしました');
+            } catch (error) {
+                console.error('Macro download error:', error);
+                showAlert('error', 'マクロのダウンロードに失敗しました: ' + error.message);
             }
         }
 
@@ -659,6 +823,19 @@ require_once 'includes/header.php';
         
         .btn-delete:hover {
             background-color: #c82333;
+        }
+        
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+        
+        .btn-icon svg {
+            width: 100%;
+            height: 100%;
         }
     </style>
 

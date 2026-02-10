@@ -61,7 +61,7 @@ class CsvProcessor {
                 $this->headers = array_map('trim', $row);
                 
                 // 必須カラムの存在確認（4つのみ）
-                $requiredColumns = ['サービス名', '装置種別', '装置名称', 'ユーザー名'];
+                $requiredColumns = ['サービス名', '装置種別', '装置名称', 'ユーザー名1'];
                 foreach ($requiredColumns as $required) {
                     if (!in_array($required, $this->headers)) {
                         $this->errors[] = "必須カラムが不足しています: " . $required;
@@ -97,8 +97,8 @@ class CsvProcessor {
                     $this->errors[] = "行{$rowNumber}: 装置名称が空です";
                     continue;
                 }
-                if (empty($rowData['ユーザー名'])) {
-                    $this->errors[] = "行{$rowNumber}: ユーザー名が空です";
+                if (empty($rowData['ユーザー名1'])) {
+                    $this->errors[] = "行{$rowNumber}: ユーザー名1が空です";
                     continue;
                 }
                 
@@ -207,7 +207,7 @@ class CsvProcessor {
         return $rowData['サービス名'] . '_' . 
                $rowData['装置種別'] . '_' . 
                $rowData['装置名称'] . '_' . 
-               $rowData['ユーザー名'];
+               $rowData['ユーザー名1'];
     }
     
     /**

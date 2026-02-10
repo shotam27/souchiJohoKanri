@@ -95,9 +95,11 @@ require_once 'includes/header.php';
                         <?php include 'svgs/rotate.svg'; ?>
                     </div> クリア
                 </button>
-                <button type="submit" id="searchBtn" class="btn btn-primary">                    <div class="btn-icon">
+                <button type="submit" id="searchBtn" class="btn btn-primary">
+                    <div class="btn-icon">
                         <?php include 'svgs/search.svg'; ?>
-                    </div> 検索</button>
+                    </div> 検索
+                </button>
             </div>
         </form>
         
@@ -246,23 +248,25 @@ require_once 'includes/header.php';
 
         // 検索実行
         async function performSearch(page = 1) {
-            const formData = new FormData(document.getElementById('searchForm'));
-            const params = new URLSearchParams(formData);
-            params.append('action', 'search_devices');
-            params.append('page', page);
+            const serviceName = document.getElementById('serviceName').value;
+            const deviceType = document.getElementById('deviceType').value;
+            const deviceName = document.getElementById('deviceName').value;
             
-            // 現在の検索パラメータを保存
-            currentSearchParams = Object.fromEntries(formData);
+            currentSearchParams = {
+                service_name: serviceName,
+                device_type: deviceType,
+                device_name: deviceName,
+                page: page
+            };
             currentPage = page;
 
             try {
                 showLoading(true);
                 
-                const response = await fetch('ajax_api.php', {
-                    method: 'POST',
-                    body: params
-                });
+                const params = new URLSearchParams(currentSearchParams);
+                params.append('action', 'search_devices');
                 
+                const response = await fetch('ajax_api.php?' + params.toString());
                 const result = await response.json();
                 
                 if (result.success) {
@@ -307,14 +311,12 @@ require_once 'includes/header.php';
                         <td>${formatDateTime(device.created_at)}</td>
                         <td>${formatDateTime(device.updated_at)}</td>
                         <td>
-                            <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
+                            <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')"
                                     ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
                                 🔧 マクロ
                             </button>
                         </td>
                     `;
-                    tableBody.appendChild(row);
-                });
             }
             
             // ページネーション表示

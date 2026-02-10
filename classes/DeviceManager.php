@@ -1333,5 +1333,58 @@ class DeviceManager {
             throw new Exception("動的テーブルからの削除に失敗しました: " . $e->getMessage());
         }
     }
+    
+    /**
+     * 動的テーブルからデータを取得
+     * @param string $tableName
+     * @param string $primaryKey
+     * @return array|null
+     */
+    public function getDynamicTableData($tableName, $primaryKey) {
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
+        try {
+            if ($isPgsql) {
+                $sql = "SELECT * FROM \"{$tableName}\" WHERE primary_key = :primary_key";
+            } else {
+                $sql = "SELECT * FROM `{$tableName}` WHERE primary_key = :primary_key";
+            }
+            
+            $stmt = $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("動的テーブル '{$tableName}' からのデータ取得に失敗: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 動的テーブルの拡張列名を取得（基本列を除く）
+     * @param string $tableName
+     * @return array
+     */
+    public function getDynamicTableExtendedColumns($tableName) {
+        $allColumns = $this->getTableColumns($tableName);
+        
+        // 基本列（device_infoと共通の列）を除外
+        $baseColumns = [
+            'primary_key', 'device_name', 'login_ip',
+            'username1', 'password1', 'username2', 'password2',
+            'username3', 'password3', 'username4', 'password4',
+            'username5', 'password5', 'username6', 'password6',
+            'username7', 'password7', 'username8', 'password8',
+            'username9', 'password9', 'username10', 'password10',
+            'created_at', 'updated_at'
+        ];
+        
+        $extendedColumns = [];
+        foreach ($allColumns as $column) {
+            if (!in_array($column, $baseColumns)) {
+                $extendedColumns[] = $column;
+            }
+        }
+        
+        return $extendedColumns;
+    }
 }
 ?>
