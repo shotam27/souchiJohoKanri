@@ -191,6 +191,94 @@ try {
             echo $generator->generate();
             exit; // JSON出力をスキップ
             
+        case 'get_device':
+            // 装置情報を取得
+            $primaryKey = $_GET['primary_key'] ?? $_POST['primary_key'] ?? '';
+            
+            if (empty($primaryKey)) {
+                throw new Exception('Primary keyが指定されていません');
+            }
+            
+            $device = $deviceManager->getDeviceByPrimaryKey($primaryKey);
+            
+            if (!$device) {
+                throw new Exception('指定された装置情報が見つかりません');
+            }
+            
+            $response = [
+                'success' => true,
+                'data' => $device,
+                'message' => '装置情報を取得しました'
+            ];
+            break;
+            
+        case 'update_device':
+            // 装置情報を更新
+            $primaryKey = $_POST['primary_key'] ?? '';
+            
+            if (empty($primaryKey)) {
+                throw new Exception('Primary keyが指定されていません');
+            }
+            
+            // 更新データを取得
+            $updateData = [
+                'service_name' => $_POST['service_name'] ?? '',
+                'device_type' => $_POST['device_type'] ?? '',
+                'device_name' => $_POST['device_name'] ?? '',
+                'login_ip' => $_POST['login_ip'] ?? null,
+                'username1' => $_POST['username1'] ?? ''
+            ];
+            
+            // パスワード1-10、ユーザー名2-10を追加
+            $updateData['password1'] = $_POST['password1'] ?? null;
+            for ($i = 2; $i <= 10; $i++) {
+                $updateData["username{$i}"] = $_POST["username{$i}"] ?? null;
+                $updateData["password{$i}"] = $_POST["password{$i}"] ?? null;
+            }
+            
+            // 必須項目チェック
+            if (empty($updateData['service_name']) || empty($updateData['device_type']) || 
+                empty($updateData['device_name']) || empty($updateData['username1'])) {
+                throw new Exception('サービス名、装置種別、装置名称、ユーザー名1は必須です');
+            }
+            
+            $deviceManager->updateDeviceInfo($primaryKey, $updateData);
+            
+            $response = [
+                'success' => true,
+                'data' => null,
+                'message' => '装置情報を更新しました'
+            ];
+            break;
+            
+        case 'delete_device':
+            // 装置情報を削除
+            $primaryKey = $_POST['primary_key'] ?? '';
+            $serviceName = $_POST['service_name'] ?? '';
+            $deviceType = $_POST['device_type'] ?? '';
+            
+            if (empty($primaryKey)) {
+                throw new Exception('Primary keyが指定されていません');
+            }
+            
+            // device_infoから削除
+            $deviceManager->deleteDeviceInfo($primaryKey);
+            
+            // 動的テーブルからも削除
+            if (!empty($serviceName) && !empty($deviceType)) {
+                $tableName = sanitizeTableName($serviceName . '_' . $deviceType);
+                if ($deviceManager->dynamicTableExists($tableName)) {
+                    $deviceManager->deleteFromDynamicTable($tableName, $primaryKey);
+                }
+            }
+            
+            $response = [
+                'success' => true,
+                'data' => null,
+                'message' => '装置情報を削除しました'
+            ];
+            break;
+            
         default:
             throw new Exception('不正なアクションです: ' . $action);
     }

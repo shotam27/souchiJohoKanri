@@ -38,8 +38,14 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                             <span class="nav-text nav-text-hidden">装置検索</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="index.php" class="nav-link <?= $currentPage === 'index' ? 'active' : '' ?>" title="CSVアップロード">
+                    <li class="nav-item">                        <a href="manage.php" class="nav-link <?= $currentPage === 'manage' ? 'active' : '' ?>" title="装置情報管理">
+                            <div class="nav-icon">
+                                <?php include 'svgs/info.svg'; ?>
+                            </div>
+                            <span class="nav-text nav-text-hidden">装置情報管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">                        <a href="index.php" class="nav-link <?= $currentPage === 'index' ? 'active' : '' ?>" title="CSVアップロード">
                             <div class="nav-icon">
                                 <?php include 'svgs/upload.svg'; ?>
                             </div>

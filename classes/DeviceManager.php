@@ -1238,5 +1238,100 @@ class DeviceManager {
             throw new Exception("カラム '{$columnName}' をテーブル '{$tableName}' に追加できませんでした: " . $e->getMessage());
         }
     }
+    
+    /**
+     * Primary Keyで装置情報を取得
+     * @param string $primaryKey
+     * @return array|null
+     */
+    public function getDeviceByPrimaryKey($primaryKey) {
+        $sql = "SELECT * FROM device_info WHERE primary_key = :primary_key";
+        
+        try {
+            $stmt = $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (Exception $e) {
+            throw new Exception("装置情報の取得に失敗しました: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 装置情報を更新
+     * @param string $primaryKey
+     * @param array $deviceData
+     * @return bool
+     */
+    public function updateDeviceInfo($primaryKey, $deviceData) {
+        $updateFields = [];
+        $params = ['primary_key' => $primaryKey];
+        
+        // 更新可能なフィールド
+        $allowedFields = ['service_name', 'device_type', 'device_name', 'login_ip'];
+        for ($i = 1; $i <= 10; $i++) {
+            $allowedFields[] = "username{$i}";
+            $allowedFields[] = "password{$i}";
+        }
+        
+        foreach ($deviceData as $field => $value) {
+            if (in_array($field, $allowedFields)) {
+                $updateFields[] = "{$field} = :{$field}";
+                $params[$field] = $value;
+            }
+        }
+        
+        if (empty($updateFields)) {
+            throw new Exception("更新するフィールドがありません");
+        }
+        
+        $sql = "UPDATE device_info SET " . implode(', ', $updateFields) . ", updated_at = CURRENT_TIMESTAMP WHERE primary_key = :primary_key";
+        
+        try {
+            $this->database->execute($sql, $params);
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("装置情報の更新に失敗しました: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 装置情報を削除
+     * @param string $primaryKey
+     * @return bool
+     */
+    public function deleteDeviceInfo($primaryKey) {
+        try {
+            // device_infoから削除
+            $sql = "DELETE FROM device_info WHERE primary_key = :primary_key";
+            $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("装置情報の削除に失敗しました: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 動的テーブルからも関連データを削除
+     * @param string $tableName
+     * @param string $primaryKey
+     * @return bool
+     */
+    public function deleteFromDynamicTable($tableName, $primaryKey) {
+        $isPgsql = $this->database->getDbType() === 'pgsql';
+        
+        try {
+            if ($isPgsql) {
+                $sql = "DELETE FROM \"{$tableName}\" WHERE primary_key = :primary_key";
+            } else {
+                $sql = "DELETE FROM `{$tableName}` WHERE primary_key = :primary_key";
+            }
+            
+            $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("動的テーブルからの削除に失敗しました: " . $e->getMessage());
+        }
+    }
 }
 ?>
