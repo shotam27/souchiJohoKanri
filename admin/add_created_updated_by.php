@@ -31,7 +31,8 @@ try {
         ";
     }
     
-    $existingColumns = $database->query($checkSql);
+    $stmt = $database->execute($checkSql);
+    $existingColumns = $stmt->fetchAll();
     $existingColumnNames = array_column($existingColumns, $dbType === 'pgsql' ? 'column_name' : 'COLUMN_NAME');
     
     echo "既存のカラム: " . implode(', ', $existingColumnNames) . "\n\n";

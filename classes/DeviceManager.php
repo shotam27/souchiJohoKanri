@@ -785,6 +785,8 @@ class DeviceManager {
                 password9,
                 username10,
                 password10,
+                created_by,
+                updated_by,
                 created_at,
                 updated_at
             FROM device_info 

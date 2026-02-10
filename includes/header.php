@@ -45,7 +45,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="upload.php" class="nav-link <?= $currentPage === 'upload' ? 'active' : '' ?>" title="CSVアップロード">
+                        <a href="download.php" class="nav-link <?= $currentPage === 'download' ? 'active' : '' ?>" title="CSVダウンロード">
                             <div class="nav-icon">
                                 <?php include 'svgs/download.svg'; ?>
                             </div>

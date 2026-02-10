@@ -280,20 +280,10 @@ try {
             
             // 新しい動的テーブルに挿入または更新
             if ($deviceManager->dynamicTableExists($newTableName)) {
-                // 動的テーブル用のデータを準備
+                // 動的テーブル用のデータを準備（primary_keyと拡張カラムのみ）
                 $dynamicData = [
-                    'primary_key' => $primaryKey,
-                    'device_name' => $updateData['device_name'],
-                    'login_ip' => $updateData['login_ip'],
-                    'username1' => $updateData['username1'],
-                    'password1' => $updateData['password1']
+                    'primary_key' => $primaryKey
                 ];
-                
-                // username2-10, password2-10を追加
-                for ($i = 2; $i <= 10; $i++) {
-                    $dynamicData["username{$i}"] = $updateData["username{$i}"];
-                    $dynamicData["password{$i}"] = $updateData["password{$i}"];
-                }
                 
                 // 拡張列のデータを追加（extended_で始まるPOSTパラメータ）
                 $extendedColumns = $deviceManager->getDynamicTableExtendedColumns($newTableName);
@@ -304,7 +294,10 @@ try {
                     }
                 }
                 
-                $deviceManager->insertOrUpdateDynamicData($newTableName, $dynamicData);
+                // 拡張カラムがある場合のみ動的テーブルを更新
+                if (count($dynamicData) > 1) {
+                    $deviceManager->insertOrUpdateDynamicData($newTableName, $dynamicData);
+                }
             }
             
             $response = [
