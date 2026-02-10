@@ -114,6 +114,8 @@ require_once 'includes/header.php';
                             <th>装置名称</th>
                             <th>ログインIP</th>
                             <th>ユーザー名</th>
+                            <th>作成者</th>
+                            <th>更新者</th>
                             <th>登録日時</th>
                             <th>更新日時</th>
                             <th>操作</th>
@@ -140,6 +142,18 @@ require_once 'includes/header.php';
                 <input type="hidden" id="edit_primary_key" name="primary_key">
                 <input type="hidden" id="edit_old_service_name" name="old_service_name">
                 <input type="hidden" id="edit_old_device_type" name="old_device_type">
+                
+                <!-- 作成者・更新者情報 -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <strong>作成者:</strong> <span id="display_created_by" style="color: #495057;">-</span>
+                        </div>
+                        <div>
+                            <strong>更新者:</strong> <span id="display_updated_by" style="color: #495057;">-</span>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="form-group">
                     <label for="edit_service_name">サービス名:<span style="color: red;">*</span></label>
@@ -409,8 +423,8 @@ require_once 'includes/header.php';
             tableBody.innerHTML = '';
             
             if (data.devices.length === 0) {
-                console.log('⚠️ 検索結果0件');
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
+                console.error('検索結果0件');
+                tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
             } else {
                 console.log('✅ 検索結果あり:', data.devices.length, '件');
                 data.devices.forEach((device, index) => {
@@ -426,6 +440,8 @@ require_once 'includes/header.php';
                             <td class="text-truncate" title="${escapeHtml(device.device_name)}">${escapeHtml(device.device_name)}</td>
                             <td>${escapeHtml(device.login_ip || '-')}</td>
                             <td>${escapeHtml(device.username1)}</td>
+                            <td>${escapeHtml(device.created_by || '-')}</td>
+                            <td>${escapeHtml(device.updated_by || '-')}</td>
                             <td>${formatDateTime(device.created_at)}</td>
                             <td>${formatDateTime(device.updated_at)}</td>
                             <td>
@@ -524,6 +540,10 @@ require_once 'includes/header.php';
                     document.getElementById('edit_login_ip').value = device.login_ip || '';
                     document.getElementById('edit_username1').value = device.username1;
                     document.getElementById('edit_password1').value = device.password1 || '';
+                    
+                    // 作成者・更新者情報を表示
+                    document.getElementById('display_created_by').textContent = device.created_by || '-';
+                    document.getElementById('display_updated_by').textContent = device.updated_by || '-';
                     
                     // 追加の認証情報
                     for (let i = 2; i <= 10; i++) {

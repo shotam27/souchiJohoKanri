@@ -169,8 +169,8 @@ try {
         <div class="header">
             <h1>⚙️ テーブル管理</h1>
             <div class="nav-buttons">
-                <a href="index.php">📤 CSVアップロード</a>
-                <a href="search.php">🔍 装置検索</a>
+                <a href="upload.php">📤 CSVアップロード</a>
+                <a href="manage.php">⚙️ 装置情報管理</a>
                 <a href="relations.php">🔗 リレーション管理</a>
             </div>
         </div>

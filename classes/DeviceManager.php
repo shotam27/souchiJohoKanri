@@ -193,6 +193,23 @@ class DeviceManager {
         
         $params = $deviceData;
         
+        // 作成者・更新者の情報を追加
+        require_once __DIR__ . '/../includes/auth_helper.php';
+        $currentUser = getLoggedInUsername();
+        
+        // created_byは新規作成時のみ設定（ON DUPLICATE KEY UPDATEでは更新されない）
+        if ($currentUser) {
+            $columns[] = 'created_by';
+            $placeholders[] = ':created_by';
+            $params['created_by'] = $currentUser;
+            
+            // updated_byは常に設定
+            $columns[] = 'updated_by';
+            $placeholders[] = ':updated_by';
+            $updateColumns[] = 'updated_by';
+            $params['updated_by'] = $currentUser;
+        }
+        
         // device_infoテーブルの既存カラムを取得
         $existingColumns = $this->getTableColumns('device_info');
         
@@ -210,7 +227,7 @@ class DeviceManager {
             // PostgreSQL用: ON CONFLICT ... DO UPDATE
             $updateClauses = [];
             foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip']) ||
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip', 'created_by', 'updated_by']) ||
                              preg_match('/^(username|password)\d+$/', $col)
                     ? $col 
                     : "\"{$col}\"";
@@ -229,7 +246,7 @@ class DeviceManager {
             // MySQL用: ON DUPLICATE KEY UPDATE
             $updateClauses = [];
             foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip']) ||
+                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip', 'created_by', 'updated_by']) ||
                              preg_match('/^(username|password)\d+$/', $col)
                     ? $col 
                     : "`{$col}`";
@@ -1282,6 +1299,14 @@ class DeviceManager {
         
         if (empty($updateFields)) {
             throw new Exception("更新するフィールドがありません");
+        }
+        
+        // 更新者の情報を追加
+        require_once __DIR__ . '/../includes/auth_helper.php';
+        $currentUser = getLoggedInUsername();
+        if ($currentUser) {
+            $updateFields[] = "updated_by = :updated_by";
+            $params['updated_by'] = $currentUser;
         }
         
         $sql = "UPDATE device_info SET " . implode(', ', $updateFields) . ", updated_at = CURRENT_TIMESTAMP WHERE primary_key = :primary_key";

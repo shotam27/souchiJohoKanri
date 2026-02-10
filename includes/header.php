@@ -30,14 +30,6 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             <div class="navbar-menu">
                 <!-- ナビゲーションメニュー -->
                 <ul class="navbar-nav" id="navbarNav">
-                    <li class="nav-item">
-                        <a href="search.php" class="nav-link <?= $currentPage === 'search' ? 'active' : '' ?>" title="装置検索">
-                            <div class="nav-icon">
-                                <?php include 'svgs/search.svg'; ?>
-                            </div>
-                            <span class="nav-text nav-text-hidden">装置検索</span>
-                        </a>
-                    </li>
                     <li class="nav-item">                        <a href="manage.php" class="nav-link <?= $currentPage === 'manage' ? 'active' : '' ?>" title="装置情報管理">
                             <div class="nav-icon">
                                 <?php include 'svgs/info.svg'; ?>
@@ -53,7 +45,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="download.php" class="nav-link <?= $currentPage === 'download' ? 'active' : '' ?>" title="CSVダウンロード">
+                        <a href="upload.php" class="nav-link <?= $currentPage === 'upload' ? 'active' : '' ?>" title="CSVアップロード">
                             <div class="nav-icon">
                                 <?php include 'svgs/download.svg'; ?>
                             </div>
