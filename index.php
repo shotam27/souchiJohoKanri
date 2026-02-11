@@ -24,7 +24,6 @@ if (isLoggedIn()) {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
         }
         
@@ -42,7 +41,6 @@ if (isLoggedIn()) {
             width: 100px;
             height: 100px;
             margin: 0 auto 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -126,7 +124,6 @@ if (isLoggedIn()) {
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 15px 40px;
             border-radius: 8px;

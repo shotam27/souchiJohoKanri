@@ -102,6 +102,41 @@ try {
             $stmt = $database->execute($sql, [$selectedService, $selectedDeviceType]);
             $previewData = $stmt->fetchAll();
             
+            // 全行が空欄のカラムを除外
+            if (!empty($previewData)) {
+                $columnsToKeep = [];
+                foreach ($previewColumns as $index => $columnName) {
+                    $hasValue = false;
+                    foreach ($previewData as $row) {
+                        $values = array_values($row);
+                        $value = $values[$index] ?? '';
+                        // 値が存在し、空でない場合
+                        if ($value !== null && trim((string)$value) !== '') {
+                            $hasValue = true;
+                            break;
+                        }
+                    }
+                    if ($hasValue) {
+                        $columnsToKeep[] = $index;
+                    }
+                }
+                
+                // 保持するカラムのみに絞り込み
+                $previewColumns = array_values(array_intersect_key($previewColumns, array_flip($columnsToKeep)));
+                
+                // プレビューデータも保持するカラムのみに絞り込み
+                $filteredPreviewData = [];
+                foreach ($previewData as $row) {
+                    $values = array_values($row);
+                    $filteredRow = [];
+                    foreach ($columnsToKeep as $index) {
+                        $filteredRow[] = $values[$index] ?? '';
+                    }
+                    $filteredPreviewData[] = $filteredRow;
+                }
+                $previewData = $filteredPreviewData;
+            }
+            
             // 総件数を取得
             $countSql = "
                 SELECT COUNT(*) as total 
@@ -173,8 +208,39 @@ try {
                 $data = $stmt->fetchAll();
                 
                 if (!empty($data)) {
-                    // 選択されたフィールドを取得
+                    // 全行が空欄のカラムを除外
+                    $allColumns = array_keys($data[0]);
+                    $columnsToKeep = [];
+                    
+                    foreach ($allColumns as $columnName) {
+                        $hasValue = false;
+                        foreach ($data as $row) {
+                            $value = $row[$columnName] ?? '';
+                            // 値が存在し、空でない場合
+                            if ($value !== null && trim((string)$value) !== '') {
+                                $hasValue = true;
+                                break;
+                            }
+                        }
+                        if ($hasValue) {
+                            $columnsToKeep[] = $columnName;
+                        }
+                    }
+                    
+                    // データを保持するカラムのみに絞り込み
+                    $filteredData = [];
+                    foreach ($data as $row) {
+                        $filteredRow = [];
+                        foreach ($columnsToKeep as $columnName) {
+                            $filteredRow[$columnName] = $row[$columnName] ?? '';
+                        }
+                        $filteredData[] = $filteredRow;
+                    }
+                    $data = $filteredData;
+                    
+                    // 選択されたフィールドを取得（除外されたカラムは除く）
                     $selectedFields = $_POST['selected_fields'] ?? [];
+                    $selectedFields = array_intersect($selectedFields, $columnsToKeep);
                     
                     // デバッグ: 選択されたフィールドをログ出力
                     error_log("=== CSV Download Debug ===");
@@ -322,11 +388,6 @@ require_once 'includes/header.php';
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <button type="button" class="btn btn-primary" onclick="updatePreview()">
-                        プレビュー表示
-                    </button>
-                </div>
             </form>
         </div>
         
@@ -344,10 +405,14 @@ require_once 'includes/header.php';
             </div>
             
             <?php if (!empty($previewData)): ?>
-            <h4 style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 20px; height: 20px; display: inline-flex;"><?php include 'svgs/info.svg'; ?></span>
-                データプレビュー
-            </h4>
+            <div style="margin-bottom: 15px;">
+                <p style="font-weight: bold; color: #333; margin-bottom: 5px;">
+    
+                        <span class="svg-wrapper" style="width: 20px; height: 20px; display: inline-flex;"><?php include 'svgs/info.svg'; ?></span>
+                        不要なカラムはチェックを外してください
+                </p>
+                <p style="color: #666; font-size: 0.95em;">※出力されるCSVは行列逆になります</p>
+            </div>
             <div style="overflow-x: auto;">
                 <table id="previewTable" class="preview-table transposed">
                     <?php
@@ -376,8 +441,8 @@ require_once 'includes/header.php';
                         echo '<tbody>';
                         foreach ($transposedData as $fieldName => $fieldValues) {
                             $fieldId = 'field_' . md5($fieldName); // ユニークなID生成
-                            echo '<tr>';
-                            echo '<td class="checkbox-cell"><input type="checkbox" id="' . $fieldId . '" name="selected_fields[]" value="' . h($fieldName) . '" checked></td>';
+                            echo '<tr class="clickable-row" data-checkbox-id="' . $fieldId . '" style="cursor: pointer;">';
+                            echo '<td class="checkbox-cell" onclick="event.stopPropagation();"><input type="checkbox" id="' . $fieldId . '" name="selected_fields[]" value="' . h($fieldName) . '" checked></td>';
                             echo '<th class="row-header">' . h($fieldName) . '</th>';
                             foreach ($fieldValues as $value) {
                                 echo '<td title="' . h($value) . '">' . h($value) . '</td>';
@@ -392,7 +457,9 @@ require_once 'includes/header.php';
             
             <!-- ダウンロードボタン -->
             <div class="download-section">
-                <h4>📥 CSVダウンロード</h4>
+                <h4>                
+                    CSVダウンロード
+                </h4>
                 <p id="download-info">全<?= number_format($totalCount) ?>件のデータをCSVファイルとしてダウンロードします。</p>
                 
                 <form method="post" id="downloadForm">
@@ -403,7 +470,8 @@ require_once 'includes/header.php';
                     <!-- 選択されたフィールドをここに動的に追加 -->
                     
                     <button type="submit" class="btn btn-success">
-                        💾 CSV ダウンロード
+                        <span style="width: 16px; height: 16px; display: inline-flex; vertical-align: middle; margin-right: 4px;"><?php include 'svgs/download.svg'; ?></span>
+                        CSV ダウンロード
                     </button>
                 </form>
             </div>
@@ -516,9 +584,10 @@ require_once 'includes/header.php';
             const selectedFields = getSelectedFields();
             const downloadBtn = document.querySelector('#downloadForm button');
             if (downloadBtn) {
-                const baseText = '💾 CSV ダウンロード';
+                const iconHtml = downloadBtn.querySelector('span')?.outerHTML || '';
+                const baseText = 'CSV ダウンロード';
                 const countText = selectedFields.length > 0 ? ` (${selectedFields.length}項目)` : ' (項目未選択)';
-                downloadBtn.textContent = baseText + countText;
+                downloadBtn.innerHTML = iconHtml + baseText + countText;
             }
         }
         
@@ -589,6 +658,22 @@ require_once 'includes/header.php';
             
             // 初期表示時にダウンロードボタンを更新
             updateDownloadButton();
+            
+            // 行クリックでチェックボックスの状態を変更
+            const clickableRows = document.querySelectorAll('.clickable-row');
+            clickableRows.forEach(row => {
+                row.addEventListener('click', function(e) {
+                    // チェックボックスセル以外をクリックした場合
+                    if (!e.target.closest('.checkbox-cell')) {
+                        const checkboxId = this.getAttribute('data-checkbox-id');
+                        const checkbox = document.getElementById(checkboxId);
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            updateDownloadButton();
+                        }
+                    }
+                });
+            });
         });
     </script>
 

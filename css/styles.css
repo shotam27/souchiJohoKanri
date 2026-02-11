@@ -21,6 +21,12 @@ body {
     flex-direction: column;
 }
 
+.svg-wrapper {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
 /* ===================================
    ナビゲーションバー
    =================================== */
@@ -450,7 +456,6 @@ ul, ol {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 20px;
     border-radius: 12px;
@@ -585,18 +590,24 @@ ul, ol {
     font-weight: bold;
     min-width: 120px;
     position: sticky;
-    left: 40px;
-    z-index: 10;
+    left: 39px;
+    z-index: 11;
+    border-left: none;
+    margin-left: -1px;
 }
 
 .preview-table.transposed th.checkbox-header,
 .preview-table.transposed td.checkbox-cell {
     width: 40px;
+    min-width: 40px;
+    max-width: 40px;
     text-align: center;
     background-color: #f8f9fa;
     position: sticky;
     left: 0;
     z-index: 10;
+    padding: 8px 4px;
+    border-right: none;
 }
 
 .preview-table.transposed td.checkbox-cell input[type="checkbox"] {

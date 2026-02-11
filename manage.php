@@ -114,10 +114,10 @@ require_once 'includes/header.php';
                             <th>装置名称</th>
                             <th>ログインIP</th>
                             <th>ユーザー名</th>
-                            <th>作成者</th>
-                            <th>更新者</th>
-                            <th>登録日時</th>
-                            <th>更新日時</th>
+                            <th style="display: none;">作成者</th>
+                            <th style="display: none;">更新者</th>
+                            <th style="display: none;">登録日時</th>
+                            <th style="display: none;">更新日時</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -424,7 +424,7 @@ require_once 'includes/header.php';
             
             if (data.devices.length === 0) {
                 console.error('検索結果0件');
-                tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #6c757d;">検索条件に一致するデータが見つかりませんでした</td></tr>';
             } else {
                 console.log('✅ 検索結果あり:', data.devices.length, '件');
                 data.devices.forEach((device, index) => {
@@ -440,10 +440,10 @@ require_once 'includes/header.php';
                             <td class="text-truncate" title="${escapeHtml(device.device_name)}">${escapeHtml(device.device_name)}</td>
                             <td>${escapeHtml(device.login_ip || '-')}</td>
                             <td>${escapeHtml(device.username1)}</td>
-                            <td>${escapeHtml(device.created_by || '-')}</td>
-                            <td>${escapeHtml(device.updated_by || '-')}</td>
-                            <td>${formatDateTime(device.created_at)}</td>
-                            <td>${formatDateTime(device.updated_at)}</td>
+                            <td style="display: none;">${escapeHtml(device.created_by || '-')}</td>
+                            <td style="display: none;">${escapeHtml(device.updated_by || '-')}</td>
+                            <td style="display: none;">${formatDateTime(device.created_at)}</td>
+                            <td style="display: none;">${formatDateTime(device.updated_at)}</td>
                             <td>
                                 <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
                                         ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
