@@ -3,27 +3,27 @@ from pathlib import Path
 import html
 from datetime import datetime
 
-def find_php_files(directory):
-    """指定されたディレクトリからすべてのPHPファイルを再帰的に検索"""
-    php_files = []
+def find_files(directory):
+    """指定されたディレクトリからすべてのPHPとCSSファイルを再帰的に検索"""
+    target_files = []
     for root, dirs, files in os.walk(directory):
         # 特定のディレクトリを除外
         dirs[:] = [d for d in dirs if d not in ['vendor', 'node_modules', '.git', 'logs', 'uploads']]
         
         for file in files:
-            if file.endswith('.php'):
-                php_files.append(os.path.join(root, file))
+            if file.endswith('.php') or file.endswith('.css'):
+                target_files.append(os.path.join(root, file))
     # 最終更新日時で降順にソート（新しい順）
-    return sorted(php_files, key=lambda x: os.path.getmtime(x), reverse=True)
+    return sorted(target_files, key=lambda x: os.path.getmtime(x), reverse=True)
 
 def generate_html(php_files, base_dir):
-    """PHPファイルの内容を含むHTMLを生成"""
+    """PHPとCSSファイルの内容を含むHTMLを生成"""
     html_content = """<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP Files Documentation</title>
+    <title>PHP & CSS Files Documentation</title>
     <style>
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -141,7 +141,7 @@ def generate_html(php_files, base_dir):
 </head>
 <body>
     <div class="container">
-        <h1>📁 PHP Files Documentation</h1>
+        <h1>📁 PHP & CSS Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> {total_files} ファイル<br>
             <strong>生成日時:</strong> {timestamp}
@@ -239,14 +239,14 @@ def main():
     # カレントディレクトリを取得
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    print("PHPファイルを検索中...")
-    php_files = find_php_files(base_dir)
+    print("PHPとCSSファイルを検索中...")
+    php_files = find_files(base_dir)
     
     if not php_files:
-        print("PHPファイルが見つかりませんでした。")
+        print("PHPとCSSファイルが見つかりませんでした。")
         return
     
-    print(f"{len(php_files)}個のPHPファイルが見つかりました。")
+    print(f"{len(php_files)}個のファイルが見つかりました。")
     for php_file in php_files:
         print(f"  - {os.path.relpath(php_file, base_dir)}")
     
