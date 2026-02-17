@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP & CSS Files Documentation</title>
+    <title>PHP, CSS & Shell Script Files Documentation</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -121,58 +121,260 @@
 </head>
 <body>
     <div class="container">
-        <h1>📁 PHP & CSS Files Documentation</h1>
+        <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
-            <strong>総ファイル数:</strong> 35 ファイル<br>
-            <strong>生成日時:</strong> 2026-02-11 17:17:15
+            <strong>総ファイル数:</strong> 39 ファイル<br>
+            <strong>生成日時:</strong> 2026-02-17 22:46:02
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">download.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 16:04:38)</span></li>
-                <li><a href="#file-2">css\styles.css</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 15:52:51)</span></li>
-                <li><a href="#file-3">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 13:10:42)</span></li>
-                <li><a href="#file-4">insert_dummy_data.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 13:10:42)</span></li>
-                <li><a href="#file-5">index.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 12:59:41)</span></li>
-                <li><a href="#file-6">classes\DeviceManager.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:26:28)</span></li>
-                <li><a href="#file-7">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:24:44)</span></li>
-                <li><a href="#file-8">admin\update_existing_user_fields.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:24:44)</span></li>
-                <li><a href="#file-9">includes\header.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:18:03)</span></li>
-                <li><a href="#file-10">admin\add_created_updated_by.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:18:03)</span></li>
-                <li><a href="#file-11">classes\DatabaseInitializer.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:06:15)</span></li>
-                <li><a href="#file-12">admin\admin_tables.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:58:19)</span></li>
-                <li><a href="#file-13">upload.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:58:19)</span></li>
-                <li><a href="#file-14">rebuild_relations.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
-                <li><a href="#file-15">debug_search.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
-                <li><a href="#file-16">test_ajax_direct.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
-                <li><a href="#file-17">classes\CsvProcessor.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
-                <li><a href="#file-18">migrate_device_info.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
-                <li><a href="#file-19">check_db_schema.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
-                <li><a href="#file-20">admin\migrate_device_info_schema.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 09:27:34)</span></li>
-                <li><a href="#file-21">login.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 00:55:52)</span></li>
-                <li><a href="#file-22">register.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 00:55:52)</span></li>
-                <li><a href="#file-23">admin\init_users_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:22)</span></li>
-                <li><a href="#file-24">classes\User.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
-                <li><a href="#file-25">includes\auth_helper.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
-                <li><a href="#file-26">logout.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
-                <li><a href="#file-27">admin\init_database.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-03 20:16:48)</span></li>
-                <li><a href="#file-28">config.render.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-03 20:16:48)</span></li>
-                <li><a href="#file-29">config.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-28 22:45:18)</span></li>
-                <li><a href="#file-30">debug.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-28 00:00:04)</span></li>
-                <li><a href="#file-31">classes\TeratermMacroGenerator.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-27 21:43:39)</span></li>
-                <li><a href="#file-32">classes\Database.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-10 01:57:03)</span></li>
-                <li><a href="#file-33">config.docker.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 23:40:32)</span></li>
-                <li><a href="#file-34">test-static.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 22:38:44)</span></li>
-                <li><a href="#file-35">includes\footer.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 22:38:44)</span></li>
+                <li><a href="#file-1">restore_mysql.sh</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-17 22:43:53)</span></li>
+                <li><a href="#file-2">backup_mysql.sh</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-17 22:43:44)</span></li>
+                <li><a href="#file-3">download.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 17:17:25)</span></li>
+                <li><a href="#file-4">css\styles.css</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 15:52:51)</span></li>
+                <li><a href="#file-5">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 13:10:42)</span></li>
+                <li><a href="#file-6">insert_dummy_data.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 13:10:42)</span></li>
+                <li><a href="#file-7">index.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-11 12:59:41)</span></li>
+                <li><a href="#file-8">classes\DeviceManager.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:26:28)</span></li>
+                <li><a href="#file-9">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:24:44)</span></li>
+                <li><a href="#file-10">admin\update_existing_user_fields.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:24:44)</span></li>
+                <li><a href="#file-11">includes\header.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:18:03)</span></li>
+                <li><a href="#file-12">admin\add_created_updated_by.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:18:03)</span></li>
+                <li><a href="#file-13">classes\DatabaseInitializer.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 13:06:15)</span></li>
+                <li><a href="#file-14">admin\admin_tables.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:58:19)</span></li>
+                <li><a href="#file-15">upload.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:58:19)</span></li>
+                <li><a href="#file-16">rebuild_relations.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
+                <li><a href="#file-17">debug_search.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
+                <li><a href="#file-18">test_ajax_direct.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 12:16:16)</span></li>
+                <li><a href="#file-19">classes\CsvProcessor.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
+                <li><a href="#file-20">migrate_device_info.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
+                <li><a href="#file-21">check_db_schema.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-10 11:57:11)</span></li>
+                <li><a href="#file-22">admin\migrate_device_info_schema.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 09:27:34)</span></li>
+                <li><a href="#file-23">login.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 00:55:52)</span></li>
+                <li><a href="#file-24">register.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-07 00:55:52)</span></li>
+                <li><a href="#file-25">admin\init_users_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:22)</span></li>
+                <li><a href="#file-26">classes\User.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
+                <li><a href="#file-27">includes\auth_helper.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
+                <li><a href="#file-28">logout.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-06 23:26:21)</span></li>
+                <li><a href="#file-29">admin\init_database.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-03 20:16:48)</span></li>
+                <li><a href="#file-30">config.render.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-03 20:16:48)</span></li>
+                <li><a href="#file-31">start.sh</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-03 20:06:47)</span></li>
+                <li><a href="#file-32">config.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-28 22:45:18)</span></li>
+                <li><a href="#file-33">debug.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-28 00:00:04)</span></li>
+                <li><a href="#file-34">classes\TeratermMacroGenerator.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-27 21:43:39)</span></li>
+                <li><a href="#file-35">classes\Database.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-10 01:57:03)</span></li>
+                <li><a href="#file-36">config.docker.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 23:40:32)</span></li>
+                <li><a href="#file-37">test-static.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 22:38:44)</span></li>
+                <li><a href="#file-38">init-render-db.sh</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 22:38:44)</span></li>
+                <li><a href="#file-39">includes\footer.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-01-09 22:38:44)</span></li>
             </ul>
         </div>
 
 
         <div class="file-section" id="file-1">
             <div class="file-header">
+                <h2>restore_mysql.sh</h2>
+                <div class="file-path">📂 restore_mysql.sh | 行数: 75 | 最終更新: 2026-02-17 22:43:53</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>#!/bin/bash
+
+# MySQL リストアスクリプト
+# 使用方法: ./restore_mysql.sh &lt;バックアップファイルのパス&gt;
+
+# 設定
+DB_HOST=&quot;${DB_HOST:-localhost}&quot;
+DB_PORT=&quot;${DB_PORT:-3306}&quot;
+DB_NAME=&quot;${DB_NAME:-device_management}&quot;
+DB_USER=&quot;${DB_USER:-root}&quot;
+DB_PASS=&quot;${DB_PASS:-}&quot;
+
+# 引数チェック
+if [ $# -eq 0 ]; then
+    echo &quot;使用方法: $0 &lt;バックアップファイルのパス&gt;&quot;
+    echo &quot;&quot;
+    echo &quot;例:&quot;
+    echo &quot;  $0 backups/daily/backup_device_management_20260217_120000.sql.gz&quot;
+    exit 1
+fi
+
+BACKUP_FILE=&quot;$1&quot;
+
+# ファイルの存在確認
+if [ ! -f &quot;${BACKUP_FILE}&quot; ]; then
+    echo &quot;エラー: ファイルが見つかりません: ${BACKUP_FILE}&quot;
+    exit 1
+fi
+
+echo &quot;==========================================&quot;
+echo &quot;データベースリストア&quot;
+echo &quot;バックアップファイル: ${BACKUP_FILE}&quot;
+echo &quot;データベース: ${DB_NAME}&quot;
+echo &quot;==========================================&quot;
+echo &quot;&quot;
+read -p &quot;このデータベースを復元しますか？ 現在のデータは上書きされます。(yes/no): &quot; CONFIRM
+
+if [ &quot;${CONFIRM}&quot; != &quot;yes&quot; ]; then
+    echo &quot;リストアをキャンセルしました。&quot;
+    exit 0
+fi
+
+echo &quot;&quot;
+echo &quot;リストアを開始します...&quot;
+
+# リストアの実行
+if [ -z &quot;${DB_PASS}&quot; ]; then
+    # パスワードなし
+    gunzip &lt; &quot;${BACKUP_FILE}&quot; | mysql -h &quot;${DB_HOST}&quot; \
+                                      -P &quot;${DB_PORT}&quot; \
+                                      -u &quot;${DB_USER}&quot; \
+                                      &quot;${DB_NAME}&quot;
+else
+    # パスワードあり
+    gunzip &lt; &quot;${BACKUP_FILE}&quot; | mysql -h &quot;${DB_HOST}&quot; \
+                                      -P &quot;${DB_PORT}&quot; \
+                                      -u &quot;${DB_USER}&quot; \
+                                      -p&quot;${DB_PASS}&quot; \
+                                      &quot;${DB_NAME}&quot;
+fi
+
+# リストアの成否を確認
+if [ $? -eq 0 ]; then
+    echo &quot;&quot;
+    echo &quot;✓ リストアが完了しました&quot;
+    echo &quot;==========================================&quot;
+else
+    echo &quot;&quot;
+    echo &quot;✗ エラー: リストアに失敗しました&quot;
+    echo &quot;==========================================&quot;
+    exit 1
+fi
+
+exit 0
+</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-2">
+            <div class="file-header">
+                <h2>backup_mysql.sh</h2>
+                <div class="file-path">📂 backup_mysql.sh | 行数: 103 | 最終更新: 2026-02-17 22:43:44</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>#!/bin/bash
+
+# MySQL バックアップスクリプト
+# 使用方法: ./backup_mysql.sh [daily|weekly|monthly]
+
+# 設定
+SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)&quot;
+BACKUP_ROOT=&quot;${SCRIPT_DIR}/backups&quot;
+DB_HOST=&quot;${DB_HOST:-localhost}&quot;
+DB_PORT=&quot;${DB_PORT:-3306}&quot;
+DB_NAME=&quot;${DB_NAME:-device_management}&quot;
+DB_USER=&quot;${DB_USER:-root}&quot;
+DB_PASS=&quot;${DB_PASS:-}&quot;
+
+# バックアップタイプ（引数から取得、デフォルトはdaily）
+BACKUP_TYPE=&quot;${1:-daily}&quot;
+
+# バックアップディレクトリ
+BACKUP_DIR=&quot;${BACKUP_ROOT}/${BACKUP_TYPE}&quot;
+mkdir -p &quot;${BACKUP_DIR}&quot;
+
+# タイムスタンプ
+TIMESTAMP=$(date +&quot;%Y%m%d_%H%M%S&quot;)
+BACKUP_FILE=&quot;${BACKUP_DIR}/backup_${DB_NAME}_${TIMESTAMP}.sql.gz&quot;
+
+# ログファイル
+LOG_DIR=&quot;${SCRIPT_DIR}/logs&quot;
+mkdir -p &quot;${LOG_DIR}&quot;
+LOG_FILE=&quot;${LOG_DIR}/backup.log&quot;
+
+# ログ関数
+log() {
+    echo &quot;[$(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;)] $1&quot; | tee -a &quot;${LOG_FILE}&quot;
+}
+
+log &quot;==========================================&quot;
+log &quot;バックアップ開始: ${BACKUP_TYPE}&quot;
+log &quot;データベース: ${DB_NAME}&quot;
+
+# mysqldumpの実行
+if [ -z &quot;${DB_PASS}&quot; ]; then
+    # パスワードなし
+    mysqldump -h &quot;${DB_HOST}&quot; \
+              -P &quot;${DB_PORT}&quot; \
+              -u &quot;${DB_USER}&quot; \
+              --single-transaction \
+              --routines \
+              --triggers \
+              --events \
+              &quot;${DB_NAME}&quot; | gzip &gt; &quot;${BACKUP_FILE}&quot;
+else
+    # パスワードあり
+    mysqldump -h &quot;${DB_HOST}&quot; \
+              -P &quot;${DB_PORT}&quot; \
+              -u &quot;${DB_USER}&quot; \
+              -p&quot;${DB_PASS}&quot; \
+              --single-transaction \
+              --routines \
+              --triggers \
+              --events \
+              &quot;${DB_NAME}&quot; | gzip &gt; &quot;${BACKUP_FILE}&quot;
+fi
+
+# バックアップの成否を確認
+if [ $? -eq 0 ] &amp;&amp; [ -f &quot;${BACKUP_FILE}&quot; ]; then
+    BACKUP_SIZE=$(du -h &quot;${BACKUP_FILE}&quot; | cut -f1)
+    log &quot;バックアップ成功: ${BACKUP_FILE} (${BACKUP_SIZE})&quot;
+else
+    log &quot;エラー: バックアップに失敗しました&quot;
+    exit 1
+fi
+
+# 古いバックアップファイルの削除
+case &quot;${BACKUP_TYPE}&quot; in
+    daily)
+        # 7日以上前のファイルを削除
+        KEEP_DAYS=7
+        log &quot;日次バックアップ: ${KEEP_DAYS}日より古いファイルを削除&quot;
+        find &quot;${BACKUP_DIR}&quot; -name &quot;backup_*.sql.gz&quot; -type f -mtime +${KEEP_DAYS} -delete
+        ;;
+    weekly)
+        # 4週間（28日）以上前のファイルを削除
+        KEEP_DAYS=28
+        log &quot;週次バックアップ: ${KEEP_DAYS}日より古いファイルを削除&quot;
+        find &quot;${BACKUP_DIR}&quot; -name &quot;backup_*.sql.gz&quot; -type f -mtime +${KEEP_DAYS} -delete
+        ;;
+    monthly)
+        # 12ヶ月（365日）以上前のファイルを削除
+        KEEP_DAYS=365
+        log &quot;月次バックアップ: ${KEEP_DAYS}日より古いファイルを削除&quot;
+        find &quot;${BACKUP_DIR}&quot; -name &quot;backup_*.sql.gz&quot; -type f -mtime +${KEEP_DAYS} -delete
+        ;;
+esac
+
+# 残っているバックアップファイルの数を表示
+BACKUP_COUNT=$(ls -1 &quot;${BACKUP_DIR}&quot;/backup_*.sql.gz 2&gt;/dev/null | wc -l)
+log &quot;保存されているバックアップファイル数: ${BACKUP_COUNT}&quot;
+
+log &quot;バックアップ完了&quot;
+log &quot;==========================================&quot;
+
+exit 0
+</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-3">
+            <div class="file-header">
                 <h2>download.php</h2>
-                <div class="file-path">📂 download.php | 行数: 683 | 最終更新: 2026-02-11 16:04:38</div>
+                <div class="file-path">📂 download.php | 行数: 683 | 最終更新: 2026-02-11 17:17:25</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -862,7 +1064,7 @@ require_once &#x27;includes/header.php&#x27;;
             </div>
         </div>
 
-        <div class="file-section" id="file-2">
+        <div class="file-section" id="file-4">
             <div class="file-header">
                 <h2>styles.css</h2>
                 <div class="file-path">📂 css\styles.css | 行数: 939 | 最終更新: 2026-02-11 15:52:51</div>
@@ -1811,7 +2013,7 @@ input[type=&quot;file&quot;]:hover {
             </div>
         </div>
 
-        <div class="file-section" id="file-3">
+        <div class="file-section" id="file-5">
             <div class="file-header">
                 <h2>manage.php</h2>
                 <div class="file-path">📂 manage.php | 行数: 863 | 最終更新: 2026-02-11 13:10:42</div>
@@ -2684,7 +2886,7 @@ require_once &#x27;includes/header.php&#x27;;
             </div>
         </div>
 
-        <div class="file-section" id="file-4">
+        <div class="file-section" id="file-6">
             <div class="file-header">
                 <h2>insert_dummy_data.php</h2>
                 <div class="file-path">📂 insert_dummy_data.php | 行数: 122 | 最終更新: 2026-02-11 13:10:42</div>
@@ -2816,7 +3018,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-5">
+        <div class="file-section" id="file-7">
             <div class="file-header">
                 <h2>index.php</h2>
                 <div class="file-path">📂 index.php | 行数: 246 | 最終更新: 2026-02-11 12:59:41</div>
@@ -3072,7 +3274,7 @@ if (isLoggedIn()) {
             </div>
         </div>
 
-        <div class="file-section" id="file-6">
+        <div class="file-section" id="file-8">
             <div class="file-header">
                 <h2>DeviceManager.php</h2>
                 <div class="file-path">📂 classes\DeviceManager.php | 行数: 1417 | 最終更新: 2026-02-10 13:26:28</div>
@@ -4499,7 +4701,7 @@ class DeviceManager {
             </div>
         </div>
 
-        <div class="file-section" id="file-7">
+        <div class="file-section" id="file-9">
             <div class="file-header">
                 <h2>ajax_api.php</h2>
                 <div class="file-path">📂 ajax_api.php | 行数: 363 | 最終更新: 2026-02-10 13:24:44</div>
@@ -4872,7 +5074,7 @@ echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             </div>
         </div>
 
-        <div class="file-section" id="file-8">
+        <div class="file-section" id="file-10">
             <div class="file-header">
                 <h2>update_existing_user_fields.php</h2>
                 <div class="file-path">📂 admin\update_existing_user_fields.php | 行数: 46 | 最終更新: 2026-02-10 13:24:44</div>
@@ -4928,7 +5130,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-9">
+        <div class="file-section" id="file-11">
             <div class="file-header">
                 <h2>header.php</h2>
                 <div class="file-path">📂 includes\header.php | 行数: 113 | 最終更新: 2026-02-10 13:18:03</div>
@@ -5051,7 +5253,7 @@ $currentPage = basename($_SERVER[&#x27;PHP_SELF&#x27;], &#x27;.php&#x27;);
             </div>
         </div>
 
-        <div class="file-section" id="file-10">
+        <div class="file-section" id="file-12">
             <div class="file-header">
                 <h2>add_created_updated_by.php</h2>
                 <div class="file-path">📂 admin\add_created_updated_by.php | 行数: 74 | 最終更新: 2026-02-10 13:18:03</div>
@@ -5135,7 +5337,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-11">
+        <div class="file-section" id="file-13">
             <div class="file-header">
                 <h2>DatabaseInitializer.php</h2>
                 <div class="file-path">📂 classes\DatabaseInitializer.php | 行数: 295 | 最終更新: 2026-02-10 13:06:15</div>
@@ -5440,7 +5642,7 @@ class DatabaseInitializer {
             </div>
         </div>
 
-        <div class="file-section" id="file-12">
+        <div class="file-section" id="file-14">
             <div class="file-header">
                 <h2>admin_tables.php</h2>
                 <div class="file-path">📂 admin\admin_tables.php | 行数: 249 | 最終更新: 2026-02-10 12:58:19</div>
@@ -5699,7 +5901,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-13">
+        <div class="file-section" id="file-15">
             <div class="file-header">
                 <h2>upload.php</h2>
                 <div class="file-path">📂 upload.php | 行数: 575 | 最終更新: 2026-02-10 12:58:19</div>
@@ -6284,7 +6486,7 @@ exit;
             </div>
         </div>
 
-        <div class="file-section" id="file-14">
+        <div class="file-section" id="file-16">
             <div class="file-header">
                 <h2>rebuild_relations.php</h2>
                 <div class="file-path">📂 rebuild_relations.php | 行数: 219 | 最終更新: 2026-02-10 12:16:16</div>
@@ -6513,7 +6715,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-15">
+        <div class="file-section" id="file-17">
             <div class="file-header">
                 <h2>debug_search.php</h2>
                 <div class="file-path">📂 debug_search.php | 行数: 313 | 最終更新: 2026-02-10 12:16:16</div>
@@ -6836,7 +7038,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-16">
+        <div class="file-section" id="file-18">
             <div class="file-header">
                 <h2>test_ajax_direct.php</h2>
                 <div class="file-path">📂 test_ajax_direct.php | 行数: 379 | 最終更新: 2026-02-10 12:16:16</div>
@@ -7225,7 +7427,7 @@ header(&#x27;Content-Type: text/html; charset=UTF-8&#x27;);
             </div>
         </div>
 
-        <div class="file-section" id="file-17">
+        <div class="file-section" id="file-19">
             <div class="file-header">
                 <h2>CsvProcessor.php</h2>
                 <div class="file-path">📂 classes\CsvProcessor.php | 行数: 351 | 最終更新: 2026-02-10 11:57:11</div>
@@ -7586,7 +7788,7 @@ class CsvProcessor {
             </div>
         </div>
 
-        <div class="file-section" id="file-18">
+        <div class="file-section" id="file-20">
             <div class="file-header">
                 <h2>migrate_device_info.php</h2>
                 <div class="file-path">📂 migrate_device_info.php | 行数: 212 | 最終更新: 2026-02-10 11:57:11</div>
@@ -7808,7 +8010,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-19">
+        <div class="file-section" id="file-21">
             <div class="file-header">
                 <h2>check_db_schema.php</h2>
                 <div class="file-path">📂 check_db_schema.php | 行数: 88 | 最終更新: 2026-02-10 11:57:11</div>
@@ -7906,7 +8108,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-20">
+        <div class="file-section" id="file-22">
             <div class="file-header">
                 <h2>migrate_device_info_schema.php</h2>
                 <div class="file-path">📂 admin\migrate_device_info_schema.php | 行数: 144 | 最終更新: 2026-02-07 09:27:34</div>
@@ -8060,7 +8262,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-21">
+        <div class="file-section" id="file-23">
             <div class="file-header">
                 <h2>login.php</h2>
                 <div class="file-path">📂 login.php | 行数: 139 | 最終更新: 2026-02-07 00:55:52</div>
@@ -8209,7 +8411,7 @@ include __DIR__ . &#x27;/includes/header.php&#x27;;
             </div>
         </div>
 
-        <div class="file-section" id="file-22">
+        <div class="file-section" id="file-24">
             <div class="file-header">
                 <h2>register.php</h2>
                 <div class="file-path">📂 register.php | 行数: 187 | 最終更新: 2026-02-07 00:55:52</div>
@@ -8406,7 +8608,7 @@ include __DIR__ . &#x27;/includes/header.php&#x27;;
             </div>
         </div>
 
-        <div class="file-section" id="file-23">
+        <div class="file-section" id="file-25">
             <div class="file-header">
                 <h2>init_users_table.php</h2>
                 <div class="file-path">📂 admin\init_users_table.php | 行数: 37 | 最終更新: 2026-02-06 23:26:22</div>
@@ -8453,7 +8655,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-24">
+        <div class="file-section" id="file-26">
             <div class="file-header">
                 <h2>User.php</h2>
                 <div class="file-path">📂 classes\User.php | 行数: 278 | 最終更新: 2026-02-06 23:26:21</div>
@@ -8741,7 +8943,7 @@ class User {
             </div>
         </div>
 
-        <div class="file-section" id="file-25">
+        <div class="file-section" id="file-27">
             <div class="file-header">
                 <h2>auth_helper.php</h2>
                 <div class="file-path">📂 includes\auth_helper.php | 行数: 50 | 最終更新: 2026-02-06 23:26:21</div>
@@ -8801,7 +9003,7 @@ function isLoggedIn() {
             </div>
         </div>
 
-        <div class="file-section" id="file-26">
+        <div class="file-section" id="file-28">
             <div class="file-header">
                 <h2>logout.php</h2>
                 <div class="file-path">📂 logout.php | 行数: 13 | 最終更新: 2026-02-06 23:26:21</div>
@@ -8824,7 +9026,7 @@ exit;
             </div>
         </div>
 
-        <div class="file-section" id="file-27">
+        <div class="file-section" id="file-29">
             <div class="file-header">
                 <h2>init_database.php</h2>
                 <div class="file-path">📂 admin\init_database.php | 行数: 107 | 最終更新: 2026-02-03 20:16:48</div>
@@ -8941,7 +9143,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-28">
+        <div class="file-section" id="file-30">
             <div class="file-header">
                 <h2>config.render.php</h2>
                 <div class="file-path">📂 config.render.php | 行数: 177 | 最終更新: 2026-02-03 20:16:48</div>
@@ -9128,7 +9330,39 @@ function getSuccessMessage() {
             </div>
         </div>
 
-        <div class="file-section" id="file-29">
+        <div class="file-section" id="file-31">
+            <div class="file-header">
+                <h2>start.sh</h2>
+                <div class="file-path">📂 start.sh | 行数: 22 | 最終更新: 2026-02-03 20:06:47</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>#!/bin/bash
+set -e
+
+# ServerName警告を抑制
+echo &quot;ServerName localhost&quot; &gt;&gt; /etc/apache2/apache2.conf
+
+# Renderの環境変数PORTを使用してApacheを設定
+if [ -n &quot;$PORT&quot; ]; then
+    echo &quot;Configuring Apache to listen on port $PORT&quot;
+    sed -i &quot;s/Listen 80/Listen $PORT/g&quot; /etc/apache2/ports.conf
+    sed -i &quot;s/:80&gt;/:$PORT&gt;/g&quot; /etc/apache2/sites-available/000-default.conf
+else
+    echo &quot;PORT environment variable not set, using default port 80&quot;
+fi
+
+# Apache設定を表示（デバッグ用）
+echo &quot;Apache will listen on:&quot;
+grep &quot;Listen&quot; /etc/apache2/ports.conf
+
+# Apacheを起動
+exec apache2-foreground
+</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-32">
             <div class="file-header">
                 <h2>config.php</h2>
                 <div class="file-path">📂 config.php | 行数: 178 | 最終更新: 2026-01-28 22:45:18</div>
@@ -9316,7 +9550,7 @@ function validateExtendedColumn($columnName) {
             </div>
         </div>
 
-        <div class="file-section" id="file-30">
+        <div class="file-section" id="file-33">
             <div class="file-header">
                 <h2>debug.php</h2>
                 <div class="file-path">📂 debug.php | 行数: 114 | 最終更新: 2026-01-28 00:00:04</div>
@@ -9440,7 +9674,7 @@ echo &quot;&lt;p&gt;&lt;a href=&#x27;/&#x27;&gt;トップページに戻る&lt;/
             </div>
         </div>
 
-        <div class="file-section" id="file-31">
+        <div class="file-section" id="file-34">
             <div class="file-header">
                 <h2>TeratermMacroGenerator.php</h2>
                 <div class="file-path">📂 classes\TeratermMacroGenerator.php | 行数: 204 | 最終更新: 2026-01-27 21:43:39</div>
@@ -9654,7 +9888,7 @@ class TeratermMacroGenerator
             </div>
         </div>
 
-        <div class="file-section" id="file-32">
+        <div class="file-section" id="file-35">
             <div class="file-header">
                 <h2>Database.php</h2>
                 <div class="file-path">📂 classes\Database.php | 行数: 190 | 最終更新: 2026-01-10 01:57:03</div>
@@ -9854,7 +10088,7 @@ class Database {
             </div>
         </div>
 
-        <div class="file-section" id="file-33">
+        <div class="file-section" id="file-36">
             <div class="file-header">
                 <h2>config.docker.php</h2>
                 <div class="file-path">📂 config.docker.php | 行数: 170 | 最終更新: 2026-01-09 23:40:32</div>
@@ -10034,7 +10268,7 @@ function checkDockerEnvironment() {
             </div>
         </div>
 
-        <div class="file-section" id="file-34">
+        <div class="file-section" id="file-37">
             <div class="file-header">
                 <h2>test-static.php</h2>
                 <div class="file-path">📂 test-static.php | 行数: 115 | 最終更新: 2026-01-09 22:38:44</div>
@@ -10159,7 +10393,73 @@ function checkDockerEnvironment() {
             </div>
         </div>
 
-        <div class="file-section" id="file-35">
+        <div class="file-section" id="file-38">
+            <div class="file-header">
+                <h2>init-render-db.sh</h2>
+                <div class="file-path">📂 init-render-db.sh | 行数: 56 | 最終更新: 2026-01-09 22:38:44</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>#!/bin/bash
+
+# Renderデータベース初期化スクリプト
+# 
+# 使用方法:
+# 1. Renderダッシュボードでデータベースの接続情報を取得
+# 2. 以下の変数を設定
+# 3. ./init-render-db.sh を実行
+
+# データベース接続情報（Renderダッシュボードから取得）
+DB_HOST=&quot;your-database-host.render.com&quot;
+DB_PORT=&quot;3306&quot;
+DB_NAME=&quot;device_management&quot;
+DB_USER=&quot;admin&quot;
+DB_PASS=&quot;your-database-password&quot;
+
+echo &quot;Renderデータベースにスキーマを適用します...&quot;
+echo &quot;接続先: $DB_HOST:$DB_PORT&quot;
+echo &quot;データベース: $DB_NAME&quot;
+echo &quot;&quot;
+
+# スキーマファイルの存在確認
+if [ ! -f &quot;database/schema.sql&quot; ]; then
+    echo &quot;エラー: database/schema.sql が見つかりません&quot;
+    exit 1
+fi
+
+# MySQLクライアントの確認
+if ! command -v mysql &amp;&gt; /dev/null; then
+    echo &quot;エラー: MySQLクライアントがインストールされていません&quot;
+    echo &quot;インストール方法:&quot;
+    echo &quot;  macOS: brew install mysql-client&quot;
+    echo &quot;  Ubuntu: sudo apt-get install mysql-client&quot;
+    echo &quot;  Windows: MySQL公式サイトからダウンロード&quot;
+    exit 1
+fi
+
+# データベースに接続してスキーマを適用
+echo &quot;スキーマを適用中...&quot;
+mysql -h &quot;$DB_HOST&quot; -P &quot;$DB_PORT&quot; -u &quot;$DB_USER&quot; -p&quot;$DB_PASS&quot; &quot;$DB_NAME&quot; &lt; database/schema.sql
+
+if [ $? -eq 0 ]; then
+    echo &quot;&quot;
+    echo &quot;✅ スキーマの適用が完了しました！&quot;
+    echo &quot;&quot;
+    echo &quot;次のステップ:&quot;
+    echo &quot;1. Renderのwebサービスが起動していることを確認&quot;
+    echo &quot;2. 提供されたURLにアクセス&quot;
+    echo &quot;3. CSVファイルをアップロードしてテスト&quot;
+else
+    echo &quot;&quot;
+    echo &quot;❌ エラーが発生しました&quot;
+    echo &quot;接続情報を確認してください&quot;
+    exit 1
+fi
+</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-39">
             <div class="file-header">
                 <h2>footer.php</h2>
                 <div class="file-path">📂 includes\footer.php | 行数: 18 | 最終更新: 2026-01-09 22:38:44</div>

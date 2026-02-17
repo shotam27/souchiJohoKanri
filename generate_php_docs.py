@@ -4,26 +4,26 @@ import html
 from datetime import datetime
 
 def find_files(directory):
-    """指定されたディレクトリからすべてのPHPとCSSファイルを再帰的に検索"""
+    """指定されたディレクトリからすべてのPHP、CSS、シェルスクリプトファイルを再帰的に検索"""
     target_files = []
     for root, dirs, files in os.walk(directory):
         # 特定のディレクトリを除外
         dirs[:] = [d for d in dirs if d not in ['vendor', 'node_modules', '.git', 'logs', 'uploads']]
         
         for file in files:
-            if file.endswith('.php') or file.endswith('.css'):
+            if file.endswith('.php') or file.endswith('.css') or file.endswith('.sh'):
                 target_files.append(os.path.join(root, file))
     # 最終更新日時で降順にソート（新しい順）
     return sorted(target_files, key=lambda x: os.path.getmtime(x), reverse=True)
 
 def generate_html(php_files, base_dir):
-    """PHPとCSSファイルの内容を含むHTMLを生成"""
+    """PHP、CSS、シェルスクリプトファイルの内容を含むHTMLを生成"""
     html_content = """<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP & CSS Files Documentation</title>
+    <title>PHP, CSS & Shell Script Files Documentation</title>
     <style>
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -141,7 +141,7 @@ def generate_html(php_files, base_dir):
 </head>
 <body>
     <div class="container">
-        <h1>📁 PHP & CSS Files Documentation</h1>
+        <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> {total_files} ファイル<br>
             <strong>生成日時:</strong> {timestamp}
@@ -239,11 +239,11 @@ def main():
     # カレントディレクトリを取得
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    print("PHPとCSSファイルを検索中...")
+    print("PHP、CSS、シェルスクリプトファイルを検索中...")
     php_files = find_files(base_dir)
     
     if not php_files:
-        print("PHPとCSSファイルが見つかりませんでした。")
+        print("PHP、CSS、シェルスクリプトファイルが見つかりませんでした。")
         return
     
     print(f"{len(php_files)}個のファイルが見つかりました。")
