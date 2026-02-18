@@ -45,16 +45,16 @@ try {
             // プレビュー用のカラムヘッダーを作成
             $previewColumns = [
                 'サービス名', '装置種別', '装置名称', 'ログインIP',
-                'ユーザー名1', 'パスワード1',
-                'ユーザー名2', 'パスワード2',
-                'ユーザー名3', 'パスワード3',
-                'ユーザー名4', 'パスワード4',
-                'ユーザー名5', 'パスワード5',
-                'ユーザー名6', 'パスワード6',
-                'ユーザー名7', 'パスワード7',
-                'ユーザー名8', 'パスワード8',
-                'ユーザー名9', 'パスワード9',
-                'ユーザー名10', 'パスワード10'
+                'ユーザ名1', 'パスワード1',
+                'ユーザ名2', 'パスワード2',
+                'ユーザ名3', 'パスワード3',
+                'ユーザ名4', 'パスワード4',
+                'ユーザ名5', 'パスワード5',
+                'ユーザ名6', 'パスワード6',
+                'ユーザ名7', 'パスワード7',
+                'ユーザ名8', 'パスワード8',
+                'ユーザ名9', 'パスワード9',
+                'ユーザ名10', 'パスワード10'
             ];
             $previewColumns = array_merge($previewColumns, $extendedColumns);
             
@@ -71,25 +71,25 @@ try {
                     di.device_type as '装置種別',
                     di.device_name as '装置名称',
                     di.login_ip as 'ログインIP',
-                    di.username1 as 'ユーザー名1',
+                    di.username1 as 'ユーザ名1',
                     di.password1 as 'パスワード1',
-                    di.username2 as 'ユーザー名2',
+                    di.username2 as 'ユーザ名2',
                     di.password2 as 'パスワード2',
-                    di.username3 as 'ユーザー名3',
+                    di.username3 as 'ユーザ名3',
                     di.password3 as 'パスワード3',
-                    di.username4 as 'ユーザー名4',
+                    di.username4 as 'ユーザ名4',
                     di.password4 as 'パスワード4',
-                    di.username5 as 'ユーザー名5',
+                    di.username5 as 'ユーザ名5',
                     di.password5 as 'パスワード5',
-                    di.username6 as 'ユーザー名6',
+                    di.username6 as 'ユーザ名6',
                     di.password6 as 'パスワード6',
-                    di.username7 as 'ユーザー名7',
+                    di.username7 as 'ユーザ名7',
                     di.password7 as 'パスワード7',
-                    di.username8 as 'ユーザー名8',
+                    di.username8 as 'ユーザ名8',
                     di.password8 as 'パスワード8',
-                    di.username9 as 'ユーザー名9',
+                    di.username9 as 'ユーザ名9',
                     di.password9 as 'パスワード9',
-                    di.username10 as 'ユーザー名10',
+                    di.username10 as 'ユーザ名10',
                     di.password10 as 'パスワード10'
                     {$dynamicColumnStr}
                 FROM device_info di
@@ -177,25 +177,25 @@ try {
                         di.device_type as '装置種別',
                         di.device_name as '装置名称',
                         di.login_ip as 'ログインIP',
-                        di.username1 as 'ユーザー名1',
+                        di.username1 as 'ユーザ名1',
                         di.password1 as 'パスワード1',
-                        di.username2 as 'ユーザー名2',
+                        di.username2 as 'ユーザ名2',
                         di.password2 as 'パスワード2',
-                        di.username3 as 'ユーザー名3',
+                        di.username3 as 'ユーザ名3',
                         di.password3 as 'パスワード3',
-                        di.username4 as 'ユーザー名4',
+                        di.username4 as 'ユーザ名4',
                         di.password4 as 'パスワード4',
-                        di.username5 as 'ユーザー名5',
+                        di.username5 as 'ユーザ名5',
                         di.password5 as 'パスワード5',
-                        di.username6 as 'ユーザー名6',
+                        di.username6 as 'ユーザ名6',
                         di.password6 as 'パスワード6',
-                        di.username7 as 'ユーザー名7',
+                        di.username7 as 'ユーザ名7',
                         di.password7 as 'パスワード7',
-                        di.username8 as 'ユーザー名8',
+                        di.username8 as 'ユーザ名8',
                         di.password8 as 'パスワード8',
-                        di.username9 as 'ユーザー名9',
+                        di.username9 as 'ユーザ名9',
                         di.password9 as 'パスワード9',
-                        di.username10 as 'ユーザー名10',
+                        di.username10 as 'ユーザ名10',
                         di.password10 as 'パスワード10'
                         {$dynamicColumnStr}
                     FROM device_info di
@@ -366,7 +366,7 @@ require_once 'includes/header.php';
             <form method="post" id="searchForm">
                 <div class="form-group">
                     <label for="service_name">サービス名:</label>
-                    <select name="service_name" id="service_name" class="form-control" onchange="updateDeviceTypes()">
+                    <select name="service_name" id="service_name" class="form-control">
                         <option value="">-- サービス名を選択 --</option>
                         <?php foreach ($services as $service): ?>
                         <option value="<?= h($service) ?>" <?= $service === $selectedService ? 'selected' : '' ?>>
@@ -564,15 +564,11 @@ require_once 'includes/header.php';
         
         // ページ読み込み時に装置種別を更新（選択状態を保持）
         document.addEventListener('DOMContentLoaded', async function() {
+            // inline onchange の代わりに addEventListener で登録（全ブラウザ対応）
+            document.getElementById('service_name').addEventListener('change', updateDeviceTypes);
+
             const serviceName = document.getElementById('service_name').value;
-            const deviceTypeSelect = document.getElementById('device_type');
-            const selectedDeviceType = '<?= h($selectedDeviceType) ?>';
-            
-            if (serviceName && selectedDeviceType) {
-                // プレビュー表示時は選択状態を保持するため、装置種別リストを更新
-                await updateDeviceTypes();
-            } else if (serviceName && !selectedDeviceType) {
-                // プレビュー前は通常通り更新
+            if (serviceName) {
                 await updateDeviceTypes();
             }
         });

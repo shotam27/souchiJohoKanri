@@ -124,14 +124,14 @@
         <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 38 ファイル<br>
-            <strong>生成日時:</strong> 2026-02-18 23:53:57
+            <strong>生成日時:</strong> 2026-02-19 00:27:40
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">download.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 23:53:47)</span></li>
-                <li><a href="#file-2">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 23:53:47)</span></li>
+                <li><a href="#file-1">download.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:27:12)</span></li>
+                <li><a href="#file-2">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:03:41)</span></li>
                 <li><a href="#file-3">classes\CsvProcessor.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 22:54:46)</span></li>
                 <li><a href="#file-4">test-static.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 21:45:17)</span></li>
                 <li><a href="#file-5">test_ajax_direct.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 21:45:17)</span></li>
@@ -175,7 +175,7 @@
         <div class="file-section" id="file-1">
             <div class="file-header">
                 <h2>download.php</h2>
-                <div class="file-path">📂 download.php | 行数: 687 | 最終更新: 2026-02-18 23:53:47</div>
+                <div class="file-path">📂 download.php | 行数: 683 | 最終更新: 2026-02-19 00:27:12</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -226,16 +226,16 @@ try {
             // プレビュー用のカラムヘッダーを作成
             $previewColumns = [
                 &#x27;サービス名&#x27;, &#x27;装置種別&#x27;, &#x27;装置名称&#x27;, &#x27;ログインIP&#x27;,
-                &#x27;ユーザー名1&#x27;, &#x27;パスワード1&#x27;,
-                &#x27;ユーザー名2&#x27;, &#x27;パスワード2&#x27;,
-                &#x27;ユーザー名3&#x27;, &#x27;パスワード3&#x27;,
-                &#x27;ユーザー名4&#x27;, &#x27;パスワード4&#x27;,
-                &#x27;ユーザー名5&#x27;, &#x27;パスワード5&#x27;,
-                &#x27;ユーザー名6&#x27;, &#x27;パスワード6&#x27;,
-                &#x27;ユーザー名7&#x27;, &#x27;パスワード7&#x27;,
-                &#x27;ユーザー名8&#x27;, &#x27;パスワード8&#x27;,
-                &#x27;ユーザー名9&#x27;, &#x27;パスワード9&#x27;,
-                &#x27;ユーザー名10&#x27;, &#x27;パスワード10&#x27;
+                &#x27;ユーザ名1&#x27;, &#x27;パスワード1&#x27;,
+                &#x27;ユーザ名2&#x27;, &#x27;パスワード2&#x27;,
+                &#x27;ユーザ名3&#x27;, &#x27;パスワード3&#x27;,
+                &#x27;ユーザ名4&#x27;, &#x27;パスワード4&#x27;,
+                &#x27;ユーザ名5&#x27;, &#x27;パスワード5&#x27;,
+                &#x27;ユーザ名6&#x27;, &#x27;パスワード6&#x27;,
+                &#x27;ユーザ名7&#x27;, &#x27;パスワード7&#x27;,
+                &#x27;ユーザ名8&#x27;, &#x27;パスワード8&#x27;,
+                &#x27;ユーザ名9&#x27;, &#x27;パスワード9&#x27;,
+                &#x27;ユーザ名10&#x27;, &#x27;パスワード10&#x27;
             ];
             $previewColumns = array_merge($previewColumns, $extendedColumns);
             
@@ -252,25 +252,25 @@ try {
                     di.device_type as &#x27;装置種別&#x27;,
                     di.device_name as &#x27;装置名称&#x27;,
                     di.login_ip as &#x27;ログインIP&#x27;,
-                    di.username1 as &#x27;ユーザー名1&#x27;,
+                    di.username1 as &#x27;ユーザ名1&#x27;,
                     di.password1 as &#x27;パスワード1&#x27;,
-                    di.username2 as &#x27;ユーザー名2&#x27;,
+                    di.username2 as &#x27;ユーザ名2&#x27;,
                     di.password2 as &#x27;パスワード2&#x27;,
-                    di.username3 as &#x27;ユーザー名3&#x27;,
+                    di.username3 as &#x27;ユーザ名3&#x27;,
                     di.password3 as &#x27;パスワード3&#x27;,
-                    di.username4 as &#x27;ユーザー名4&#x27;,
+                    di.username4 as &#x27;ユーザ名4&#x27;,
                     di.password4 as &#x27;パスワード4&#x27;,
-                    di.username5 as &#x27;ユーザー名5&#x27;,
+                    di.username5 as &#x27;ユーザ名5&#x27;,
                     di.password5 as &#x27;パスワード5&#x27;,
-                    di.username6 as &#x27;ユーザー名6&#x27;,
+                    di.username6 as &#x27;ユーザ名6&#x27;,
                     di.password6 as &#x27;パスワード6&#x27;,
-                    di.username7 as &#x27;ユーザー名7&#x27;,
+                    di.username7 as &#x27;ユーザ名7&#x27;,
                     di.password7 as &#x27;パスワード7&#x27;,
-                    di.username8 as &#x27;ユーザー名8&#x27;,
+                    di.username8 as &#x27;ユーザ名8&#x27;,
                     di.password8 as &#x27;パスワード8&#x27;,
-                    di.username9 as &#x27;ユーザー名9&#x27;,
+                    di.username9 as &#x27;ユーザ名9&#x27;,
                     di.password9 as &#x27;パスワード9&#x27;,
-                    di.username10 as &#x27;ユーザー名10&#x27;,
+                    di.username10 as &#x27;ユーザ名10&#x27;,
                     di.password10 as &#x27;パスワード10&#x27;
                     {$dynamicColumnStr}
                 FROM device_info di
@@ -358,25 +358,25 @@ try {
                         di.device_type as &#x27;装置種別&#x27;,
                         di.device_name as &#x27;装置名称&#x27;,
                         di.login_ip as &#x27;ログインIP&#x27;,
-                        di.username1 as &#x27;ユーザー名1&#x27;,
+                        di.username1 as &#x27;ユーザ名1&#x27;,
                         di.password1 as &#x27;パスワード1&#x27;,
-                        di.username2 as &#x27;ユーザー名2&#x27;,
+                        di.username2 as &#x27;ユーザ名2&#x27;,
                         di.password2 as &#x27;パスワード2&#x27;,
-                        di.username3 as &#x27;ユーザー名3&#x27;,
+                        di.username3 as &#x27;ユーザ名3&#x27;,
                         di.password3 as &#x27;パスワード3&#x27;,
-                        di.username4 as &#x27;ユーザー名4&#x27;,
+                        di.username4 as &#x27;ユーザ名4&#x27;,
                         di.password4 as &#x27;パスワード4&#x27;,
-                        di.username5 as &#x27;ユーザー名5&#x27;,
+                        di.username5 as &#x27;ユーザ名5&#x27;,
                         di.password5 as &#x27;パスワード5&#x27;,
-                        di.username6 as &#x27;ユーザー名6&#x27;,
+                        di.username6 as &#x27;ユーザ名6&#x27;,
                         di.password6 as &#x27;パスワード6&#x27;,
-                        di.username7 as &#x27;ユーザー名7&#x27;,
+                        di.username7 as &#x27;ユーザ名7&#x27;,
                         di.password7 as &#x27;パスワード7&#x27;,
-                        di.username8 as &#x27;ユーザー名8&#x27;,
+                        di.username8 as &#x27;ユーザ名8&#x27;,
                         di.password8 as &#x27;パスワード8&#x27;,
-                        di.username9 as &#x27;ユーザー名9&#x27;,
+                        di.username9 as &#x27;ユーザ名9&#x27;,
                         di.password9 as &#x27;パスワード9&#x27;,
-                        di.username10 as &#x27;ユーザー名10&#x27;,
+                        di.username10 as &#x27;ユーザ名10&#x27;,
                         di.password10 as &#x27;パスワード10&#x27;
                         {$dynamicColumnStr}
                     FROM device_info di
@@ -547,7 +547,7 @@ require_once &#x27;includes/header.php&#x27;;
             &lt;form method=&quot;post&quot; id=&quot;searchForm&quot;&gt;
                 &lt;div class=&quot;form-group&quot;&gt;
                     &lt;label for=&quot;service_name&quot;&gt;サービス名:&lt;/label&gt;
-                    &lt;select name=&quot;service_name&quot; id=&quot;service_name&quot; class=&quot;form-control&quot; onchange=&quot;updateDeviceTypes()&quot;&gt;
+                    &lt;select name=&quot;service_name&quot; id=&quot;service_name&quot; class=&quot;form-control&quot;&gt;
                         &lt;option value=&quot;&quot;&gt;-- サービス名を選択 --&lt;/option&gt;
                         &lt;?php foreach ($services as $service): ?&gt;
                         &lt;option value=&quot;&lt;?= h($service) ?&gt;&quot; &lt;?= $service === $selectedService ? &#x27;selected&#x27; : &#x27;&#x27; ?&gt;&gt;
@@ -745,15 +745,11 @@ require_once &#x27;includes/header.php&#x27;;
         
         // ページ読み込み時に装置種別を更新（選択状態を保持）
         document.addEventListener(&#x27;DOMContentLoaded&#x27;, async function() {
+            // inline onchange の代わりに addEventListener で登録（全ブラウザ対応）
+            document.getElementById(&#x27;service_name&#x27;).addEventListener(&#x27;change&#x27;, updateDeviceTypes);
+
             const serviceName = document.getElementById(&#x27;service_name&#x27;).value;
-            const deviceTypeSelect = document.getElementById(&#x27;device_type&#x27;);
-            const selectedDeviceType = &#x27;&lt;?= h($selectedDeviceType) ?&gt;&#x27;;
-            
-            if (serviceName &amp;&amp; selectedDeviceType) {
-                // プレビュー表示時は選択状態を保持するため、装置種別リストを更新
-                await updateDeviceTypes();
-            } else if (serviceName &amp;&amp; !selectedDeviceType) {
-                // プレビュー前は通常通り更新
+            if (serviceName) {
                 await updateDeviceTypes();
             }
         });
@@ -872,7 +868,7 @@ require_once &#x27;includes/header.php&#x27;;
         <div class="file-section" id="file-2">
             <div class="file-header">
                 <h2>manage.php</h2>
-                <div class="file-path">📂 manage.php | 行数: 868 | 最終更新: 2026-02-18 23:53:47</div>
+                <div class="file-path">📂 manage.php | 行数: 868 | 最終更新: 2026-02-19 00:03:41</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
