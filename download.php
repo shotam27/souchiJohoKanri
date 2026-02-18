@@ -510,8 +510,8 @@ require_once 'includes/header.php';
 
     <script>
         // 共通fetch関数（セッションCookie送信のため credentials: 'same-origin' を付与）
-        async function apiFetch(url, options = {}) {
-            return fetch(url, { credentials: 'same-origin', ...options });
+        async function apiFetch(url, options) {
+            return fetch(url, Object.assign({ credentials: 'same-origin' }, options));
         }
 
         // 装置種別の更新
