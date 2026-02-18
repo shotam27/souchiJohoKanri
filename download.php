@@ -507,7 +507,6 @@ require_once 'includes/header.php';
             </ol>
         </div>
         <?php endif; ?>
-    </div>
 
     <script>
         // 装置種別の更新
