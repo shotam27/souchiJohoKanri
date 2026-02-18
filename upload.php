@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once 'config.php';
 require_once __DIR__ . '/includes/auth_helper.php';
 
@@ -57,14 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             </h3>
             <p>以下の形式のCSVファイルをアップロードしてください：</p>
             <div class="csv-format">
-サービス名,装置種別,装置名称,ユーザー名,装置IP,パスワード,その他カラム1,その他カラム2
+サービス名,装置種別,装置名称,ユーザ名,装置IP,パスワード,その他カラム1,その他カラム2
 サービスA,装置種別A,souchimei,admin,198.1.1.1,admin123,値1,値2
 サービスA,装置種別A,souchimei2,admin,198.1.1.2,admin123,値3,値4
             </div>
             <ul>
-                <li><strong>必須項目:</strong> サービス名、装置種別、装置名称、ユーザー名</li>
+                <li><strong>必須項目:</strong> サービス名、装置種別、装置名称、ユーザ名</li>
                 <li><strong>任意項目:</strong> 装置IP、パスワード</li>
-                <li><strong>主キー:</strong> [サービス名]_[装置種別]_[装置名称]_[ユーザー名]</li>
+                <li><strong>主キー:</strong> [サービス名]_[装置種別]_[装置名称]_[ユーザ名]</li>
                 <li><strong>その他のカラム:</strong> 
                     <ul>
                         <li>device_infoテーブルに存在するカラムの場合 → device_infoに登録</li>

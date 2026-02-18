@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Ajax API 直接テスト - ブラウザで開いて動作確認
  */
@@ -231,7 +231,7 @@ header('Content-Type: text/html; charset=UTF-8');
                     
                     if (devices && devices.length > 0) {
                         html += '<table border="1" cellpadding="5" style="margin-top: 10px;">';
-                        html += '<tr><th>サービス名</th><th>装置種別</th><th>装置名称</th><th>ログインIP</th><th>ユーザー名1</th></tr>';
+                        html += '<tr><th>サービス名</th><th>装置種別</th><th>装置名称</th><th>ログインIP</th><th>ユーザ名1</th></tr>';
                         devices.forEach(device => {
                             html += '<tr>';
                             html += '<td>' + escapeHtml(device.service_name) + '</td>';

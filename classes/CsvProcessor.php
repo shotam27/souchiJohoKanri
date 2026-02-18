@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CSVファイル処理クラス
  */
@@ -86,7 +86,7 @@ class CsvProcessor {
                 $this->headers = array_map('trim', $row);
                 
                 // 必須カラムの存在確認（4つのみ）
-                $requiredColumns = ['サービス名', '装置種別', '装置名称', 'ユーザー名1'];
+                $requiredColumns = ['サービス名', '装置種別', '装置名称', 'ユーザ名1'];
                 foreach ($requiredColumns as $required) {
                     if (!in_array($required, $this->headers)) {
                         $this->errors[] = "必須カラムが不足しています: " . $required;
@@ -122,8 +122,8 @@ class CsvProcessor {
                     $this->errors[] = "行{$rowNumber}: 装置名称が空です";
                     continue;
                 }
-                if (empty($rowData['ユーザー名1'])) {
-                    $this->errors[] = "行{$rowNumber}: ユーザー名1が空です";
+                if (empty($rowData['ユーザ名1'])) {
+                    $this->errors[] = "行{$rowNumber}: ユーザ名1が空です";
                     continue;
                 }
                 
@@ -175,25 +175,25 @@ class CsvProcessor {
             '装置種別', 
             '装置名称',
             'ログインIP',
-            'ユーザー名1',
+            'ユーザ名1',
             'パスワード1',
-            'ユーザー名2',
+            'ユーザ名2',
             'パスワード2',
-            'ユーザー名3',
+            'ユーザ名3',
             'パスワード3',
-            'ユーザー名4',
+            'ユーザ名4',
             'パスワード4',
-            'ユーザー名5',
+            'ユーザ名5',
             'パスワード5',
-            'ユーザー名6',
+            'ユーザ名6',
             'パスワード6',
-            'ユーザー名7',
+            'ユーザ名7',
             'パスワード7',
-            'ユーザー名8',
+            'ユーザ名8',
             'パスワード8',
-            'ユーザー名9',
+            'ユーザ名9',
             'パスワード9',
-            'ユーザー名10',
+            'ユーザ名10',
             'パスワード10'
         ];
     }
@@ -232,7 +232,7 @@ class CsvProcessor {
         return $rowData['サービス名'] . '_' . 
                $rowData['装置種別'] . '_' . 
                $rowData['装置名称'] . '_' . 
-               $rowData['ユーザー名1'];
+               $rowData['ユーザ名1'];
     }
     
     /**
@@ -266,13 +266,13 @@ class CsvProcessor {
             'device_type' => $rowData['装置種別'],
             'device_name' => $rowData['装置名称'],
             'login_ip' => isset($rowData['ログインIP']) ? $rowData['ログインIP'] : null,
-            'username1' => $rowData['ユーザー名1'],
+            'username1' => $rowData['ユーザ名1'],
             'password1' => isset($rowData['パスワード1']) ? $rowData['パスワード1'] : null
         ];
         
-        // ユーザー名2-10、パスワード2-10を追加
+        // ユーザ名2-10、パスワード2-10を追加
         for ($i = 2; $i <= 10; $i++) {
-            $result["username{$i}"] = isset($rowData["ユーザー名{$i}"]) ? $rowData["ユーザー名{$i}"] : null;
+            $result["username{$i}"] = isset($rowData["ユーザ名{$i}"]) ? $rowData["ユーザ名{$i}"] : null;
             $result["password{$i}"] = isset($rowData["パスワード{$i}"]) ? $rowData["パスワード{$i}"] : null;
         }
         

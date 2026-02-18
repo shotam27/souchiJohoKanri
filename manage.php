@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once 'config.php';
 require_once __DIR__ . '/includes/auth_helper.php';
 
@@ -113,7 +113,7 @@ require_once 'includes/header.php';
                             <th>装置種別</th>
                             <th>装置名称</th>
                             <th>ログインIP</th>
-                            <th>ユーザー名</th>
+                            <th>ユーザ名</th>
                             <th style="display: none;">作成者</th>
                             <th style="display: none;">更新者</th>
                             <th style="display: none;">登録日時</th>
@@ -178,7 +178,7 @@ require_once 'includes/header.php';
                 <h4 style="margin-top: 20px; margin-bottom: 10px;">認証情報</h4>
                 
                 <div class="form-group">
-                    <label for="edit_username1">ユーザー名1:<span style="color: red;">*</span></label>
+                    <label for="edit_username1">ユーザ名1:<span style="color: red;">*</span></label>
                     <input type="text" id="edit_username1" name="username1" required>
                 </div>
                 
@@ -188,7 +188,7 @@ require_once 'includes/header.php';
                 </div>
                 
                 <div id="additionalCredentials">
-                    <!-- ユーザー名2-10、パスワード2-10 -->
+                    <!-- ユーザ名2-10、パスワード2-10 -->
                 </div>
                 
                 <button type="button" onclick="toggleAdditionalCredentials()" style="margin-bottom: 20px; background: #6c757d;">
@@ -451,7 +451,7 @@ require_once 'includes/header.php';
                             <td style="display: none;">${formatDateTime(device.updated_at)}</td>
                             <td>
                                 <button class="btn-macro" onclick="downloadTeratermMacro('${escapeHtml(device.login_ip || '')}', '${escapeHtml(device.username1)}', '${escapeHtml(device.password1 || '')}', '${escapeHtml(device.device_name)}')" 
-                                        ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザー名、パスワードが必要です"' : ''}>
+                                        ${!device.login_ip || !device.username1 || !device.password1 ? 'disabled title="IPアドレス、ユーザ名、パスワードが必要です"' : ''}>
                                     マクロ
                                 </button>
                                 <button class="btn-edit" onclick="openEditModal('${escapeHtml(device.primary_key)}')">
@@ -600,7 +600,7 @@ require_once 'includes/header.php';
                 html += `
                     <div class="form-group" style="display: none;" id="credentials_group_${i}">
                         <h5 style="margin-top: 15px;">認証情報 ${i}</h5>
-                        <label for="edit_username${i}">ユーザー名${i}:</label>
+                        <label for="edit_username${i}">ユーザ名${i}:</label>
                         <input type="text" id="edit_username${i}" name="username${i}">
                         <label for="edit_password${i}">パスワード${i}:</label>
                         <input type="password" id="edit_password${i}" name="password${i}">
@@ -687,7 +687,7 @@ require_once 'includes/header.php';
         // Teratermマクロダウンロード
         async function downloadTeratermMacro(deviceIp, username, password, deviceName) {
             if (!deviceIp || !username || !password) {
-                showAlert('error', 'IPアドレス、ユーザー名、パスワードが必要です');
+                showAlert('error', 'IPアドレス、ユーザ名、パスワードが必要です');
                 return;
             }
 

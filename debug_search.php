@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * 検索機能デバッグツール
  */
@@ -107,7 +107,7 @@ try {
             echo "<th>装置種別</th>";
             echo "<th>装置名称</th>";
             echo "<th>ログインIP</th>";
-            echo "<th>ユーザー名1</th>";
+            echo "<th>ユーザ名1</th>";
             echo "<th>登録日時</th>";
             echo "</tr>";
             
