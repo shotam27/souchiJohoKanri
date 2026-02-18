@@ -11,7 +11,7 @@ def find_files(directory):
         dirs[:] = [d for d in dirs if d not in ['vendor', 'node_modules', '.git', 'logs', 'uploads']]
         
         for file in files:
-            if file.endswith('.php') or file.endswith('.css') or file.endswith('.sh'):
+            if file.endswith('.php') or file.endswith('.css') or file.endswith('.sh') or file.endswith('.example'):
                 target_files.append(os.path.join(root, file))
     # 最終更新日時で降順にソート（新しい順）
     return sorted(target_files, key=lambda x: os.path.getmtime(x), reverse=True)
