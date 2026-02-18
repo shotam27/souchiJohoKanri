@@ -209,6 +209,11 @@ require_once 'includes/header.php';
     </div>
 
     <script>
+        // 共通fetch関数（セッションCookie送信のため credentials: 'same-origin' を付与）
+        async function apiFetch(url, options = {}) {
+            return fetch(url, { credentials: 'same-origin', ...options });
+        }
+
         // グローバル変数
         let currentPage = 1;
         let currentSearchParams = {};
@@ -245,7 +250,7 @@ require_once 'includes/header.php';
         async function loadServices() {
             console.log('🔄 loadServices 開始');
             try {
-                const response = await fetch('ajax_api.php?action=get_services');
+                const response = await apiFetch('ajax_api.php?action=get_services');
                 console.log('📥 loadServices response status:', response.status);
                 
                 const result = await response.json();
@@ -292,7 +297,7 @@ require_once 'includes/header.php';
                 deviceTypeSelect.disabled = true;
                 deviceTypeSelect.innerHTML = '<option value="">-- 読み込み中... --</option>';
                 
-                const response = await fetch(`ajax_api.php?action=get_device_types&service_name=${encodeURIComponent(serviceName)}`);
+                const response = await apiFetch(`ajax_api.php?action=get_device_types&service_name=${encodeURIComponent(serviceName)}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -349,7 +354,7 @@ require_once 'includes/header.php';
                 const url = 'ajax_api.php?' + params.toString();
                 console.log('📡 Request URL:', url);
                 
-                const response = await fetch(url);
+                const response = await apiFetch(url);
                 console.log('📥 Response status:', response.status);
                 
                 const text = await response.text();
@@ -522,7 +527,7 @@ require_once 'includes/header.php';
         // 編集モーダルを開く
         async function openEditModal(primaryKey) {
             try {
-                const response = await fetch(`ajax_api.php?action=get_device&primary_key=${encodeURIComponent(primaryKey)}`);
+                const response = await apiFetch(`ajax_api.php?action=get_device&primary_key=${encodeURIComponent(primaryKey)}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -624,7 +629,7 @@ require_once 'includes/header.php';
             formData.append('action', 'update_device');
             
             try {
-                const response = await fetch('ajax_api.php', {
+                const response = await apiFetch('ajax_api.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -660,7 +665,7 @@ require_once 'includes/header.php';
             formData.append('device_type', deviceType);
             
             try {
-                const response = await fetch('ajax_api.php', {
+                const response = await apiFetch('ajax_api.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -695,7 +700,7 @@ require_once 'includes/header.php';
                     device_name: deviceName
                 });
 
-                const response = await fetch('ajax_api.php?' + params.toString());
+                const response = await apiFetch('ajax_api.php?' + params.toString());
                 
                 if (!response.ok) {
                     throw new Error('マクロの生成に失敗しました');

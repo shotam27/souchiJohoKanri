@@ -509,8 +509,13 @@ require_once 'includes/header.php';
         <?php endif; ?>
 
     <script>
+        // 共通fetch関数（セッションCookie送信のため credentials: 'same-origin' を付与）
+        async function apiFetch(url, options = {}) {
+            return fetch(url, { credentials: 'same-origin', ...options });
+        }
+
         // 装置種別の更新
-        async function updateDeviceTypes() {
+        var updateDeviceTypes = async function() {
             const serviceName = document.getElementById('service_name').value;
             const deviceTypeSelect = document.getElementById('device_type');
             
@@ -522,7 +527,7 @@ require_once 'includes/header.php';
             
             if (serviceName) {
                 try {
-                    const response = await fetch(`ajax_api.php?action=get_device_types&service_name=${encodeURIComponent(serviceName)}`);
+                    const response = await apiFetch(`ajax_api.php?action=get_device_types&service_name=${encodeURIComponent(serviceName)}`);
                     const result = await response.json();
                     
                     if (result.success) {
