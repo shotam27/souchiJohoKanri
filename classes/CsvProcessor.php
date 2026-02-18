@@ -7,12 +7,34 @@ class CsvProcessor {
     private $headers;
     private $data;
     private $errors;
+    private $delimiter;
     
     public function __construct($filePath = null) {
         $this->filePath = $filePath;
         $this->headers = [];
         $this->data = [];
         $this->errors = [];
+        $this->delimiter = ',';
+    }
+
+    /**
+     * CSVの区切り文字を自動検出する（カンマ or タブ）
+     * @param string $content ファイル内容
+     * @return string 検出された区切り文字
+     */
+    private function detectDelimiter($content) {
+        $firstLine = strtok($content, "\n");
+        $tabCount   = substr_count($firstLine, "\t");
+        $commaCount = substr_count($firstLine, ',');
+        return ($tabCount > $commaCount) ? "\t" : ',';
+    }
+
+    /**
+     * 使用中の区切り文字を返す
+     * @return string
+     */
+    public function getDelimiter() {
+        return $this->delimiter;
     }
     
     /**
@@ -44,7 +66,10 @@ class CsvProcessor {
             $content = mb_convert_encoding($content, 'UTF-8', $encoding);
             file_put_contents($filePath, $content);
         }
-        
+
+        // 区切り文字を自動検出（カンマ or タブ）
+        $this->delimiter = $this->detectDelimiter($content);
+
         // CSVファイルを開く
         $handle = fopen($filePath, 'r');
         if ($handle === false) {
@@ -53,7 +78,7 @@ class CsvProcessor {
         }
         
         $rowNumber = 0;
-        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+        while (($row = fgetcsv($handle, 0, $this->delimiter)) !== false) {
             $rowNumber++;
             
             if ($rowNumber === 1) {
