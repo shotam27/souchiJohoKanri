@@ -423,6 +423,15 @@ try {
         throw new Exception('ファイルの保存に失敗しました');
     }
     
+    // UTF-8 BOM が先頭にある場合は除去する（CSV処理前）
+    $file_contents = @file_get_contents($upload_path);
+    if ($file_contents !== false && substr($file_contents, 0, 3) === "\xEF\xBB\xBF") {
+        if (file_put_contents($upload_path, substr($file_contents, 3)) === false) {
+            throw new Exception('ファイルの保存後のBOM除去に失敗しました');
+        }
+        error_log("Removed UTF-8 BOM from uploaded file: " . $upload_path);
+    }
+    
     // CSVファイルの処理
     $csv_processor = new CsvProcessor();
     if (!$csv_processor->loadFile($upload_path)) {

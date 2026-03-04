@@ -124,16 +124,16 @@
         <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 40 ファイル<br>
-            <strong>生成日時:</strong> 2026-02-19 01:36:37
+            <strong>生成日時:</strong> 2026-03-04 12:55:18
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">debug_search.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
-                <li><a href="#file-2">test_ajax_direct.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
-                <li><a href="#file-3">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
-                <li><a href="#file-4">upload.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
+                <li><a href="#file-1">upload.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-03-04 12:45:49)</span></li>
+                <li><a href="#file-2">debug_search.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
+                <li><a href="#file-3">test_ajax_direct.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
+                <li><a href="#file-4">manage.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
                 <li><a href="#file-5">classes\CsvProcessor.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:30:17)</span></li>
                 <li><a href="#file-6">download.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-19 00:27:12)</span></li>
                 <li><a href="#file-7">test-static.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-02-18 21:45:17)</span></li>
@@ -175,6 +175,600 @@
 
 
         <div class="file-section" id="file-1">
+            <div class="file-header">
+                <h2>upload.php</h2>
+                <div class="file-path">📂 upload.php | 行数: 584 | 最終更新: 2026-03-04 12:45:49</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>﻿&lt;?php
+require_once &#x27;config.php&#x27;;
+require_once __DIR__ . &#x27;/includes/auth_helper.php&#x27;;
+
+// ログイン必須
+requireLogin();
+
+// GETリクエストの場合はフォームを表示
+if ($_SERVER[&#x27;REQUEST_METHOD&#x27;] !== &#x27;POST&#x27;) {
+    $pageTitle = &#x27;装置情報管理システム - CSVアップロード&#x27;;
+    $errorMessage = getErrorMessage();
+    $successMessage = getSuccessMessage();
+    
+    // 共通ヘッダーを読み込み
+    require_once &#x27;includes/header.php&#x27;;
+    ?&gt;
+    
+    &lt;div class=&quot;main-content&quot;&gt;
+        &lt;div class=&quot;page-container&quot;&gt;
+            &lt;div class=&quot;page-header&quot;&gt;
+                &lt;h1 class=&quot;page-title&quot;&gt;
+                    &lt;div class=&quot;page-title-icon black-svg&quot;&gt;
+                        &lt;?php include &#x27;svgs/upload.svg&#x27;; ?&gt;
+                    &lt;/div&gt;
+                    CSVファイルアップロード
+                &lt;/h1&gt;
+            &lt;/div&gt;
+
+        &lt;?php if ($errorMessage): ?&gt;
+        &lt;div class=&quot;alert alert-error&quot;&gt;
+            &lt;svg class=&quot;alert-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
+                &lt;path d=&quot;M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z&quot;/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;エラー:&lt;/strong&gt; &lt;?= h($errorMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;?php if ($successMessage): ?&gt;
+        &lt;div class=&quot;alert alert-success&quot;&gt;
+            &lt;svg class=&quot;alert-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
+                &lt;path d=&quot;M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z&quot;/&gt;
+            &lt;/svg&gt;
+            &lt;div&gt;
+                &lt;strong&gt;成功:&lt;/strong&gt; &lt;?= h($successMessage) ?&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;?php endif; ?&gt;
+        
+        &lt;div class=&quot;info-box&quot;&gt;
+            &lt;h3&gt;
+                &lt;svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
+                    &lt;path d=&quot;M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z&quot;/&gt;
+                &lt;/svg&gt;
+                CSVファイル形式について
+            &lt;/h3&gt;
+            &lt;p&gt;以下の形式のCSVファイルをアップロードしてください：&lt;/p&gt;
+            &lt;div class=&quot;csv-format&quot;&gt;
+サービス名,装置種別,装置名称,ユーザ名,装置IP,パスワード,その他カラム1,その他カラム2
+サービスA,装置種別A,souchimei,admin,198.1.1.1,admin123,値1,値2
+サービスA,装置種別A,souchimei2,admin,198.1.1.2,admin123,値3,値4
+            &lt;/div&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;strong&gt;必須項目:&lt;/strong&gt; サービス名、装置種別、装置名称、ユーザ名&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;任意項目:&lt;/strong&gt; 装置IP、パスワード&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;主キー:&lt;/strong&gt; [サービス名]_[装置種別]_[装置名称]_[ユーザ名]&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;その他のカラム:&lt;/strong&gt; 
+                    &lt;ul&gt;
+                        &lt;li&gt;device_infoテーブルに存在するカラムの場合 → device_infoに登録&lt;/li&gt;
+                        &lt;li&gt;存在しない場合 → [サービス名]_[装置種別]テーブルに登録&lt;/li&gt;
+                        &lt;li&gt;カラムが存在しない場合は自動で追加されます&lt;/li&gt;
+                    &lt;/ul&gt;
+                &lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;文字エンコーディング:&lt;/strong&gt; UTF-8&lt;/li&gt;
+                &lt;li&gt;&lt;strong&gt;ファイルサイズ制限:&lt;/strong&gt; 最大10MB&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/div&gt;
+        
+        &lt;form id=&quot;uploadForm&quot; action=&quot;upload.php&quot; method=&quot;POST&quot; enctype=&quot;multipart/form-data&quot;&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;&lt;?= h(generateCsrfToken()) ?&gt;&quot;&gt;
+            
+            &lt;div class=&quot;form-group flex-col&quot;&gt;
+                &lt;label for=&quot;csvFile&quot;&gt;CSVファイルを選択:&lt;/label&gt;
+                
+                &lt;!-- ドラッグ&amp;ドロップエリア --&gt;
+                &lt;div class=&quot;drag-drop-area&quot; id=&quot;dragDropArea&quot;&gt;
+                    &lt;div class=&quot;drag-drop-icon&quot;&gt;
+                        &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
+                            &lt;path d=&quot;M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z&quot;/&gt;
+                        &lt;/svg&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&quot;drag-drop-text&quot;&gt;
+                        CSVファイルをここにドラッグ&amp;ドロップ
+                    &lt;/div&gt;
+                    &lt;div class=&quot;drag-drop-subtext&quot;&gt;
+                        または&lt;strong&gt;クリック&lt;/strong&gt;してファイルを選択
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                
+                &lt;!-- 隠されたファイル入力 --&gt;
+                &lt;input type=&quot;file&quot; 
+                       id=&quot;csvFile&quot; 
+                       name=&quot;csv_file&quot; 
+                       accept=&quot;.csv,text/csv,application/csv&quot; 
+                       class=&quot;file-input-hidden&quot;&gt;
+                
+                &lt;!-- 選択されたファイル情報 --&gt;
+                &lt;div class=&quot;selected-file-info&quot; id=&quot;selectedFileInfo&quot;&gt;
+                    &lt;div class=&quot;file-details&quot;&gt;
+                        &lt;div class=&quot;file-icon&quot;&gt;
+                            &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
+                                &lt;path d=&quot;M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z&quot;/&gt;
+                            &lt;/svg&gt;
+                        &lt;/div&gt;
+                        &lt;div class=&quot;file-info-text&quot;&gt;
+                            &lt;div class=&quot;file-name&quot; id=&quot;fileName&quot;&gt;&lt;/div&gt;
+                            &lt;div class=&quot;file-size&quot; id=&quot;fileSize&quot;&gt;&lt;/div&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                
+                &lt;div class=&quot;file-info&quot; style=&quot;margin-top: 10px;&quot;&gt;
+                    ※ CSVファイル（.csv）のみアップロード可能です（最大10MB）
+                &lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div class=&quot;upload-progress&quot; id=&quot;uploadProgress&quot;&gt;
+                &lt;div class=&quot;progress-bar&quot; id=&quot;progressBar&quot;&gt;&lt;/div&gt;
+            &lt;/div&gt;
+            
+            &lt;div class=&quot;form-group&quot;&gt;
+                &lt;button type=&quot;submit&quot; class=&quot;btn&quot; id=&quot;uploadBtn&quot;&gt;
+                    CSVファイルをアップロード
+                &lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // ドラッグ&amp;ドロップ機能
+        const dragDropArea = document.getElementById(&#x27;dragDropArea&#x27;);
+        const fileInput = document.getElementById(&#x27;csvFile&#x27;);
+        const selectedFileInfo = document.getElementById(&#x27;selectedFileInfo&#x27;);
+        const fileName = document.getElementById(&#x27;fileName&#x27;);
+        const fileSize = document.getElementById(&#x27;fileSize&#x27;);
+        
+        // ドラッグ&amp;ドロップエリアのクリックでファイル選択ダイアログを開く
+        dragDropArea.addEventListener(&#x27;click&#x27;, function() {
+            fileInput.click();
+        });
+        
+        // ドラッグオーバー（ドロップを許可するため必須）
+        dragDropArea.addEventListener(&#x27;dragover&#x27;, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = &#x27;copy&#x27;;
+            dragDropArea.classList.add(&#x27;drag-over&#x27;);
+        });
+        
+        // ドラッグエンター
+        dragDropArea.addEventListener(&#x27;dragenter&#x27;, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragDropArea.classList.add(&#x27;drag-over&#x27;);
+        });
+        
+        // ドラッグリーブ
+        dragDropArea.addEventListener(&#x27;dragleave&#x27;, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // ドロップエリア自体から出た場合のみクラスを削除
+            if (e.target === dragDropArea) {
+                dragDropArea.classList.remove(&#x27;drag-over&#x27;);
+            }
+        });
+        
+        // ドロップ
+        dragDropArea.addEventListener(&#x27;drop&#x27;, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragDropArea.classList.remove(&#x27;drag-over&#x27;);
+            
+            console.log(&#x27;ファイルドロップイベント発生&#x27;);
+            console.log(&#x27;e.dataTransfer:&#x27;, e.dataTransfer);
+            
+            const files = e.dataTransfer.files;
+            console.log(&#x27;ドロップされたファイル数:&#x27;, files ? files.length : &#x27;undefined&#x27;);
+            console.log(&#x27;files オブジェクト:&#x27;, files);
+            
+            if (!files || files.length === 0) {
+                alert(&#x27;⚠️ ファイルを検出できませんでした\n\nもう一度お試しください。\n\n通常のファイル選択ボタンをお試しください。&#x27;);
+                console.error(&#x27;ドロップされたファイルが見つかりません&#x27;);
+                console.error(&#x27;e.dataTransfer.files:&#x27;, e.dataTransfer.files);
+                console.error(&#x27;e.dataTransfer.items:&#x27;, e.dataTransfer.items);
+                return;
+            }
+            
+            if (files.length &gt; 1) {
+                alert(&#x27;⚠️ 複数のファイルが選択されています\n\n1つのCSVファイルのみを選択してください。&#x27;);
+                console.warn(&#x27;複数ファイル検出:&#x27;, files.length, &#x27;個&#x27;);
+                return;
+            }
+            
+            const file = files[0];
+            console.log(&#x27;ファイル詳細:&#x27;, {
+                name: file.name,
+                size: file.size + &#x27; bytes&#x27;,
+                type: file.type,
+                lastModified: new Date(file.lastModified).toLocaleString(&#x27;ja-JP&#x27;)
+            });
+            
+            if (validateFile(file)) {
+                // DataTransferオブジェクトを使ってファイル入力に設定
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                displayFileInfo(file);
+                console.log(&#x27;✓ ファイル設定完了&#x27;);
+            } else {
+                console.error(&#x27;ファイル検証失敗:&#x27;, file.name);
+            }
+        });
+        
+        // ファイル選択（通常の方法）
+        fileInput.addEventListener(&#x27;change&#x27;, function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                displayFileInfo(file);
+            }
+        });
+        
+        // ファイル情報を表示
+        function displayFileInfo(file) {
+            const fileSizeBytes = file.size;
+            let fileSizeText;
+            
+            if (fileSizeBytes === 0) {
+                fileSizeText = &#x27;0 KB (ファイルが空です)&#x27;;
+                alert(&#x27;⚠️ エラー: ファイルサイズが0バイトです\n\nファイル名: &#x27; + file.name + &#x27;\n\n可能な原因:\n1. ファイルが空です\n2. ファイルが破損しています\n3. ファイルへのアクセス権限がありません\n\n別のファイルを選択するか、ファイルを確認してください。&#x27;);
+            } else if (fileSizeBytes &lt; 1024) {
+                fileSizeText = fileSizeBytes + &#x27; B&#x27;;
+            } else if (fileSizeBytes &lt; 1024 * 1024) {
+                fileSizeText = (fileSizeBytes / 1024).toFixed(2) + &#x27; KB&#x27;;
+            } else {
+                fileSizeText = (fileSizeBytes / 1024 / 1024).toFixed(2) + &#x27; MB&#x27;;
+            }
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = fileSizeText;
+            
+            selectedFileInfo.classList.add(&#x27;show&#x27;);
+            dragDropArea.classList.add(&#x27;has-file&#x27;);
+            
+            // ドラッグエリアのテキストを更新
+            const dragDropText = dragDropArea.querySelector(&#x27;.drag-drop-text&#x27;);
+            const dragDropSubtext = dragDropArea.querySelector(&#x27;.drag-drop-subtext&#x27;);
+            dragDropText.textContent = &#x27;ファイルが選択されました&#x27;;
+            dragDropSubtext.innerHTML = &#x27;&lt;strong&gt;クリック&lt;/strong&gt;して別のファイルを選択&#x27;;
+        }
+        
+        // ファイル検証
+        function validateFile(file) {
+            console.log(&#x27;ファイル検証開始:&#x27;, {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified)
+            });
+            
+            // ファイルサイズが0バイトチェック
+            if (file.size === 0) {
+                alert(&#x27;❌ エラー: ファイルが空です\n\nファイル名: &#x27; + file.name + &#x27;\nファイルサイズ: 0バイト\n\nファイルの内容を確認してください。&#x27;);
+                console.error(&#x27;ファイルサイズが0バイト:&#x27;, file.name);
+                return false;
+            }
+            
+            // ファイルサイズチェック
+            if (file.size &gt; &lt;?= UPLOAD_MAX_SIZE ?&gt;) {
+                alert(&#x27;❌ エラー: ファイルサイズが大きすぎます\n\nファイル名: &#x27; + file.name + &#x27;\nファイルサイズ: &#x27; + (file.size / 1024 / 1024).toFixed(2) + &#x27; MB\n\n10MB以下のファイルを選択してください。&#x27;);
+                console.error(&#x27;ファイルサイズ超過:&#x27;, file.size, &#x27;bytes&#x27;);
+                return false;
+            }
+            
+            // ファイル形式チェック
+            const allowedTypes = [&#x27;text/csv&#x27;, &#x27;application/csv&#x27;, &#x27;text/plain&#x27;];
+            const fileName = file.name.toLowerCase();
+            const hasValidExtension = fileName.endsWith(&#x27;.csv&#x27;);
+            const hasValidMimeType = allowedTypes.includes(file.type);
+            
+            if (!hasValidExtension &amp;&amp; !hasValidMimeType) {
+                alert(&#x27;❌ エラー: CSVファイルのみアップロード可能です\n\nファイル名: &#x27; + file.name + &#x27;\nファイル形式: &#x27; + (file.type || &#x27;不明&#x27;) + &#x27;\n\n.csv形式のファイルを選択してください。&#x27;);
+                console.error(&#x27;無効なファイル形式:&#x27;, { type: file.type, name: file.name });
+                return false;
+            }
+            
+            console.log(&#x27;✓ ファイル検証成功&#x27;);
+            return true;
+        }
+        
+        // フォーム送信
+        document.getElementById(&#x27;uploadForm&#x27;).addEventListener(&#x27;submit&#x27;, function(e) {
+            const uploadBtn = document.getElementById(&#x27;uploadBtn&#x27;);
+            const uploadProgress = document.getElementById(&#x27;uploadProgress&#x27;);
+            
+            console.log(&#x27;フォーム送信開始&#x27;);
+            
+            if (!fileInput.files.length) {
+                alert(&#x27;❌ CSVファイルを選択してください。&#x27;);
+                console.error(&#x27;ファイルが選択されていません&#x27;);
+                e.preventDefault();
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            console.log(&#x27;送信するファイル:&#x27;, {
+                name: file.name,
+                size: file.size + &#x27; bytes&#x27;,
+                type: file.type
+            });
+            
+            if (file.size === 0) {
+                alert(&#x27;❌ エラー: ファイルが空です\n\nファイル名: &#x27; + file.name + &#x27;\n\n空のファイルはアップロードできません。&#x27;);
+                console.error(&#x27;空のファイルが選択されています&#x27;);
+                e.preventDefault();
+                return;
+            }
+            
+            if (!validateFile(file)) {
+                console.error(&#x27;ファイル検証失敗&#x27;);
+                e.preventDefault();
+                return;
+            }
+            
+            // アップロード開始
+            console.log(&#x27;✓ アップロード開始&#x27;);
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = &#x27;アップロード中...&#x27;;
+            uploadProgress.style.display = &#x27;block&#x27;;
+            
+            // 擬似的なプログレスバー
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += 5;
+                document.getElementById(&#x27;progressBar&#x27;).style.width = progress + &#x27;%&#x27;;
+                if (progress &gt;= 90) {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+        });
+    &lt;/script&gt;
+
+        &lt;/div&gt; &lt;!-- page-container --&gt;
+    &lt;/div&gt; &lt;!-- main-content --&gt;
+
+    &lt;?php 
+    require_once &#x27;includes/footer.php&#x27;;
+    exit;
+}
+
+// POSTリクエストの処理
+
+// CSRFトークンの検証
+if (!isset($_POST[&#x27;csrf_token&#x27;]) || !validateCsrfToken($_POST[&#x27;csrf_token&#x27;])) {
+    setErrorMessage(&#x27;CSRFトークンが無効です&#x27;);
+    header(&#x27;Location: upload.php&#x27;);
+    exit;
+}
+
+try {
+    // ファイルアップロードの検証
+    if (!isset($_FILES[&#x27;csv_file&#x27;]) || $_FILES[&#x27;csv_file&#x27;][&#x27;error&#x27;] !== UPLOAD_ERR_OK) {
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE =&gt; &#x27;ファイルサイズが大きすぎます&#x27;,
+            UPLOAD_ERR_FORM_SIZE =&gt; &#x27;ファイルサイズが大きすぎます&#x27;,
+            UPLOAD_ERR_PARTIAL =&gt; &#x27;ファイルのアップロードが完了していません&#x27;,
+            UPLOAD_ERR_NO_FILE =&gt; &#x27;ファイルが選択されていません&#x27;,
+            UPLOAD_ERR_NO_TMP_DIR =&gt; &#x27;テンポラリディレクトリが見つかりません&#x27;,
+            UPLOAD_ERR_CANT_WRITE =&gt; &#x27;ファイルの書き込みに失敗しました&#x27;,
+            UPLOAD_ERR_EXTENSION =&gt; &#x27;ファイルのアップロードが停止されました&#x27;
+        ];
+        
+        $error_code = $_FILES[&#x27;csv_file&#x27;][&#x27;error&#x27;];
+        $error_message = isset($error_messages[$error_code]) ? 
+                        $error_messages[$error_code] : 
+                        &#x27;不明なアップロードエラーが発生しました&#x27;;
+        
+        throw new Exception($error_message);
+    }
+    
+    $uploaded_file = $_FILES[&#x27;csv_file&#x27;];
+    
+    // ファイルサイズの検証
+    if ($uploaded_file[&#x27;size&#x27;] &gt; UPLOAD_MAX_SIZE) {
+        throw new Exception(&#x27;ファイルサイズが制限を超えています（最大: &#x27; . (UPLOAD_MAX_SIZE / 1024 / 1024) . &#x27;MB）&#x27;);
+    }
+    
+    // ファイル形式の検証
+    $file_info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($file_info, $uploaded_file[&#x27;tmp_name&#x27;]);
+    finfo_close($file_info);
+    
+    $file_extension = strtolower(pathinfo($uploaded_file[&#x27;name&#x27;], PATHINFO_EXTENSION));
+    
+    if (!in_array($mime_type, UPLOAD_ALLOWED_TYPES) &amp;&amp; $file_extension !== &#x27;csv&#x27;) {
+        throw new Exception(&#x27;CSVファイル以外はアップロードできません&#x27;);
+    }
+    
+    // アップロードディレクトリの作成
+    if (!is_dir(UPLOAD_DIR)) {
+        if (!mkdir(UPLOAD_DIR, 0755, true)) {
+            throw new Exception(&#x27;アップロードディレクトリの作成に失敗しました&#x27;);
+        }
+    }
+    
+    // ファイル名のサニタイズ
+    $original_filename = $uploaded_file[&#x27;name&#x27;];
+    $sanitized_filename = date(&#x27;Y-m-d_H-i-s&#x27;) . &#x27;_&#x27; . sanitizeFilename($original_filename);
+    $upload_path = UPLOAD_DIR . $sanitized_filename;
+    
+    // ファイルを移動
+    if (!move_uploaded_file($uploaded_file[&#x27;tmp_name&#x27;], $upload_path)) {
+        throw new Exception(&#x27;ファイルの保存に失敗しました&#x27;);
+    }
+    
+    // UTF-8 BOM が先頭にある場合は除去する（CSV処理前）
+    $file_contents = @file_get_contents($upload_path);
+    if ($file_contents !== false &amp;&amp; substr($file_contents, 0, 3) === &quot;\xEF\xBB\xBF&quot;) {
+        if (file_put_contents($upload_path, substr($file_contents, 3)) === false) {
+            throw new Exception(&#x27;ファイルの保存後のBOM除去に失敗しました&#x27;);
+        }
+        error_log(&quot;Removed UTF-8 BOM from uploaded file: &quot; . $upload_path);
+    }
+    
+    // CSVファイルの処理
+    $csv_processor = new CsvProcessor();
+    if (!$csv_processor-&gt;loadFile($upload_path)) {
+        $errors = $csv_processor-&gt;getErrors();
+        throw new Exception(&#x27;CSVファイルの読み込みに失敗しました: &#x27; . implode(&#x27;, &#x27;, $errors));
+    }
+    
+    // CSVデータの検証
+    if (!$csv_processor-&gt;validate()) {
+        $errors = $csv_processor-&gt;getErrors();
+        throw new Exception(&#x27;CSVデータの検証に失敗しました: &#x27; . implode(&#x27;, &#x27;, $errors));
+    }
+    
+    // データベース接続
+    $dbType = defined(&#x27;DB_TYPE&#x27;) ? DB_TYPE : &#x27;mysql&#x27;;
+    $charset = ($dbType === &#x27;pgsql&#x27;) ? &#x27;utf8&#x27; : DB_CHARSET;
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined(&#x27;DB_PORT&#x27;) ? DB_PORT : null);
+    
+    // データベース初期化（必須テーブルの存在確認と作成）
+    $db_initializer = new DatabaseInitializer($database);
+    error_log(&quot;Initializing required database tables&quot;);
+    $init_results = $db_initializer-&gt;initializeAllTables();
+    
+    if (!empty($init_results[&#x27;tables_created&#x27;])) {
+        error_log(&quot;Created tables: &quot; . implode(&#x27;, &#x27;, $init_results[&#x27;tables_created&#x27;]));
+    }
+    
+    if (!empty($init_results[&#x27;errors&#x27;])) {
+        throw new Exception(&#x27;データベース初期化エラー: &#x27; . implode(&#x27;, &#x27;, $init_results[&#x27;errors&#x27;]));
+    }
+    
+    $device_manager = new DeviceManager($database);
+    
+    // CSVデータをデータベースに登録
+    $results = $device_manager-&gt;processCsvData($csv_processor);
+    
+    // 処理結果の確認
+    if (!$results[&#x27;success&#x27;]) {
+        throw new Exception(&#x27;データベースへの登録に失敗しました: &#x27; . implode(&#x27;, &#x27;, $results[&#x27;errors&#x27;]));
+    }
+    
+    // CSVデータからサービス-装置種別のリレーションを自動登録（別トランザクション）
+    $relationCount = 0;
+    try {
+        $csvData = $csv_processor-&gt;getData();
+        $processedRelations = [];
+        
+        error_log(&quot;Starting relation registration for &quot; . count($csvData) . &quot; records&quot;);
+        
+        foreach ($csvData as $row) {
+            $serviceName = $row[&#x27;サービス名&#x27;];
+            $deviceType = $row[&#x27;装置種別&#x27;];
+            
+            // 重複チェック（同一処理内での重複を避ける）
+            $relationKey = $serviceName . &#x27;|&#x27; . $deviceType;
+            if (!in_array($relationKey, $processedRelations)) {
+                try {
+                    $description = &quot;CSV自動登録: &quot; . date(&#x27;Y-m-d H:i:s&#x27;) . &quot; - &quot; . basename($original_filename);
+                    error_log(&quot;Registering relation: {$serviceName} -&gt; {$deviceType}&quot;);
+                    $device_manager-&gt;registerServiceDeviceTypeRelation($serviceName, $deviceType, $description);
+                    $relationCount++;
+                    $processedRelations[] = $relationKey;
+                    error_log(&quot;Successfully registered relation: {$relationKey}&quot;);
+                } catch (Exception $e) {
+                    // リレーション登録のエラーは警告として扱う（処理は継続）
+                    error_log(&quot;Relation registration warning for {$relationKey}: &quot; . $e-&gt;getMessage());
+                }
+            } else {
+                error_log(&quot;Skipping duplicate relation: {$relationKey}&quot;);
+            }
+        }
+        
+        error_log(&quot;Completed relation registration. Total: {$relationCount} relations&quot;);
+    } catch (Exception $e) {
+        // リレーション登録エラーは警告として扱う
+        error_log(&quot;Relation registration process error: &quot; . $e-&gt;getMessage());
+        $relationCount = 0;
+    }
+    
+    // 統計情報の取得
+    $statistics = $csv_processor-&gt;getStatistics();
+    
+    // 成功メッセージの設定
+    $success_message = &quot;CSVファイルの処理が完了しました。\n&quot;;
+    $success_message .= &quot;- 処理レコード数: &quot; . $results[&#x27;device_info_count&#x27;] . &quot;件\n&quot;;
+    $success_message .= &quot;- 作成された動的テーブル: &quot; . count($results[&#x27;dynamic_tables_created&#x27;]) . &quot;個\n&quot;;
+    
+    if (!empty($results[&#x27;dynamic_tables_created&#x27;])) {
+        $success_message .= &quot;- テーブル名: &quot; . implode(&#x27;, &#x27;, $results[&#x27;dynamic_tables_created&#x27;]) . &quot;\n&quot;;
+    }
+    
+    $success_message .= &quot;- サービス数: &quot; . count($statistics[&#x27;services&#x27;]) . &quot;種類\n&quot;;
+    $success_message .= &quot;- 装置種別数: &quot; . count($statistics[&#x27;device_types&#x27;]) . &quot;種類\n&quot;;
+    $success_message .= &quot;- 自動登録されたリレーション: &quot; . $relationCount . &quot;件&quot;;
+    
+    setSuccessMessage($success_message);
+    
+    // アップロードされたファイルを削除（オプション）
+    // unlink($upload_path);
+    
+} catch (Exception $e) {
+    // 詳細なエラー情報をログに記録
+    $errorDetails = [
+        &#x27;message&#x27; =&gt; $e-&gt;getMessage(),
+        &#x27;file&#x27; =&gt; $e-&gt;getFile(),
+        &#x27;line&#x27; =&gt; $e-&gt;getLine(),
+        &#x27;trace&#x27; =&gt; $e-&gt;getTraceAsString()
+    ];
+    error_log(&quot;Upload error details: &quot; . json_encode($errorDetails, JSON_UNESCAPED_UNICODE));
+    
+    // デバッグ用：ファイルにも書き出す
+    @file_put_contents(&#x27;/tmp/fusion_upload_debug.log&#x27;, 
+        date(&#x27;Y-m-d H:i:s&#x27;) . &quot;\n&quot; . 
+        json_encode($errorDetails, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . &quot;\n\n&quot;, 
+        FILE_APPEND
+    );
+    
+    setErrorMessage(&quot;アップロード処理中にエラーが発生しました: &quot; . $e-&gt;getMessage());
+    
+    // データベースのトランザクション状態を確認してロールバック
+    if (isset($database)) {
+        try {
+            if ($database-&gt;inTransaction()) {
+                $database-&gt;rollBack();
+                error_log(&quot;Transaction rolled back due to error&quot;);
+            }
+        } catch (Exception $rollbackError) {
+            error_log(&quot;Rollback error: &quot; . $rollbackError-&gt;getMessage());
+        }
+    }
+    
+    // エラー時はアップロードされたファイルを削除
+    if (isset($upload_path) &amp;&amp; file_exists($upload_path)) {
+        unlink($upload_path);
+    }
+} finally {
+    // データベース接続を閉じる
+    if (isset($database)) {
+        try {
+            $database-&gt;close();
+        } catch (Exception $closeError) {
+            error_log(&quot;Database close error: &quot; . $closeError-&gt;getMessage());
+        }
+    }
+}
+
+// 結果ページにリダイレクト
+header(&#x27;Location: upload.php&#x27;);
+exit;
+?&gt;</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-2">
             <div class="file-header">
                 <h2>debug_search.php</h2>
                 <div class="file-path">📂 debug_search.php | 行数: 313 | 最終更新: 2026-02-19 00:30:17</div>
@@ -497,7 +1091,7 @@ try {
             </div>
         </div>
 
-        <div class="file-section" id="file-2">
+        <div class="file-section" id="file-3">
             <div class="file-header">
                 <h2>test_ajax_direct.php</h2>
                 <div class="file-path">📂 test_ajax_direct.php | 行数: 379 | 最終更新: 2026-02-19 00:30:17</div>
@@ -886,7 +1480,7 @@ header(&#x27;Content-Type: text/html; charset=UTF-8&#x27;);
             </div>
         </div>
 
-        <div class="file-section" id="file-3">
+        <div class="file-section" id="file-4">
             <div class="file-header">
                 <h2>manage.php</h2>
                 <div class="file-path">📂 manage.php | 行数: 868 | 最終更新: 2026-02-19 00:30:17</div>
@@ -1761,591 +2355,6 @@ require_once &#x27;includes/header.php&#x27;;
 
 &lt;?php require_once &#x27;includes/footer.php&#x27;; ?&gt;
 </code></pre>
-            </div>
-        </div>
-
-        <div class="file-section" id="file-4">
-            <div class="file-header">
-                <h2>upload.php</h2>
-                <div class="file-path">📂 upload.php | 行数: 575 | 最終更新: 2026-02-19 00:30:17</div>
-            </div>
-            <div class="code-wrapper">
-                <button class="copy-button" onclick="copyCode(this)">コピー</button>
-                <pre><code>﻿&lt;?php
-require_once &#x27;config.php&#x27;;
-require_once __DIR__ . &#x27;/includes/auth_helper.php&#x27;;
-
-// ログイン必須
-requireLogin();
-
-// GETリクエストの場合はフォームを表示
-if ($_SERVER[&#x27;REQUEST_METHOD&#x27;] !== &#x27;POST&#x27;) {
-    $pageTitle = &#x27;装置情報管理システム - CSVアップロード&#x27;;
-    $errorMessage = getErrorMessage();
-    $successMessage = getSuccessMessage();
-    
-    // 共通ヘッダーを読み込み
-    require_once &#x27;includes/header.php&#x27;;
-    ?&gt;
-    
-    &lt;div class=&quot;main-content&quot;&gt;
-        &lt;div class=&quot;page-container&quot;&gt;
-            &lt;div class=&quot;page-header&quot;&gt;
-                &lt;h1 class=&quot;page-title&quot;&gt;
-                    &lt;div class=&quot;page-title-icon black-svg&quot;&gt;
-                        &lt;?php include &#x27;svgs/upload.svg&#x27;; ?&gt;
-                    &lt;/div&gt;
-                    CSVファイルアップロード
-                &lt;/h1&gt;
-            &lt;/div&gt;
-
-        &lt;?php if ($errorMessage): ?&gt;
-        &lt;div class=&quot;alert alert-error&quot;&gt;
-            &lt;svg class=&quot;alert-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
-                &lt;path d=&quot;M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z&quot;/&gt;
-            &lt;/svg&gt;
-            &lt;div&gt;
-                &lt;strong&gt;エラー:&lt;/strong&gt; &lt;?= h($errorMessage) ?&gt;
-            &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;?php endif; ?&gt;
-        
-        &lt;?php if ($successMessage): ?&gt;
-        &lt;div class=&quot;alert alert-success&quot;&gt;
-            &lt;svg class=&quot;alert-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
-                &lt;path d=&quot;M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z&quot;/&gt;
-            &lt;/svg&gt;
-            &lt;div&gt;
-                &lt;strong&gt;成功:&lt;/strong&gt; &lt;?= h($successMessage) ?&gt;
-            &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;?php endif; ?&gt;
-        
-        &lt;div class=&quot;info-box&quot;&gt;
-            &lt;h3&gt;
-                &lt;svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
-                    &lt;path d=&quot;M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z&quot;/&gt;
-                &lt;/svg&gt;
-                CSVファイル形式について
-            &lt;/h3&gt;
-            &lt;p&gt;以下の形式のCSVファイルをアップロードしてください：&lt;/p&gt;
-            &lt;div class=&quot;csv-format&quot;&gt;
-サービス名,装置種別,装置名称,ユーザ名,装置IP,パスワード,その他カラム1,その他カラム2
-サービスA,装置種別A,souchimei,admin,198.1.1.1,admin123,値1,値2
-サービスA,装置種別A,souchimei2,admin,198.1.1.2,admin123,値3,値4
-            &lt;/div&gt;
-            &lt;ul&gt;
-                &lt;li&gt;&lt;strong&gt;必須項目:&lt;/strong&gt; サービス名、装置種別、装置名称、ユーザ名&lt;/li&gt;
-                &lt;li&gt;&lt;strong&gt;任意項目:&lt;/strong&gt; 装置IP、パスワード&lt;/li&gt;
-                &lt;li&gt;&lt;strong&gt;主キー:&lt;/strong&gt; [サービス名]_[装置種別]_[装置名称]_[ユーザ名]&lt;/li&gt;
-                &lt;li&gt;&lt;strong&gt;その他のカラム:&lt;/strong&gt; 
-                    &lt;ul&gt;
-                        &lt;li&gt;device_infoテーブルに存在するカラムの場合 → device_infoに登録&lt;/li&gt;
-                        &lt;li&gt;存在しない場合 → [サービス名]_[装置種別]テーブルに登録&lt;/li&gt;
-                        &lt;li&gt;カラムが存在しない場合は自動で追加されます&lt;/li&gt;
-                    &lt;/ul&gt;
-                &lt;/li&gt;
-                &lt;li&gt;&lt;strong&gt;文字エンコーディング:&lt;/strong&gt; UTF-8&lt;/li&gt;
-                &lt;li&gt;&lt;strong&gt;ファイルサイズ制限:&lt;/strong&gt; 最大10MB&lt;/li&gt;
-            &lt;/ul&gt;
-        &lt;/div&gt;
-        
-        &lt;form id=&quot;uploadForm&quot; action=&quot;upload.php&quot; method=&quot;POST&quot; enctype=&quot;multipart/form-data&quot;&gt;
-            &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;&lt;?= h(generateCsrfToken()) ?&gt;&quot;&gt;
-            
-            &lt;div class=&quot;form-group flex-col&quot;&gt;
-                &lt;label for=&quot;csvFile&quot;&gt;CSVファイルを選択:&lt;/label&gt;
-                
-                &lt;!-- ドラッグ&amp;ドロップエリア --&gt;
-                &lt;div class=&quot;drag-drop-area&quot; id=&quot;dragDropArea&quot;&gt;
-                    &lt;div class=&quot;drag-drop-icon&quot;&gt;
-                        &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
-                            &lt;path d=&quot;M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z&quot;/&gt;
-                        &lt;/svg&gt;
-                    &lt;/div&gt;
-                    &lt;div class=&quot;drag-drop-text&quot;&gt;
-                        CSVファイルをここにドラッグ&amp;ドロップ
-                    &lt;/div&gt;
-                    &lt;div class=&quot;drag-drop-subtext&quot;&gt;
-                        または&lt;strong&gt;クリック&lt;/strong&gt;してファイルを選択
-                    &lt;/div&gt;
-                &lt;/div&gt;
-                
-                &lt;!-- 隠されたファイル入力 --&gt;
-                &lt;input type=&quot;file&quot; 
-                       id=&quot;csvFile&quot; 
-                       name=&quot;csv_file&quot; 
-                       accept=&quot;.csv,text/csv,application/csv&quot; 
-                       class=&quot;file-input-hidden&quot;&gt;
-                
-                &lt;!-- 選択されたファイル情報 --&gt;
-                &lt;div class=&quot;selected-file-info&quot; id=&quot;selectedFileInfo&quot;&gt;
-                    &lt;div class=&quot;file-details&quot;&gt;
-                        &lt;div class=&quot;file-icon&quot;&gt;
-                            &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;&gt;
-                                &lt;path d=&quot;M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z&quot;/&gt;
-                            &lt;/svg&gt;
-                        &lt;/div&gt;
-                        &lt;div class=&quot;file-info-text&quot;&gt;
-                            &lt;div class=&quot;file-name&quot; id=&quot;fileName&quot;&gt;&lt;/div&gt;
-                            &lt;div class=&quot;file-size&quot; id=&quot;fileSize&quot;&gt;&lt;/div&gt;
-                        &lt;/div&gt;
-                    &lt;/div&gt;
-                &lt;/div&gt;
-                
-                &lt;div class=&quot;file-info&quot; style=&quot;margin-top: 10px;&quot;&gt;
-                    ※ CSVファイル（.csv）のみアップロード可能です（最大10MB）
-                &lt;/div&gt;
-            &lt;/div&gt;
-            
-            &lt;div class=&quot;upload-progress&quot; id=&quot;uploadProgress&quot;&gt;
-                &lt;div class=&quot;progress-bar&quot; id=&quot;progressBar&quot;&gt;&lt;/div&gt;
-            &lt;/div&gt;
-            
-            &lt;div class=&quot;form-group&quot;&gt;
-                &lt;button type=&quot;submit&quot; class=&quot;btn&quot; id=&quot;uploadBtn&quot;&gt;
-                    CSVファイルをアップロード
-                &lt;/button&gt;
-            &lt;/div&gt;
-        &lt;/form&gt;
-    &lt;/div&gt;
-
-    &lt;script&gt;
-        // ドラッグ&amp;ドロップ機能
-        const dragDropArea = document.getElementById(&#x27;dragDropArea&#x27;);
-        const fileInput = document.getElementById(&#x27;csvFile&#x27;);
-        const selectedFileInfo = document.getElementById(&#x27;selectedFileInfo&#x27;);
-        const fileName = document.getElementById(&#x27;fileName&#x27;);
-        const fileSize = document.getElementById(&#x27;fileSize&#x27;);
-        
-        // ドラッグ&amp;ドロップエリアのクリックでファイル選択ダイアログを開く
-        dragDropArea.addEventListener(&#x27;click&#x27;, function() {
-            fileInput.click();
-        });
-        
-        // ドラッグオーバー（ドロップを許可するため必須）
-        dragDropArea.addEventListener(&#x27;dragover&#x27;, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.dataTransfer.dropEffect = &#x27;copy&#x27;;
-            dragDropArea.classList.add(&#x27;drag-over&#x27;);
-        });
-        
-        // ドラッグエンター
-        dragDropArea.addEventListener(&#x27;dragenter&#x27;, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            dragDropArea.classList.add(&#x27;drag-over&#x27;);
-        });
-        
-        // ドラッグリーブ
-        dragDropArea.addEventListener(&#x27;dragleave&#x27;, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // ドロップエリア自体から出た場合のみクラスを削除
-            if (e.target === dragDropArea) {
-                dragDropArea.classList.remove(&#x27;drag-over&#x27;);
-            }
-        });
-        
-        // ドロップ
-        dragDropArea.addEventListener(&#x27;drop&#x27;, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            dragDropArea.classList.remove(&#x27;drag-over&#x27;);
-            
-            console.log(&#x27;ファイルドロップイベント発生&#x27;);
-            console.log(&#x27;e.dataTransfer:&#x27;, e.dataTransfer);
-            
-            const files = e.dataTransfer.files;
-            console.log(&#x27;ドロップされたファイル数:&#x27;, files ? files.length : &#x27;undefined&#x27;);
-            console.log(&#x27;files オブジェクト:&#x27;, files);
-            
-            if (!files || files.length === 0) {
-                alert(&#x27;⚠️ ファイルを検出できませんでした\n\nもう一度お試しください。\n\n通常のファイル選択ボタンをお試しください。&#x27;);
-                console.error(&#x27;ドロップされたファイルが見つかりません&#x27;);
-                console.error(&#x27;e.dataTransfer.files:&#x27;, e.dataTransfer.files);
-                console.error(&#x27;e.dataTransfer.items:&#x27;, e.dataTransfer.items);
-                return;
-            }
-            
-            if (files.length &gt; 1) {
-                alert(&#x27;⚠️ 複数のファイルが選択されています\n\n1つのCSVファイルのみを選択してください。&#x27;);
-                console.warn(&#x27;複数ファイル検出:&#x27;, files.length, &#x27;個&#x27;);
-                return;
-            }
-            
-            const file = files[0];
-            console.log(&#x27;ファイル詳細:&#x27;, {
-                name: file.name,
-                size: file.size + &#x27; bytes&#x27;,
-                type: file.type,
-                lastModified: new Date(file.lastModified).toLocaleString(&#x27;ja-JP&#x27;)
-            });
-            
-            if (validateFile(file)) {
-                // DataTransferオブジェクトを使ってファイル入力に設定
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                fileInput.files = dataTransfer.files;
-                displayFileInfo(file);
-                console.log(&#x27;✓ ファイル設定完了&#x27;);
-            } else {
-                console.error(&#x27;ファイル検証失敗:&#x27;, file.name);
-            }
-        });
-        
-        // ファイル選択（通常の方法）
-        fileInput.addEventListener(&#x27;change&#x27;, function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                displayFileInfo(file);
-            }
-        });
-        
-        // ファイル情報を表示
-        function displayFileInfo(file) {
-            const fileSizeBytes = file.size;
-            let fileSizeText;
-            
-            if (fileSizeBytes === 0) {
-                fileSizeText = &#x27;0 KB (ファイルが空です)&#x27;;
-                alert(&#x27;⚠️ エラー: ファイルサイズが0バイトです\n\nファイル名: &#x27; + file.name + &#x27;\n\n可能な原因:\n1. ファイルが空です\n2. ファイルが破損しています\n3. ファイルへのアクセス権限がありません\n\n別のファイルを選択するか、ファイルを確認してください。&#x27;);
-            } else if (fileSizeBytes &lt; 1024) {
-                fileSizeText = fileSizeBytes + &#x27; B&#x27;;
-            } else if (fileSizeBytes &lt; 1024 * 1024) {
-                fileSizeText = (fileSizeBytes / 1024).toFixed(2) + &#x27; KB&#x27;;
-            } else {
-                fileSizeText = (fileSizeBytes / 1024 / 1024).toFixed(2) + &#x27; MB&#x27;;
-            }
-            
-            fileName.textContent = file.name;
-            fileSize.textContent = fileSizeText;
-            
-            selectedFileInfo.classList.add(&#x27;show&#x27;);
-            dragDropArea.classList.add(&#x27;has-file&#x27;);
-            
-            // ドラッグエリアのテキストを更新
-            const dragDropText = dragDropArea.querySelector(&#x27;.drag-drop-text&#x27;);
-            const dragDropSubtext = dragDropArea.querySelector(&#x27;.drag-drop-subtext&#x27;);
-            dragDropText.textContent = &#x27;ファイルが選択されました&#x27;;
-            dragDropSubtext.innerHTML = &#x27;&lt;strong&gt;クリック&lt;/strong&gt;して別のファイルを選択&#x27;;
-        }
-        
-        // ファイル検証
-        function validateFile(file) {
-            console.log(&#x27;ファイル検証開始:&#x27;, {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: new Date(file.lastModified)
-            });
-            
-            // ファイルサイズが0バイトチェック
-            if (file.size === 0) {
-                alert(&#x27;❌ エラー: ファイルが空です\n\nファイル名: &#x27; + file.name + &#x27;\nファイルサイズ: 0バイト\n\nファイルの内容を確認してください。&#x27;);
-                console.error(&#x27;ファイルサイズが0バイト:&#x27;, file.name);
-                return false;
-            }
-            
-            // ファイルサイズチェック
-            if (file.size &gt; &lt;?= UPLOAD_MAX_SIZE ?&gt;) {
-                alert(&#x27;❌ エラー: ファイルサイズが大きすぎます\n\nファイル名: &#x27; + file.name + &#x27;\nファイルサイズ: &#x27; + (file.size / 1024 / 1024).toFixed(2) + &#x27; MB\n\n10MB以下のファイルを選択してください。&#x27;);
-                console.error(&#x27;ファイルサイズ超過:&#x27;, file.size, &#x27;bytes&#x27;);
-                return false;
-            }
-            
-            // ファイル形式チェック
-            const allowedTypes = [&#x27;text/csv&#x27;, &#x27;application/csv&#x27;, &#x27;text/plain&#x27;];
-            const fileName = file.name.toLowerCase();
-            const hasValidExtension = fileName.endsWith(&#x27;.csv&#x27;);
-            const hasValidMimeType = allowedTypes.includes(file.type);
-            
-            if (!hasValidExtension &amp;&amp; !hasValidMimeType) {
-                alert(&#x27;❌ エラー: CSVファイルのみアップロード可能です\n\nファイル名: &#x27; + file.name + &#x27;\nファイル形式: &#x27; + (file.type || &#x27;不明&#x27;) + &#x27;\n\n.csv形式のファイルを選択してください。&#x27;);
-                console.error(&#x27;無効なファイル形式:&#x27;, { type: file.type, name: file.name });
-                return false;
-            }
-            
-            console.log(&#x27;✓ ファイル検証成功&#x27;);
-            return true;
-        }
-        
-        // フォーム送信
-        document.getElementById(&#x27;uploadForm&#x27;).addEventListener(&#x27;submit&#x27;, function(e) {
-            const uploadBtn = document.getElementById(&#x27;uploadBtn&#x27;);
-            const uploadProgress = document.getElementById(&#x27;uploadProgress&#x27;);
-            
-            console.log(&#x27;フォーム送信開始&#x27;);
-            
-            if (!fileInput.files.length) {
-                alert(&#x27;❌ CSVファイルを選択してください。&#x27;);
-                console.error(&#x27;ファイルが選択されていません&#x27;);
-                e.preventDefault();
-                return;
-            }
-            
-            const file = fileInput.files[0];
-            console.log(&#x27;送信するファイル:&#x27;, {
-                name: file.name,
-                size: file.size + &#x27; bytes&#x27;,
-                type: file.type
-            });
-            
-            if (file.size === 0) {
-                alert(&#x27;❌ エラー: ファイルが空です\n\nファイル名: &#x27; + file.name + &#x27;\n\n空のファイルはアップロードできません。&#x27;);
-                console.error(&#x27;空のファイルが選択されています&#x27;);
-                e.preventDefault();
-                return;
-            }
-            
-            if (!validateFile(file)) {
-                console.error(&#x27;ファイル検証失敗&#x27;);
-                e.preventDefault();
-                return;
-            }
-            
-            // アップロード開始
-            console.log(&#x27;✓ アップロード開始&#x27;);
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = &#x27;アップロード中...&#x27;;
-            uploadProgress.style.display = &#x27;block&#x27;;
-            
-            // 擬似的なプログレスバー
-            let progress = 0;
-            const progressInterval = setInterval(function() {
-                progress += 5;
-                document.getElementById(&#x27;progressBar&#x27;).style.width = progress + &#x27;%&#x27;;
-                if (progress &gt;= 90) {
-                    clearInterval(progressInterval);
-                }
-            }, 100);
-        });
-    &lt;/script&gt;
-
-        &lt;/div&gt; &lt;!-- page-container --&gt;
-    &lt;/div&gt; &lt;!-- main-content --&gt;
-
-    &lt;?php 
-    require_once &#x27;includes/footer.php&#x27;;
-    exit;
-}
-
-// POSTリクエストの処理
-
-// CSRFトークンの検証
-if (!isset($_POST[&#x27;csrf_token&#x27;]) || !validateCsrfToken($_POST[&#x27;csrf_token&#x27;])) {
-    setErrorMessage(&#x27;CSRFトークンが無効です&#x27;);
-    header(&#x27;Location: upload.php&#x27;);
-    exit;
-}
-
-try {
-    // ファイルアップロードの検証
-    if (!isset($_FILES[&#x27;csv_file&#x27;]) || $_FILES[&#x27;csv_file&#x27;][&#x27;error&#x27;] !== UPLOAD_ERR_OK) {
-        $error_messages = [
-            UPLOAD_ERR_INI_SIZE =&gt; &#x27;ファイルサイズが大きすぎます&#x27;,
-            UPLOAD_ERR_FORM_SIZE =&gt; &#x27;ファイルサイズが大きすぎます&#x27;,
-            UPLOAD_ERR_PARTIAL =&gt; &#x27;ファイルのアップロードが完了していません&#x27;,
-            UPLOAD_ERR_NO_FILE =&gt; &#x27;ファイルが選択されていません&#x27;,
-            UPLOAD_ERR_NO_TMP_DIR =&gt; &#x27;テンポラリディレクトリが見つかりません&#x27;,
-            UPLOAD_ERR_CANT_WRITE =&gt; &#x27;ファイルの書き込みに失敗しました&#x27;,
-            UPLOAD_ERR_EXTENSION =&gt; &#x27;ファイルのアップロードが停止されました&#x27;
-        ];
-        
-        $error_code = $_FILES[&#x27;csv_file&#x27;][&#x27;error&#x27;];
-        $error_message = isset($error_messages[$error_code]) ? 
-                        $error_messages[$error_code] : 
-                        &#x27;不明なアップロードエラーが発生しました&#x27;;
-        
-        throw new Exception($error_message);
-    }
-    
-    $uploaded_file = $_FILES[&#x27;csv_file&#x27;];
-    
-    // ファイルサイズの検証
-    if ($uploaded_file[&#x27;size&#x27;] &gt; UPLOAD_MAX_SIZE) {
-        throw new Exception(&#x27;ファイルサイズが制限を超えています（最大: &#x27; . (UPLOAD_MAX_SIZE / 1024 / 1024) . &#x27;MB）&#x27;);
-    }
-    
-    // ファイル形式の検証
-    $file_info = finfo_open(FILEINFO_MIME_TYPE);
-    $mime_type = finfo_file($file_info, $uploaded_file[&#x27;tmp_name&#x27;]);
-    finfo_close($file_info);
-    
-    $file_extension = strtolower(pathinfo($uploaded_file[&#x27;name&#x27;], PATHINFO_EXTENSION));
-    
-    if (!in_array($mime_type, UPLOAD_ALLOWED_TYPES) &amp;&amp; $file_extension !== &#x27;csv&#x27;) {
-        throw new Exception(&#x27;CSVファイル以外はアップロードできません&#x27;);
-    }
-    
-    // アップロードディレクトリの作成
-    if (!is_dir(UPLOAD_DIR)) {
-        if (!mkdir(UPLOAD_DIR, 0755, true)) {
-            throw new Exception(&#x27;アップロードディレクトリの作成に失敗しました&#x27;);
-        }
-    }
-    
-    // ファイル名のサニタイズ
-    $original_filename = $uploaded_file[&#x27;name&#x27;];
-    $sanitized_filename = date(&#x27;Y-m-d_H-i-s&#x27;) . &#x27;_&#x27; . sanitizeFilename($original_filename);
-    $upload_path = UPLOAD_DIR . $sanitized_filename;
-    
-    // ファイルを移動
-    if (!move_uploaded_file($uploaded_file[&#x27;tmp_name&#x27;], $upload_path)) {
-        throw new Exception(&#x27;ファイルの保存に失敗しました&#x27;);
-    }
-    
-    // CSVファイルの処理
-    $csv_processor = new CsvProcessor();
-    if (!$csv_processor-&gt;loadFile($upload_path)) {
-        $errors = $csv_processor-&gt;getErrors();
-        throw new Exception(&#x27;CSVファイルの読み込みに失敗しました: &#x27; . implode(&#x27;, &#x27;, $errors));
-    }
-    
-    // CSVデータの検証
-    if (!$csv_processor-&gt;validate()) {
-        $errors = $csv_processor-&gt;getErrors();
-        throw new Exception(&#x27;CSVデータの検証に失敗しました: &#x27; . implode(&#x27;, &#x27;, $errors));
-    }
-    
-    // データベース接続
-    $dbType = defined(&#x27;DB_TYPE&#x27;) ? DB_TYPE : &#x27;mysql&#x27;;
-    $charset = ($dbType === &#x27;pgsql&#x27;) ? &#x27;utf8&#x27; : DB_CHARSET;
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined(&#x27;DB_PORT&#x27;) ? DB_PORT : null);
-    
-    // データベース初期化（必須テーブルの存在確認と作成）
-    $db_initializer = new DatabaseInitializer($database);
-    error_log(&quot;Initializing required database tables&quot;);
-    $init_results = $db_initializer-&gt;initializeAllTables();
-    
-    if (!empty($init_results[&#x27;tables_created&#x27;])) {
-        error_log(&quot;Created tables: &quot; . implode(&#x27;, &#x27;, $init_results[&#x27;tables_created&#x27;]));
-    }
-    
-    if (!empty($init_results[&#x27;errors&#x27;])) {
-        throw new Exception(&#x27;データベース初期化エラー: &#x27; . implode(&#x27;, &#x27;, $init_results[&#x27;errors&#x27;]));
-    }
-    
-    $device_manager = new DeviceManager($database);
-    
-    // CSVデータをデータベースに登録
-    $results = $device_manager-&gt;processCsvData($csv_processor);
-    
-    // 処理結果の確認
-    if (!$results[&#x27;success&#x27;]) {
-        throw new Exception(&#x27;データベースへの登録に失敗しました: &#x27; . implode(&#x27;, &#x27;, $results[&#x27;errors&#x27;]));
-    }
-    
-    // CSVデータからサービス-装置種別のリレーションを自動登録（別トランザクション）
-    $relationCount = 0;
-    try {
-        $csvData = $csv_processor-&gt;getData();
-        $processedRelations = [];
-        
-        error_log(&quot;Starting relation registration for &quot; . count($csvData) . &quot; records&quot;);
-        
-        foreach ($csvData as $row) {
-            $serviceName = $row[&#x27;サービス名&#x27;];
-            $deviceType = $row[&#x27;装置種別&#x27;];
-            
-            // 重複チェック（同一処理内での重複を避ける）
-            $relationKey = $serviceName . &#x27;|&#x27; . $deviceType;
-            if (!in_array($relationKey, $processedRelations)) {
-                try {
-                    $description = &quot;CSV自動登録: &quot; . date(&#x27;Y-m-d H:i:s&#x27;) . &quot; - &quot; . basename($original_filename);
-                    error_log(&quot;Registering relation: {$serviceName} -&gt; {$deviceType}&quot;);
-                    $device_manager-&gt;registerServiceDeviceTypeRelation($serviceName, $deviceType, $description);
-                    $relationCount++;
-                    $processedRelations[] = $relationKey;
-                    error_log(&quot;Successfully registered relation: {$relationKey}&quot;);
-                } catch (Exception $e) {
-                    // リレーション登録のエラーは警告として扱う（処理は継続）
-                    error_log(&quot;Relation registration warning for {$relationKey}: &quot; . $e-&gt;getMessage());
-                }
-            } else {
-                error_log(&quot;Skipping duplicate relation: {$relationKey}&quot;);
-            }
-        }
-        
-        error_log(&quot;Completed relation registration. Total: {$relationCount} relations&quot;);
-    } catch (Exception $e) {
-        // リレーション登録エラーは警告として扱う
-        error_log(&quot;Relation registration process error: &quot; . $e-&gt;getMessage());
-        $relationCount = 0;
-    }
-    
-    // 統計情報の取得
-    $statistics = $csv_processor-&gt;getStatistics();
-    
-    // 成功メッセージの設定
-    $success_message = &quot;CSVファイルの処理が完了しました。\n&quot;;
-    $success_message .= &quot;- 処理レコード数: &quot; . $results[&#x27;device_info_count&#x27;] . &quot;件\n&quot;;
-    $success_message .= &quot;- 作成された動的テーブル: &quot; . count($results[&#x27;dynamic_tables_created&#x27;]) . &quot;個\n&quot;;
-    
-    if (!empty($results[&#x27;dynamic_tables_created&#x27;])) {
-        $success_message .= &quot;- テーブル名: &quot; . implode(&#x27;, &#x27;, $results[&#x27;dynamic_tables_created&#x27;]) . &quot;\n&quot;;
-    }
-    
-    $success_message .= &quot;- サービス数: &quot; . count($statistics[&#x27;services&#x27;]) . &quot;種類\n&quot;;
-    $success_message .= &quot;- 装置種別数: &quot; . count($statistics[&#x27;device_types&#x27;]) . &quot;種類\n&quot;;
-    $success_message .= &quot;- 自動登録されたリレーション: &quot; . $relationCount . &quot;件&quot;;
-    
-    setSuccessMessage($success_message);
-    
-    // アップロードされたファイルを削除（オプション）
-    // unlink($upload_path);
-    
-} catch (Exception $e) {
-    // 詳細なエラー情報をログに記録
-    $errorDetails = [
-        &#x27;message&#x27; =&gt; $e-&gt;getMessage(),
-        &#x27;file&#x27; =&gt; $e-&gt;getFile(),
-        &#x27;line&#x27; =&gt; $e-&gt;getLine(),
-        &#x27;trace&#x27; =&gt; $e-&gt;getTraceAsString()
-    ];
-    error_log(&quot;Upload error details: &quot; . json_encode($errorDetails, JSON_UNESCAPED_UNICODE));
-    
-    // デバッグ用：ファイルにも書き出す
-    @file_put_contents(&#x27;/tmp/fusion_upload_debug.log&#x27;, 
-        date(&#x27;Y-m-d H:i:s&#x27;) . &quot;\n&quot; . 
-        json_encode($errorDetails, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . &quot;\n\n&quot;, 
-        FILE_APPEND
-    );
-    
-    setErrorMessage(&quot;アップロード処理中にエラーが発生しました: &quot; . $e-&gt;getMessage());
-    
-    // データベースのトランザクション状態を確認してロールバック
-    if (isset($database)) {
-        try {
-            if ($database-&gt;inTransaction()) {
-                $database-&gt;rollBack();
-                error_log(&quot;Transaction rolled back due to error&quot;);
-            }
-        } catch (Exception $rollbackError) {
-            error_log(&quot;Rollback error: &quot; . $rollbackError-&gt;getMessage());
-        }
-    }
-    
-    // エラー時はアップロードされたファイルを削除
-    if (isset($upload_path) &amp;&amp; file_exists($upload_path)) {
-        unlink($upload_path);
-    }
-} finally {
-    // データベース接続を閉じる
-    if (isset($database)) {
-        try {
-            $database-&gt;close();
-        } catch (Exception $closeError) {
-            error_log(&quot;Database close error: &quot; . $closeError-&gt;getMessage());
-        }
-    }
-}
-
-// 結果ページにリダイレクト
-header(&#x27;Location: upload.php&#x27;);
-exit;
-?&gt;</code></pre>
             </div>
         </div>
 
