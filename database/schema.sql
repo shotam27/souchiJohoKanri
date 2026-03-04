@@ -52,6 +52,19 @@ CREATE TABLE IF NOT EXISTS service_device_type_relations (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='サービス名と装置種別のリレーションテーブル';
 
+-- ユーザー操作ログテーブル
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    username    VARCHAR(100)  NOT NULL             COMMENT '操作ユーザー名',
+    action      VARCHAR(50)   NOT NULL             COMMENT 'アクション種別',
+    detail      TEXT                               COMMENT '補足情報',
+    ip_address  VARCHAR(45)                        COMMENT 'クライアントIP',
+    created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP COMMENT '操作日時',
+    INDEX idx_audit_username  (username),
+    INDEX idx_audit_action    (action),
+    INDEX idx_audit_created   (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ユーザー操作ログ';
+
 -- 動的テーブル作成用のサンプル（実際は PHP 側で動的に作成）
 -- CREATE TABLE IF NOT EXISTS `サービスA_装置種別A` (
 --     `サービスA_装置種別A_装置名_ユーザ名` VARCHAR(500) NOT NULL PRIMARY KEY,

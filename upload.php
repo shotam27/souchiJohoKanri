@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             </h3>
             <p>以下の形式のCSVファイルをアップロードしてください：</p>
             <div class="csv-format">
-サービス名,装置種別,装置名称,ユーザ名,装置IP,パスワード,その他カラム1,その他カラム2
+サービス名,装置種別,装置名称,ユーザ名1,装置IP,パスワード,その他カラム1,その他カラム2
 サービスA,装置種別A,souchimei,admin,198.1.1.1,admin123,値1,値2
 サービスA,装置種別A,souchimei2,admin,198.1.1.2,admin123,値3,値4
             </div>
@@ -464,7 +464,8 @@ try {
     }
     
     $device_manager = new DeviceManager($database);
-    
+    $activity_logger = new ActivityLogger($database); // ログ記録用
+
     // CSVデータをデータベースに登録
     $results = $device_manager->processCsvData($csv_processor);
     
@@ -528,7 +529,21 @@ try {
     $success_message .= "- 自動登録されたリレーション: " . $relationCount . "件";
     
     setSuccessMessage($success_message);
-    
+
+    // 操作ログを記録
+    $logDetail = sprintf(
+        'ファイル: %s, レコード数: %d, サービス数: %d, 装置種別数: %d',
+        $original_filename,
+        $results['device_info_count'],
+        count($statistics['services']),
+        count($statistics['device_types'])
+    );
+    $activity_logger->log(
+        getLoggedInUsername() ?? 'unknown',
+        ActivityLogger::ACTION_UPLOAD,
+        $logDetail
+    );
+
     // アップロードされたファイルを削除（オプション）
     // unlink($upload_path);
     
