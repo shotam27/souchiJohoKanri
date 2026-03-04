@@ -285,6 +285,21 @@ try {
                     }
                     
                     fclose($output);
+
+                    // 操作ログを記録（ヘッダー送信前なので直接DBに書く）
+                    try {
+                        $logDb = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, DB_TYPE, DB_PORT);
+                        $logger = new ActivityLogger($logDb);
+                        $logger->log(
+                            getLoggedInUsername() ?? 'unknown',
+                            ActivityLogger::ACTION_DOWNLOAD,
+                            'ファイル: ' . $filename . ', 件数: ' . count($data) . '件'
+                        );
+                        $logDb->close();
+                    } catch (Exception $logEx) {
+                        error_log('Download log error: ' . $logEx->getMessage());
+                    }
+
                     exit;
                 } else {
                     setErrorMessage('ダウンロードするデータがありません。');
