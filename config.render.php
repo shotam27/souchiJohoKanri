@@ -4,14 +4,14 @@
  */
 
 // データベース設定（環境変数から取得）
-// Render MySQL用設定
-define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql'); // 'mysql' or 'pgsql'
+// Render PostgreSQL用設定
+define('DB_TYPE', getenv('DB_TYPE') ?: 'pgsql'); // 'pgsql' or 'mysql'
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', getenv('DB_PORT') ?: '3306'); // MySQL: 3306
+define('DB_PORT', getenv('DB_PORT') ?: '5432'); // PostgreSQL: 5432, MySQL: 3306
 define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
 define('DB_USER', getenv('DB_USER') ?: 'admin');
 define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', 'utf8mb4'); // MySQL: utf8mb4
+define('DB_CHARSET', 'utf8mb4'); // MySQL: utf8mb4, PostgreSQL: UTF8
 
 // アップロード設定
 define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); // 10MB
