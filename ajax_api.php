@@ -188,7 +188,21 @@ try {
             header('Pragma: no-cache');
             header('Expires: 0');
             
-            echo $generator->generate();
+            $macroContent = $generator->generate();
+
+            // 操作ログ
+            try {
+                $actLogger = new ActivityLogger($database);
+                $actLogger->log(
+                    getLoggedInUsername() ?? 'unknown',
+                    ActivityLogger::ACTION_TERATERM,
+                    'device: ' . $deviceName . ' (' . $deviceIp . ')'
+                );
+            } catch (Exception $logEx) {
+                error_log('Teraterm log error: ' . $logEx->getMessage());
+            }
+
+            echo $macroContent;
             exit; // JSON出力をスキップ
             
         case 'get_device':
@@ -300,6 +314,14 @@ try {
                 }
             }
             
+            // 操作ログ
+            $actLogger = new ActivityLogger($database);
+            $actLogger->log(
+                getLoggedInUsername() ?? 'unknown',
+                ActivityLogger::ACTION_UPDATE_DEVICE,
+                'primary_key: ' . $primaryKey
+            );
+
             $response = [
                 'success' => true,
                 'data' => null,
@@ -328,6 +350,14 @@ try {
                 }
             }
             
+            // 操作ログ
+            $actLogger = new ActivityLogger($database);
+            $actLogger->log(
+                getLoggedInUsername() ?? 'unknown',
+                ActivityLogger::ACTION_DELETE_DEVICE,
+                'primary_key: ' . $primaryKey . ', service: ' . $serviceName . ', type: ' . $deviceType
+            );
+
             $response = [
                 'success' => true,
                 'data' => null,

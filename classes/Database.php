@@ -151,6 +151,22 @@ class Database {
     }
     
     /**
+     * SQLクエリを実行して結果を配列で返す
+     * @param string $query
+     * @param array $params
+     * @return array
+     */
+    public function query($query, $params = []) {
+        try {
+            $stmt = $this->connect()->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            throw new Exception("クエリ実行エラー: " . $e->getMessage() . " SQL: " . $query);
+        }
+    }
+
+    /**
      * テーブルの存在確認
      * @param string $tableName
      * @return bool
