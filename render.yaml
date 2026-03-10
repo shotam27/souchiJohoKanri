@@ -9,26 +9,26 @@ services:
     dockerContext: .
     envVars:
       - key: DB_TYPE
-        value: mysql
+        value: pgsql
       - key: DB_HOST
         fromDatabase:
-          name: fusion-mysql
+          name: fusion-postgres
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: fusion-mysql
+          name: fusion-postgres
           property: port
       - key: DB_NAME
         fromDatabase:
-          name: fusion-mysql
+          name: fusion-postgres
           property: database
       - key: DB_USER
         fromDatabase:
-          name: fusion-mysql
+          name: fusion-postgres
           property: user
       - key: DB_PASS
         fromDatabase:
-          name: fusion-mysql
+          name: fusion-postgres
           property: password
     # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
     # 無料プランの場合は以下をコメントアウト
@@ -37,11 +37,10 @@ services:
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
 
-# MySQLデータベース（Render無料プラン、90日でアクティブ維持推奨）
+# PostgreSQLデータベース（Render無料プラン、90日でアクティブ維持推奨）
 databases:
-  - name: fusion-mysql
+  - name: fusion-postgres
     databaseName: device_management
     user: admin
     region: singapore  # Webサービスと同じリージョン
     plan: free  # 無料プラン（90日間アクティブ）
-    type: mysql
