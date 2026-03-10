@@ -9,7 +9,7 @@ services:
     dockerContext: .
     envVars:
       - key: DB_TYPE
-        value: pgsql
+        value: mysql
       - key: DB_HOST
         fromDatabase:
           name: fusion-mysql
@@ -37,10 +37,11 @@ services:
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
 
-  # PostgreSQLデータベース
+# MySQLデータベース（Render無料プラン、90日でアクティブ維持推奨）
 databases:
   - name: fusion-mysql
-    databaseName: fusion-mysql
+    databaseName: device_management
     user: admin
     region: singapore  # Webサービスと同じリージョン
     plan: free  # 無料プラン（90日間アクティブ）
+    type: mysql
