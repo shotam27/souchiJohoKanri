@@ -17,7 +17,7 @@ services:
       - key: DB_NAME
         value: device_management
       - key: DB_USER
-        value: admin
+        value: dbuser
       - key: DB_PASS
         sync: false  # Render Dashboardで手動設定
       - key: DB_SSL_MODE
