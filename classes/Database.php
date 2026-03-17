@@ -52,8 +52,9 @@ class Database {
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
                 
-                // Google Cloud SQL用SSL設定（MySQL接続時のみ）
+                // Google Cloud SQL用SSL設定（DB_SSL_MODE環境変数が設定されている時のみ＝Render環境）
                 if ($this->dbType === 'mysql' && getenv('DB_SSL_MODE')) {
+                    $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
                     $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
                 }
                 
