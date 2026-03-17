@@ -9,27 +9,19 @@ services:
     dockerContext: .
     envVars:
       - key: DB_TYPE
-        value: pgsql
+        value: mysql
       - key: DB_HOST
-        fromDatabase:
-          name: fusion-postgres
-          property: host
+        value: 34.31.195.202  # Cloud SQL porfolio instance
       - key: DB_PORT
-        fromDatabase:
-          name: fusion-postgres
-          property: port
+        value: 3306
       - key: DB_NAME
-        fromDatabase:
-          name: fusion-postgres
-          property: database
+        value: device_management
       - key: DB_USER
-        fromDatabase:
-          name: fusion-postgres
-          property: user
+        value: admin
       - key: DB_PASS
-        fromDatabase:
-          name: fusion-postgres
-          property: password
+        sync: false  # Render Dashboardで手動設定
+      - key: DB_SSL_MODE
+        value: "1"
     # 注意: ディスクは有料プラン（Starter以上）でのみ利用可能
     # 無料プランの場合は以下をコメントアウト
     # disk:
@@ -37,10 +29,10 @@ services:
     #   mountPath: /var/www/html/uploads
     #   sizeGB: 1
 
-# PostgreSQLデータベース（Render無料プラン、90日でアクティブ維持推奨）
-databases:
-  - name: fusion-postgres
-    databaseName: device_management
-    user: admin
-    region: singapore  # Webサービスと同じリージョン
-    plan: free  # 無料プラン（90日間アクティブ）
+# Google Cloud SQLを使用（外部データベース）
+# databases:
+#   - name: fusion-postgres
+#     databaseName: device_management
+#     user: admin
+#     region: singapore
+#     plan: free
