@@ -1,0 +1,11 @@
+{
+    "require": {
+        "doctrine/dbal": "^3.8"
+    },
+    "autoload": {
+        "psr-4": {}
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

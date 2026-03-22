@@ -1,8 +1,185 @@
 <?php
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Connection as DBALConnection;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
+
 /**
- * Database接続管理クラス
+ * Database接続管理クラス（Doctrine DBAL使用）
  */
 class Database {
+    private ?DBALConnection $connection = null;
+    private string $host;
+    private string $dbname;
+    private string $username;
+    private string $password;
+    private string $charset;
+    private string $dbType;
+    private int $port;
+
+    public function __construct($host, $dbname, $username, $password, $charset = 'utf8mb4', $dbType = 'mysql', $port = null) {
+        $this->host     = $host;
+        $this->dbname   = $dbname;
+        $this->username = $username;
+        $this->password = $password;
+        $this->charset  = $charset;
+        $this->dbType   = $dbType;
+        $this->port     = (int)($port ?: ($dbType === 'pgsql' ? 5432 : 3306));
+    }
+
+    public function getDbType(): string {
+        return $this->dbType;
+    }
+
+    /**
+     * 現在のDBがMySQLかどうかを返す（PostgreSQLならfalse）
+     */
+    public function isMySQL(): bool {
+        return $this->connect()->getDatabasePlatform() instanceof MySQLPlatform;
+    }
+
+    /**
+     * DBAL接続を取得（接続済みでなければ接続する）
+     */
+    public function connect(): DBALConnection {
+        if ($this->connection === null) {
+            $driver = $this->dbType === 'pgsql' ? 'pdo_pgsql' : 'pdo_mysql';
+
+            $params = [
+                'driver'   => $driver,
+                'host'     => $this->host,
+                'dbname'   => $this->dbname,
+                'user'     => $this->username,
+                'password' => $this->password,
+                'port'     => $this->port,
+                'charset'  => $this->charset,
+            ];
+
+            // Google Cloud SQL用SSL設定（DB_SSL_MODE環境変数が設定されている時のみ＝Render環境）
+            if ($this->dbType === 'mysql' && getenv('DB_SSL_MODE')) {
+                $params['driverOptions'] = [
+                    PDO::MYSQL_ATTR_SSL_CA              => '/etc/ssl/certs/ca-certificates.crt',
+                    PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                ];
+            }
+
+            try {
+                $this->connection = DriverManager::getConnection($params);
+                if ($this->dbType === 'pgsql') {
+                    $this->connection->executeStatement("SET NAMES 'UTF8'");
+                }
+            } catch (\Exception $e) {
+                throw new Exception("データベース接続エラー: " . $e->getMessage());
+            }
+        }
+        return $this->connection;
+    }
+
+    public function close(): void {
+        if ($this->connection !== null) {
+            try {
+                if ($this->connection->isTransactionActive()) {
+                    $this->connection->rollBack();
+                }
+            } catch (\Exception $e) {
+                error_log("Error during transaction cleanup: " . $e->getMessage());
+            }
+            $this->connection->close();
+            $this->connection = null;
+        }
+    }
+
+    public function beginTransaction(): void {
+        $this->connect()->beginTransaction();
+    }
+
+    public function commit(): void {
+        $this->connect()->commit();
+    }
+
+    public function rollBack(): void {
+        if ($this->connect()->isTransactionActive()) {
+            $this->connect()->rollBack();
+        }
+    }
+
+    public function inTransaction(): bool {
+        return $this->connect()->isTransactionActive();
+    }
+
+    /**
+     * プリペアドステートメントの実行（後方互換：PDOStatementを返す）
+     */
+    public function execute($query, $params = []) {
+        try {
+            $pdo  = $this->connect()->getNativeConnection();
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (\Exception $e) {
+            throw new Exception("クエリ実行エラー: " . $e->getMessage() . " SQL: " . $query);
+        }
+    }
+
+    /**
+     * SQLクエリを実行して結果を配列で返す
+     */
+    public function query($query, $params = []) {
+        try {
+            $stmt = $this->execute($query, $params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            throw new Exception("クエリ実行エラー: " . $e->getMessage() . " SQL: " . $query);
+        }
+    }
+
+    /**
+     * 識別子（テーブル名・カラム名）をDBに応じてクォート
+     * MySQL: `name` / PostgreSQL: "name"
+     */
+    public function quoteIdentifier(string $name): string {
+        return $this->connect()->quoteIdentifier($name);
+    }
+
+    /**
+     * DBALスキーママネージャーを取得
+     */
+    public function getSchemaManager(): AbstractSchemaManager {
+        return $this->connect()->createSchemaManager();
+    }
+
+    /**
+     * テーブルの存在確認
+     */
+    public function tableExists(string $tableName): bool {
+        return $this->getSchemaManager()->tablesExist([$tableName]);
+    }
+
+    /**
+     * テーブルのカラム情報を取得（後方互換：COLUMN_NAME / DATA_TYPE 形式）
+     */
+    public function getTableColumns($tableName): array {
+        try {
+            $sm = $this->getSchemaManager();
+            if (!$sm->tablesExist([$tableName])) {
+                return [];
+            }
+            $result = [];
+            foreach ($sm->listTableColumns($tableName) as $name => $col) {
+                $result[] = [
+                    'COLUMN_NAME'    => $name,
+                    'DATA_TYPE'      => $col->getType()->getName(),
+                    'IS_NULLABLE'    => $col->getNotnull() ? 'NO' : 'YES',
+                    'COLUMN_DEFAULT' => $col->getDefault(),
+                ];
+            }
+            return $result;
+        } catch (\Exception $e) {
+            throw new Exception("カラム情報取得エラー: " . $e->getMessage());
+        }
+    }
+}
+?>
     private $connection;
     private $host;
     private $dbname;

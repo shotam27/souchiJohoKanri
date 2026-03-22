@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
 # 必要なPHP拡張機能をインストール（MySQL & PostgreSQL対応）
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli opcache
 
+# Composerをインストール
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # OPcache設定（本番環境用パフォーマンス最適化）
 RUN { \
     echo 'opcache.memory_consumption=128'; \
@@ -40,6 +43,9 @@ WORKDIR /var/www/html
 
 # アプリケーションファイルをコピー
 COPY . /var/www/html/
+
+# Composer依存関係をインストール（vendor/ディレクトリを生成）
+RUN cd /var/www/html && composer install --no-dev --optimize-autoloader --no-interaction
 
 # アップロードディレクトリとログディレクトリを作成
 RUN mkdir -p /var/www/html/uploads /var/www/html/logs

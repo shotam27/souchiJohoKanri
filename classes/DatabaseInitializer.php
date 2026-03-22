@@ -5,11 +5,9 @@
  */
 class DatabaseInitializer {
     private $database;
-    private $isPgsql;
-    
+
     public function __construct(Database $database) {
         $this->database = $database;
-        $this->isPgsql = $database->getDbType() === 'pgsql';
     }
     
     /**
@@ -59,95 +57,38 @@ class DatabaseInitializer {
      * @return bool テーブルを新規作成した場合true
      * @throws Exception
      */
-    private function initializeDeviceInfoTable() {
+    private function initializeDeviceInfoTable(): bool {
         if ($this->database->tableExists('device_info')) {
             error_log("device_info table already exists");
             return false;
         }
-        
+
         error_log("Creating device_info table");
-        
-        if ($this->isPgsql) {
-            // PostgreSQL用
-            $sql = "
-                CREATE TABLE IF NOT EXISTS device_info (
-                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY,
-                    service_name VARCHAR(100) NOT NULL,
-                    device_type VARCHAR(100) NOT NULL,
-                    device_name VARCHAR(100) NOT NULL,
-                    login_ip VARCHAR(45),
-                    username1 VARCHAR(100) NOT NULL,
-                    password1 VARCHAR(255),
-                    username2 VARCHAR(100),
-                    password2 VARCHAR(255),
-                    username3 VARCHAR(100),
-                    password3 VARCHAR(255),
-                    username4 VARCHAR(100),
-                    password4 VARCHAR(255),
-                    username5 VARCHAR(100),
-                    password5 VARCHAR(255),
-                    username6 VARCHAR(100),
-                    password6 VARCHAR(255),
-                    username7 VARCHAR(100),
-                    password7 VARCHAR(255),
-                    username8 VARCHAR(100),
-                    password8 VARCHAR(255),
-                    username9 VARCHAR(100),
-                    password9 VARCHAR(255),
-                    username10 VARCHAR(100),
-                    password10 VARCHAR(255),
-                    created_by VARCHAR(100),
-                    updated_by VARCHAR(100),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ";
-            $this->database->execute($sql);
-            
-            // インデックス作成
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_device_type ON device_info (service_name, device_type)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_info ON device_info (service_name, device_type, device_name, username1)");
-            
-        } else {
-            // MySQL用
-            $sql = "
-                CREATE TABLE IF NOT EXISTS device_info (
-                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY COMMENT 'サービス名_装置種別名_装置名_ユーザ名の複合キー',
-                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                    device_name VARCHAR(100) NOT NULL COMMENT '装置名称',
-                    login_ip VARCHAR(45) COMMENT 'ログインIP',
-                    username1 VARCHAR(100) NOT NULL COMMENT 'ユーザー名1',
-                    password1 VARCHAR(255) COMMENT 'パスワード1',
-                    username2 VARCHAR(100) COMMENT 'ユーザー名2',
-                    password2 VARCHAR(255) COMMENT 'パスワード2',
-                    username3 VARCHAR(100) COMMENT 'ユーザー名3',
-                    password3 VARCHAR(255) COMMENT 'パスワード3',
-                    username4 VARCHAR(100) COMMENT 'ユーザー名4',
-                    password4 VARCHAR(255) COMMENT 'パスワード4',
-                    username5 VARCHAR(100) COMMENT 'ユーザー名5',
-                    password5 VARCHAR(255) COMMENT 'パスワード5',
-                    username6 VARCHAR(100) COMMENT 'ユーザー名6',
-                    password6 VARCHAR(255) COMMENT 'パスワード6',
-                    username7 VARCHAR(100) COMMENT 'ユーザー名7',
-                    password7 VARCHAR(255) COMMENT 'パスワード7',
-                    username8 VARCHAR(100) COMMENT 'ユーザー名8',
-                    password8 VARCHAR(255) COMMENT 'パスワード8',
-                    username9 VARCHAR(100) COMMENT 'ユーザー名9',
-                    password9 VARCHAR(255) COMMENT 'パスワード9',
-                    username10 VARCHAR(100) COMMENT 'ユーザー名10',
-                    password10 VARCHAR(255) COMMENT 'パスワード10',
-                    created_by VARCHAR(100) COMMENT '作成者',
-                    updated_by VARCHAR(100) COMMENT '更新者',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                    INDEX idx_service_device_type (service_name, device_type),
-                    INDEX idx_device_info (service_name, device_type, device_name, username1)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='装置基本情報テーブル'
-            ";
-            $this->database->execute($sql);
+
+        $table = new \Doctrine\DBAL\Schema\Table('device_info');
+        $table->addColumn('primary_key',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 500, 'notnull' => true]);
+        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_name',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('login_ip',     \Doctrine\DBAL\Types\Types::STRING, ['length' => 45,  'notnull' => false]);
+        $table->addColumn('username1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('password1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
+        for ($i = 2; $i <= 10; $i++) {
+            $table->addColumn("username{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+            $table->addColumn("password{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
         }
-        
+        $table->addColumn('created_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+        $table->addColumn('updated_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+        $table->addColumn('created_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('updated_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->setPrimaryKey(['primary_key']);
+        $table->addIndex(['service_name', 'device_type'], 'idx_service_device_type');
+        $table->addIndex(['service_name', 'device_type', 'device_name', 'username1'], 'idx_device_info');
+        $table->addOption('engine',  'InnoDB');
+        $table->addOption('charset', 'utf8mb4');
+        $table->addOption('collate', 'utf8mb4_unicode_ci');
+
+        $this->database->getSchemaManager()->createTable($table);
         error_log("device_info table created successfully");
         return true;
     }
@@ -157,53 +98,32 @@ class DatabaseInitializer {
      * @return bool テーブルを新規作成した場合true
      * @throws Exception
      */
-    private function initializeRelationTable() {
+    private function initializeRelationTable(): bool {
         if ($this->database->tableExists('service_device_type_relations')) {
             error_log("service_device_type_relations table already exists");
             return false;
         }
-        
+
         error_log("Creating service_device_type_relations table");
-        
-        if ($this->isPgsql) {
-            // PostgreSQL用
-            $sql = "
-                CREATE TABLE IF NOT EXISTS service_device_type_relations (
-                    id SERIAL PRIMARY KEY,
-                    service_name VARCHAR(100) NOT NULL,
-                    device_type VARCHAR(100) NOT NULL,
-                    description TEXT,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (service_name, device_type)
-                )
-            ";
-            $this->database->execute($sql);
-            
-            // インデックス作成
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_name ON service_device_type_relations (service_name)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_type ON service_device_type_relations (device_type)");
-            
-        } else {
-            // MySQL用
-            $sql = "
-                CREATE TABLE IF NOT EXISTS service_device_type_relations (
-                    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'リレーションID',
-                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                    description TEXT COMMENT '説明',
-                    is_active BOOLEAN DEFAULT TRUE COMMENT 'アクティブフラグ',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                    UNIQUE KEY unique_service_device (service_name, device_type),
-                    INDEX idx_service_name (service_name),
-                    INDEX idx_device_type (device_type)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='サービス-装置種別リレーションテーブル'
-            ";
-            $this->database->execute($sql);
-        }
-        
+
+        $table = new \Doctrine\DBAL\Schema\Table('service_device_type_relations');
+        $table->addColumn('id',           \Doctrine\DBAL\Types\Types::INTEGER, ['autoincrement' => true, 'notnull' => true]);
+        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
+        $table->addColumn('description',  \Doctrine\DBAL\Types\Types::TEXT,    ['notnull' => false]);
+        $table->addColumn('is_active',    \Doctrine\DBAL\Types\Types::SMALLINT, ['notnull' => false, 'default' => 1]);
+        $table->addColumn('created_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('updated_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['service_name', 'device_type'], 'unique_service_device_type');
+        $table->addIndex(['service_name'], 'idx_service_name');
+        $table->addIndex(['device_type'],  'idx_device_type');
+        $table->addIndex(['is_active'],    'idx_active');
+        $table->addOption('engine',  'InnoDB');
+        $table->addOption('charset', 'utf8mb4');
+        $table->addOption('collate', 'utf8mb4_unicode_ci');
+
+        $this->database->getSchemaManager()->createTable($table);
         error_log("service_device_type_relations table created successfully");
         return true;
     }
@@ -232,62 +152,30 @@ class DatabaseInitializer {
      * device_infoテーブルにcreated_by、updated_byカラムを追加するマイグレーション
      * @return void
      */
-    private function migrateCreatedUpdatedByColumns() {
+    private function migrateCreatedUpdatedByColumns(): void {
         try {
-            // device_infoテーブルが存在しない場合はスキップ
             if (!$this->database->tableExists('device_info')) {
                 return;
             }
-            
-            // 既存のカラムを確認
-            if ($this->isPgsql) {
-                $checkSql = "
-                    SELECT column_name 
-                    FROM information_schema.columns 
-                    WHERE table_name = 'device_info' 
-                    AND column_name IN ('created_by', 'updated_by')
-                ";
-            } else {
-                $dbName = $this->database->query("SELECT DATABASE()")[0]['DATABASE()'];
-                $checkSql = "
-                    SELECT COLUMN_NAME 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_NAME = 'device_info' 
-                    AND TABLE_SCHEMA = '{$dbName}'
-                    AND COLUMN_NAME IN ('created_by', 'updated_by')
-                ";
-            }
-            
-            $existingColumns = $this->database->query($checkSql);
-            $existingColumnNames = array_column($existingColumns, $this->isPgsql ? 'column_name' : 'COLUMN_NAME');
-            
-            // created_byカラムを追加
-            if (!in_array('created_by', $existingColumnNames)) {
+
+            $sm = $this->database->getSchemaManager();
+            $existingCols = array_keys($sm->listTableColumns('device_info'));
+
+            if (!in_array('created_by', $existingCols)) {
                 error_log("Adding created_by column to device_info table");
-                if ($this->isPgsql) {
-                    $sql = "ALTER TABLE device_info ADD COLUMN created_by VARCHAR(100)";
-                } else {
-                    $sql = "ALTER TABLE device_info ADD COLUMN created_by VARCHAR(100) COMMENT '作成者' AFTER password10";
-                }
-                $this->database->execute($sql);
+                $qTable = $this->database->quoteIdentifier('device_info');
+                $this->database->execute("ALTER TABLE {$qTable} ADD COLUMN created_by VARCHAR(100)");
                 error_log("created_by column added successfully");
             }
-            
-            // updated_byカラムを追加
-            if (!in_array('updated_by', $existingColumnNames)) {
+
+            if (!in_array('updated_by', $existingCols)) {
                 error_log("Adding updated_by column to device_info table");
-                if ($this->isPgsql) {
-                    $sql = "ALTER TABLE device_info ADD COLUMN updated_by VARCHAR(100)";
-                } else {
-                    $sql = "ALTER TABLE device_info ADD COLUMN updated_by VARCHAR(100) COMMENT '更新者' AFTER created_by";
-                }
-                $this->database->execute($sql);
+                $qTable = $this->database->quoteIdentifier('device_info');
+                $this->database->execute("ALTER TABLE {$qTable} ADD COLUMN updated_by VARCHAR(100)");
                 error_log("updated_by column added successfully");
             }
-            
         } catch (Exception $e) {
             error_log("Migration error for created_by/updated_by columns: " . $e->getMessage());
-            // マイグレーションエラーは警告として扱い、処理を継続
         }
     }
 }

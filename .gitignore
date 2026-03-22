@@ -4,6 +4,9 @@
 /uploads/*
 !/uploads/.gitkeep
 
+# Composer
+/vendor/
+
 # Database
 *.sql
 *.db

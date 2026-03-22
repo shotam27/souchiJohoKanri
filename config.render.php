@@ -32,6 +32,11 @@ date_default_timezone_set('Asia/Tokyo');
 // セッション設定
 session_start();
 
+// Composer autoload（Doctrine DBAL等）
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
 // クラスファイルの自動読み込み
 spl_autoload_register(function ($class_name) {
     $file = __DIR__ . '/classes/' . $class_name . '.php';

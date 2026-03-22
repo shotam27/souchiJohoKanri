@@ -22,84 +22,36 @@ class DeviceManager {
      * @return bool
      * @throws Exception
      */
-    public function createDeviceInfoTable() {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        if ($isPgsql) {
-            // PostgreSQL用SQL
-            $sql = "
-                CREATE TABLE IF NOT EXISTS device_info (
-                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY,
-                    service_name VARCHAR(100) NOT NULL,
-                    device_type VARCHAR(100) NOT NULL,
-                    device_name VARCHAR(100) NOT NULL,
-                    login_ip VARCHAR(45),
-                    username1 VARCHAR(100) NOT NULL,
-                    password1 VARCHAR(255),
-                    username2 VARCHAR(100),
-                    password2 VARCHAR(255),
-                    username3 VARCHAR(100),
-                    password3 VARCHAR(255),
-                    username4 VARCHAR(100),
-                    password4 VARCHAR(255),
-                    username5 VARCHAR(100),
-                    password5 VARCHAR(255),
-                    username6 VARCHAR(100),
-                    password6 VARCHAR(255),
-                    username7 VARCHAR(100),
-                    password7 VARCHAR(255),
-                    username8 VARCHAR(100),
-                    password8 VARCHAR(255),
-                    username9 VARCHAR(100),
-                    password9 VARCHAR(255),
-                    username10 VARCHAR(100),
-                    password10 VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ";
-            $this->database->execute($sql);
-            // インデックス作成
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_device_type ON device_info (service_name, device_type)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_info ON device_info (service_name, device_type, device_name, username1)");
-        } else {
-            // MySQL用SQL
-            $sql = "
-                CREATE TABLE IF NOT EXISTS device_info (
-                    primary_key VARCHAR(500) NOT NULL PRIMARY KEY COMMENT 'サービス名_装置種別名_装置名_ユーザ名の複合キー',
-                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                    device_name VARCHAR(100) NOT NULL COMMENT '装置名称',
-                    login_ip VARCHAR(45) COMMENT 'ログインIP',
-                    username1 VARCHAR(100) NOT NULL COMMENT 'ユーザー名1',
-                    password1 VARCHAR(255) COMMENT 'パスワード1',
-                    username2 VARCHAR(100) COMMENT 'ユーザー名2',
-                    password2 VARCHAR(255) COMMENT 'パスワード2',
-                    username3 VARCHAR(100) COMMENT 'ユーザー名3',
-                    password3 VARCHAR(255) COMMENT 'パスワード3',
-                    username4 VARCHAR(100) COMMENT 'ユーザー名4',
-                    password4 VARCHAR(255) COMMENT 'パスワード4',
-                    username5 VARCHAR(100) COMMENT 'ユーザー名5',
-                    password5 VARCHAR(255) COMMENT 'パスワード5',
-                    username6 VARCHAR(100) COMMENT 'ユーザー名6',
-                    password6 VARCHAR(255) COMMENT 'パスワード6',
-                    username7 VARCHAR(100) COMMENT 'ユーザー名7',
-                    password7 VARCHAR(255) COMMENT 'パスワード7',
-                    username8 VARCHAR(100) COMMENT 'ユーザー名8',
-                    password8 VARCHAR(255) COMMENT 'パスワード8',
-                    username9 VARCHAR(100) COMMENT 'ユーザー名9',
-                    password9 VARCHAR(255) COMMENT 'パスワード9',
-                    username10 VARCHAR(100) COMMENT 'ユーザー名10',
-                    password10 VARCHAR(255) COMMENT 'パスワード10',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                    INDEX idx_service_device_type (service_name, device_type),
-                    INDEX idx_device_info (service_name, device_type, device_name, username1)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='装置基本情報テーブル'
-            ";
-            $this->database->execute($sql);
+    public function createDeviceInfoTable(): bool {
+        $sm = $this->database->getSchemaManager();
+        if ($sm->tablesExist(['device_info'])) {
+            return false;
         }
-        
+
+        $table = new \Doctrine\DBAL\Schema\Table('device_info');
+        $table->addColumn('primary_key',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 500, 'notnull' => true]);
+        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_name',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('login_ip',     \Doctrine\DBAL\Types\Types::STRING, ['length' => 45,  'notnull' => false]);
+        $table->addColumn('username1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
+        $table->addColumn('password1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
+        for ($i = 2; $i <= 10; $i++) {
+            $table->addColumn("username{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+            $table->addColumn("password{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
+        }
+        $table->addColumn('created_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+        $table->addColumn('updated_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
+        $table->addColumn('created_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('updated_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->setPrimaryKey(['primary_key']);
+        $table->addIndex(['service_name', 'device_type'], 'idx_service_device_type');
+        $table->addIndex(['service_name', 'device_type', 'device_name', 'username1'], 'idx_device_info');
+        $table->addOption('engine',  'InnoDB');
+        $table->addOption('charset', 'utf8mb4');
+        $table->addOption('collate', 'utf8mb4_unicode_ci');
+
+        $sm->createTable($table);
         return true;
     }
     
@@ -120,52 +72,30 @@ class DeviceManager {
      * @return bool
      * @throws Exception
      */
-    public function createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns) {
-        // テーブル名のみサニタイズ（カラム名は日本語を保持）
+    public function createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns): bool {
         $tableName = sanitizeTableName($tableName);
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        $columnDefinitions = [];
-        
-        // MySQL/PostgreSQLで適切なクォート文字を使用
-        $quote = $isPgsql ? '"' : '`';
-        
-        $columnDefinitions[] = "{$quote}{$primaryKeyColumn}{$quote} VARCHAR(500) NOT NULL PRIMARY KEY";
-        
+        $sm = $this->database->getSchemaManager();
+
+        if ($sm->tablesExist([$tableName])) {
+            return false;
+        }
+
+        $table = new \Doctrine\DBAL\Schema\Table($tableName);
+        $table->addColumn($primaryKeyColumn, \Doctrine\DBAL\Types\Types::STRING, ['length' => 500, 'notnull' => true]);
         foreach ($extendedColumns as $column) {
-            // カラム名は日本語のまま使用、適切なクォートでエスケープ
-            $columnDefinitions[] = "{$quote}{$column}{$quote} TEXT";
+            $table->addColumn($column, \Doctrine\DBAL\Types\Types::TEXT, ['notnull' => false]);
         }
-        
-        $columnDefinitions[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
-        
-        if ($isPgsql) {
-            $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
-        } else {
-            $columnDefinitions[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時'";
-        }
-        
-        if ($isPgsql) {
-            $sql = "
-                CREATE TABLE IF NOT EXISTS \"{$tableName}\" (
-                    " . implode(",\n                    ", $columnDefinitions) . "
-                )
-            ";
-        } else {
-            $sql = "
-                CREATE TABLE IF NOT EXISTS `{$tableName}` (
-                    " . implode(",\n                    ", $columnDefinitions) . "
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='動的テーブル: {$tableName}'
-            ";
-        }
-        
+        $table->addColumn('created_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('updated_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->setPrimaryKey([$primaryKeyColumn]);
+        $table->addOption('engine',  'InnoDB');
+        $table->addOption('charset', 'utf8mb4');
+        $table->addOption('collate', 'utf8mb4_unicode_ci');
+
         try {
-            error_log("Creating dynamic table SQL: " . $sql);
-            $this->database->execute($sql);
+            $sm->createTable($table);
             return true;
-        } catch (Exception $e) {
-            error_log("Dynamic table creation error: " . $e->getMessage());
-            error_log("SQL: " . $sql);
+        } catch (\Exception $e) {
             throw new Exception("動的テーブル '{$tableName}' の作成に失敗しました: " . $e->getMessage());
         }
     }
@@ -177,92 +107,63 @@ class DeviceManager {
      * @return bool
      * @throws Exception
      */
-    public function insertOrUpdateDeviceInfo($deviceData, $additionalData = []) {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        // 基本カラム
+    public function insertOrUpdateDeviceInfo($deviceData, $additionalData = []): bool {
         $baseColumns = ['primary_key', 'service_name', 'device_type', 'device_name', 'login_ip', 'username1', 'password1'];
         for ($i = 2; $i <= 10; $i++) {
             $baseColumns[] = "username{$i}";
             $baseColumns[] = "password{$i}";
         }
-        
-        $columns = $baseColumns;
-        $placeholders = array_map(function($col) { return ":{$col}"; }, $columns);
-        $updateColumns = array_diff($columns, ['primary_key']);
-        
-        $params = $deviceData;
-        
-        // 作成者・更新者の情報を追加
+
+        $columns       = $baseColumns;
+        $updateColumns = array_values(array_diff($baseColumns, ['primary_key']));
+        $params        = $deviceData;
+
         require_once __DIR__ . '/../includes/auth_helper.php';
         $currentUser = getLoggedInUsername();
-        
-        // created_byは新規作成時のみ設定（ON DUPLICATE KEY UPDATEでは更新されない）
         if ($currentUser) {
-            $columns[] = 'created_by';
-            $placeholders[] = ':created_by';
+            $columns[]       = 'created_by';
             $params['created_by'] = $currentUser;
-            
-            // updated_byは常に設定
-            $columns[] = 'updated_by';
-            $placeholders[] = ':updated_by';
+            $columns[]       = 'updated_by';
             $updateColumns[] = 'updated_by';
             $params['updated_by'] = $currentUser;
         }
-        
-        // device_infoテーブルの既存カラムを取得
+
         $existingColumns = $this->getTableColumns('device_info');
-        
-        // 追加データがある場合、device_infoに存在するカラムのみ追加
         foreach ($additionalData as $column => $value) {
             if (in_array($column, $existingColumns) && !in_array($column, $columns)) {
-                $columns[] = $isPgsql ? "\"{$column}\"" : "`{$column}`";
-                $placeholders[] = ":{$column}";
+                $columns[]       = $column;
                 $updateColumns[] = $column;
                 $params[$column] = $value;
             }
         }
-        
-        if ($isPgsql) {
-            // PostgreSQL用: ON CONFLICT ... DO UPDATE
-            $updateClauses = [];
-            foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip', 'created_by', 'updated_by']) ||
-                             preg_match('/^(username|password)\d+$/', $col)
-                    ? $col 
-                    : "\"{$col}\"";
-                $updateClauses[] = "{$quotedCol} = EXCLUDED.{$quotedCol}";
-            }
-            
-            $sql = "
-                INSERT INTO device_info 
-                (" . implode(", ", $columns) . ")
-                VALUES (" . implode(", ", $placeholders) . ")
-                ON CONFLICT (primary_key) DO UPDATE SET
-                    " . implode(",\n                    ", $updateClauses) . ",
-                    updated_at = CURRENT_TIMESTAMP
-            ";
-        } else {
-            // MySQL用: ON DUPLICATE KEY UPDATE
-            $updateClauses = [];
-            foreach ($updateColumns as $col) {
-                $quotedCol = in_array($col, ['service_name', 'device_type', 'device_name', 'login_ip', 'created_by', 'updated_by']) ||
-                             preg_match('/^(username|password)\d+$/', $col)
-                    ? $col 
-                    : "`{$col}`";
-                $updateClauses[] = "{$quotedCol} = VALUES({$quotedCol})";
-            }
-            
-            $sql = "
-                INSERT INTO device_info 
-                (" . implode(", ", $columns) . ")
-                VALUES (" . implode(", ", $placeholders) . ")
+
+        $qTable        = $this->database->quoteIdentifier('device_info');
+        $qConflict     = $this->database->quoteIdentifier('primary_key');
+        $quotedCols    = array_map(fn($c) => $this->database->quoteIdentifier($c), $columns);
+        $placeholders  = array_map(fn($c) => ":{$c}", $columns);
+
+        if ($this->database->isMySQL()) {
+            $updateClauses = array_map(function ($col) {
+                $q = $this->database->quoteIdentifier($col);
+                return "{$q} = VALUES({$q})";
+            }, $updateColumns);
+            $sql = "INSERT INTO {$qTable} (" . implode(', ', $quotedCols) . ")
+                VALUES (" . implode(', ', $placeholders) . ")
                 ON DUPLICATE KEY UPDATE
                     " . implode(",\n                    ", $updateClauses) . ",
-                    updated_at = CURRENT_TIMESTAMP
-            ";
+                    updated_at = CURRENT_TIMESTAMP";
+        } else {
+            $updateClauses = array_map(function ($col) {
+                $q = $this->database->quoteIdentifier($col);
+                return "{$q} = EXCLUDED.{$q}";
+            }, $updateColumns);
+            $sql = "INSERT INTO {$qTable} (" . implode(', ', $quotedCols) . ")
+                VALUES (" . implode(', ', $placeholders) . ")
+                ON CONFLICT ({$qConflict}) DO UPDATE SET
+                    " . implode(",\n                    ", $updateClauses) . ",
+                    updated_at = CURRENT_TIMESTAMP";
         }
-        
+
         try {
             $this->database->execute($sql, $params);
             return true;
@@ -280,72 +181,52 @@ class DeviceManager {
      */
     public function insertOrUpdateDynamicData($tableName, $data) {
         $tableName = sanitizeTableName($tableName);
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
         if (empty($data)) {
             return true;
         }
-        
-        // カラム名とプレースホルダーを準備
-        $columns = [];
-        $placeholders = [];
-        $updateClauses = [];
-        $params = [];
+
+        $columns          = [];
+        $placeholders     = [];
+        $updateClauses    = [];
+        $params           = [];
         $placeholderIndex = 0;
         $primaryKeyColumn = null;
-        
-        // 適切なクォート文字を選択
-        $quote = $isPgsql ? '"' : '`';
-        
+
         foreach ($data as $key => $value) {
             if ($placeholderIndex === 0) {
-                $primaryKeyColumn = $key; // 最初のカラムが主キー
+                $primaryKeyColumn = $key;
             }
-            
-            // カラム名は日本語のまま使用（適切なクォートでエスケープ）
-            $columns[] = "{$quote}{$key}{$quote}";
-            
-            // プレースホルダー名は英数字のみ（param0, param1, ...）
-            $placeholder = "param" . $placeholderIndex;
+            $columns[] = $this->database->quoteIdentifier($key);
+            $placeholder = 'param' . $placeholderIndex;
             $placeholders[] = ":{$placeholder}";
             $params[$placeholder] = $value;
-            
-            // 主キー以外の更新句を作成
+
             if ($key !== $primaryKeyColumn) {
-                if ($isPgsql) {
-                    $updateClauses[] = "{$quote}{$key}{$quote} = EXCLUDED.{$quote}{$key}{$quote}";
+                $q = $this->database->quoteIdentifier($key);
+                if ($this->database->isMySQL()) {
+                    $updateClauses[] = "{$q} = VALUES({$q})";
                 } else {
-                    $updateClauses[] = "{$quote}{$key}{$quote} = VALUES({$quote}{$key}{$quote})";
+                    $updateClauses[] = "{$q} = EXCLUDED.{$q}";
                 }
             }
-            
             $placeholderIndex++;
         }
-        
-        if ($isPgsql) {
-            // PostgreSQL用
-            $tableQuote = '"';
-            $sql = "
-                INSERT INTO {$tableQuote}{$tableName}{$tableQuote} 
-                (" . implode(", ", $columns) . ")
-                VALUES (" . implode(", ", $placeholders) . ")
-            ";
-            
+
+        $qTable    = $this->database->quoteIdentifier($tableName);
+        $qConflict = $this->database->quoteIdentifier($primaryKeyColumn);
+        $colList   = implode(', ', $columns);
+        $phList    = implode(', ', $placeholders);
+        $updateStr = implode(', ', $updateClauses);
+
+        if ($this->database->isMySQL()) {
+            $sql = "INSERT INTO {$qTable} ({$colList}) VALUES ({$phList})";
             if (!empty($updateClauses)) {
-                $sql .= " ON CONFLICT ({$quote}{$primaryKeyColumn}{$quote}) DO UPDATE SET " 
-                     . implode(", ", $updateClauses) 
-                     . ", updated_at = CURRENT_TIMESTAMP";
+                $sql .= " ON DUPLICATE KEY UPDATE {$updateStr}, updated_at = CURRENT_TIMESTAMP";
             }
         } else {
-            // MySQL用
-            $sql = "
-                INSERT INTO `{$tableName}` 
-                (" . implode(", ", $columns) . ")
-                VALUES (" . implode(", ", $placeholders) . ")
-            ";
-            
+            $sql = "INSERT INTO {$qTable} ({$colList}) VALUES ({$phList})";
             if (!empty($updateClauses)) {
-                $sql .= " ON DUPLICATE KEY UPDATE " . implode(", ", $updateClauses) . ", updated_at = CURRENT_TIMESTAMP";
+                $sql .= " ON CONFLICT ({$qConflict}) DO UPDATE SET {$updateStr}, updated_at = CURRENT_TIMESTAMP";
             }
         }
         
@@ -379,14 +260,7 @@ class DeviceManager {
             'errors' => []
         ];
         
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
         try {
-            // PostgreSQLの場合、エラーハンドリングを改善
-            if ($isPgsql) {
-                // 各ステップを個別のトランザクションで処理
-                error_log("PostgreSQL mode: Using individual transactions");
-            }
             
             // トランザクション開始
             $this->database->beginTransaction();
@@ -448,21 +322,13 @@ class DeviceManager {
                 $this->createRelationTable();
             }
             
-            // ここまでの変更をコミット（PostgreSQLの場合、テーブル定義変更を確定）
-            if ($isPgsql) {
-                $this->database->commit();
-                error_log("Table structure changes committed");
-            } else {
-                // MySQLの場合は1つのトランザクションで処理を続ける
-            }
+            // テーブル定義変更をコミット（次のデータ挿入トランザクション開始前に確定）
+            $this->database->commit();
             
             // データを処理
             foreach ($data as $rowIndex => $row) {
-                // PostgreSQLの場合は各行ごとに新しいトランザクションを開始
-                if ($isPgsql) {
-                    $this->database->beginTransaction();
-                    error_log("Started new transaction for row {$rowIndex}");
-                }
+                $this->database->beginTransaction();
+                error_log("Started transaction for row {$rowIndex}");
                 
                 error_log("Processing row {$rowIndex}: " . json_encode($row, JSON_UNESCAPED_UNICODE));
                 
@@ -488,32 +354,21 @@ class DeviceManager {
                     error_log("Row {$rowIndex} - device_info insert error: " . $e->getMessage());
                     error_log("Stack trace: " . $e->getTraceAsString());
                     
-                    // PostgreSQLの場合はロールバックして次の行へ
-                    if ($isPgsql) {
-                        $this->database->rollback();
-                        error_log("Transaction rolled back for row {$rowIndex}");
-                    }
-                    
+                    $this->database->rollBack();
+                    error_log("Transaction rolled back for row {$rowIndex}");
                     throw new Exception("行" . ($rowIndex + 2) . "のdevice_info登録でエラー: " . $e->getMessage());
                 }
                 
                 // サービス名と装置種別のリレーションを登録
-                // PostgreSQLの場合、トランザクション管理を簡素化するため、
-                // upload.php側でまとめて登録するのでここではスキップ
-                if (!$isPgsql) {
-                    try {
-                        $this->registerServiceDeviceTypeRelation(
-                            $row['サービス名'],
-                            $row['装置種別'],
-                            'CSV自動登録'
-                        );
-                        error_log("Successfully registered relation for row {$rowIndex}");
-                    } catch (Exception $e) {
-                        // リレーション登録エラーはログに記録するが処理は継続
-                        error_log("リレーション登録エラー: " . $e->getMessage());
-                    }
-                } else {
-                    error_log("Skipping relation registration in PostgreSQL mode (will be done in upload.php)");
+                try {
+                    $this->registerServiceDeviceTypeRelation(
+                        $row['サービス名'],
+                        $row['装置種別'],
+                        'CSV自動登録'
+                    );
+                    error_log("Successfully registered relation for row {$rowIndex}");
+                } catch (Exception $e) {
+                    error_log("リレーション登録エラー: " . $e->getMessage());
                 }
                 
                 // 動的テーブルに挿入
@@ -546,27 +401,12 @@ class DeviceManager {
                     
                 } catch (Exception $e) {
                     error_log("Row {$rowIndex} - dynamic table insert error: " . $e->getMessage());
-                    error_log("Stack trace: " . $e->getTraceAsString());
-                    
-                    // PostgreSQLの場合はロールバックして次の行へ
-                    if ($isPgsql) {
-                        $this->database->rollback();
-                        error_log("Transaction rolled back for row {$rowIndex}");
-                    }
-                    
+                    $this->database->rollBack();
                     throw new Exception("行" . ($rowIndex + 2) . "の動的テーブル登録でエラー: " . $e->getMessage());
                 }
-                
-                // PostgreSQLの場合は各行の処理後にコミット
-                if ($isPgsql) {
-                    $this->database->commit();
-                    error_log("Transaction committed for row {$rowIndex}");
-                }
-            }
-            
-            // MySQLの場合のみ最終コミット（PostgreSQLは各行でコミット済み）
-            if (!$isPgsql) {
+
                 $this->database->commit();
+                error_log("Transaction committed for row {$rowIndex}");
             }
             $results['success'] = true;
             
@@ -665,19 +505,12 @@ class DeviceManager {
      * 動的テーブルの一覧を取得
      * @return array
      */
-    public function getDynamicTables() {
-        $sql = "
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = DATABASE() 
-            AND table_name != 'device_info'
-            ORDER BY table_name
-        ";
-        
+    public function getDynamicTables(): array {
         try {
-            $stmt = $this->database->execute($sql);
-            return $stmt->fetchAll(PDO::FETCH_COLUMN);
-        } catch (Exception $e) {
+            $systemTables = ['device_info', 'service_device_type_relations', 'audit_logs', 'users'];
+            $all = $this->database->getSchemaManager()->listTableNames();
+            return array_values(array_filter($all, fn($t) => !in_array($t, $systemTables)));
+        } catch (\Exception $e) {
             throw new Exception("動的テーブル一覧の取得に失敗しました: " . $e->getMessage());
         }
     }
@@ -912,48 +745,30 @@ class DeviceManager {
      * @return bool
      * @throws Exception
      */
-    public function createRelationTable() {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        if ($isPgsql) {
-            // PostgreSQL用SQL
-            $sql = "
-                CREATE TABLE IF NOT EXISTS service_device_type_relations (
-                    id SERIAL PRIMARY KEY,
-                    service_name VARCHAR(100) NOT NULL,
-                    device_type VARCHAR(100) NOT NULL,
-                    description TEXT,
-                    is_active SMALLINT DEFAULT 1,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (service_name, device_type)
-                )
-            ";
-            $this->database->execute($sql);
-            // インデックス作成
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_service_name ON service_device_type_relations (service_name)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_device_type ON service_device_type_relations (device_type)");
-            $this->database->execute("CREATE INDEX IF NOT EXISTS idx_active ON service_device_type_relations (is_active)");
-        } else {
-            // MySQL用SQL
-            $sql = "
-                CREATE TABLE IF NOT EXISTS service_device_type_relations (
-                    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
-                    service_name VARCHAR(100) NOT NULL COMMENT 'サービス名',
-                    device_type VARCHAR(100) NOT NULL COMMENT '装置種別',
-                    description TEXT COMMENT '説明',
-                    is_active TINYINT(1) DEFAULT 1 COMMENT '有効フラグ(1:有効, 0:無効)',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-                    UNIQUE KEY unique_service_device_type (service_name, device_type),
-                    INDEX idx_service_name (service_name),
-                    INDEX idx_device_type (device_type),
-                    INDEX idx_active (is_active)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='サービス名と装置種別のリレーションテーブル'
-            ";
-            $this->database->execute($sql);
+    public function createRelationTable(): bool {
+        $sm = $this->database->getSchemaManager();
+        if ($sm->tablesExist(['service_device_type_relations'])) {
+            return false;
         }
-        
+
+        $table = new \Doctrine\DBAL\Schema\Table('service_device_type_relations');
+        $table->addColumn('id',           \Doctrine\DBAL\Types\Types::INTEGER, ['autoincrement' => true, 'notnull' => true]);
+        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
+        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
+        $table->addColumn('description',  \Doctrine\DBAL\Types\Types::TEXT,    ['notnull' => false]);
+        $table->addColumn('is_active',    \Doctrine\DBAL\Types\Types::SMALLINT, ['notnull' => false, 'default' => 1]);
+        $table->addColumn('created_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('updated_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['service_name', 'device_type'], 'unique_service_device_type');
+        $table->addIndex(['service_name'], 'idx_service_name');
+        $table->addIndex(['device_type'],  'idx_device_type');
+        $table->addIndex(['is_active'],    'idx_active');
+        $table->addOption('engine',  'InnoDB');
+        $table->addOption('charset', 'utf8mb4');
+        $table->addOption('collate', 'utf8mb4_unicode_ci');
+
+        $sm->createTable($table);
         return true;
     }
     
@@ -971,31 +786,22 @@ class DeviceManager {
             $this->createRelationTable();
         }
         
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        if ($isPgsql) {
-            // PostgreSQL用
-            $sql = "
-                INSERT INTO service_device_type_relations 
-                (service_name, device_type, description) 
-                VALUES (:service_name, :device_type, :description)
-                ON CONFLICT (service_name, device_type) 
-                DO UPDATE SET
-                    description = EXCLUDED.description,
-                    is_active = TRUE,
-                    updated_at = CURRENT_TIMESTAMP
-            ";
-        } else {
-            // MySQL用
-            $sql = "
-                INSERT INTO service_device_type_relations 
-                (service_name, device_type, description) 
+        if ($this->database->isMySQL()) {
+            $sql = "INSERT INTO service_device_type_relations
+                (service_name, device_type, description)
                 VALUES (:service_name, :device_type, :description)
                 ON DUPLICATE KEY UPDATE
                     description = VALUES(description),
                     is_active = 1,
-                    updated_at = CURRENT_TIMESTAMP
-            ";
+                    updated_at = CURRENT_TIMESTAMP";
+        } else {
+            $sql = "INSERT INTO service_device_type_relations
+                (service_name, device_type, description)
+                VALUES (:service_name, :device_type, :description)
+                ON CONFLICT (service_name, device_type) DO UPDATE SET
+                    description = EXCLUDED.description,
+                    is_active = TRUE,
+                    updated_at = CURRENT_TIMESTAMP";
         }
         
         $params = [
@@ -1197,34 +1003,12 @@ class DeviceManager {
      * @return array
      */
     public function getTableColumns($tableName) {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        if ($isPgsql) {
-            $sql = "
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = :table_name
-                ORDER BY ordinal_position
-            ";
-            $params = ['table_name' => $tableName];
-        } else {
-            $sql = "
-                SELECT COLUMN_NAME as column_name
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                AND TABLE_NAME = :table_name
-                ORDER BY ORDINAL_POSITION
-            ";
-            $params = ['table_name' => $tableName];
-        }
-        
         try {
-            $stmt = $this->database->execute($sql, $params);
-            $columns = [];
-            while ($row = $stmt->fetch()) {
-                $columns[] = $row['column_name'];
+            $sm = $this->database->getSchemaManager();
+            if (!$sm->tablesExist([$tableName])) {
+                return [];
             }
-            return $columns;
+            return array_keys($sm->listTableColumns($tableName));
         } catch (Exception $e) {
             error_log("Failed to get columns for table {$tableName}: " . $e->getMessage());
             return [];
@@ -1238,15 +1022,11 @@ class DeviceManager {
      * @return bool
      * @throws Exception
      */
-    public function addColumnToDynamicTable($tableName, $columnName) {
+    public function addColumnToDynamicTable($tableName, $columnName): bool {
         $tableName = sanitizeTableName($tableName);
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
-        if ($isPgsql) {
-            $sql = "ALTER TABLE \"{$tableName}\" ADD COLUMN \"{$columnName}\" TEXT";
-        } else {
-            $sql = "ALTER TABLE `{$tableName}` ADD COLUMN `{$columnName}` TEXT";
-        }
+        $qTable = $this->database->quoteIdentifier($tableName);
+        $qCol   = $this->database->quoteIdentifier($columnName);
+        $sql = "ALTER TABLE {$qTable} ADD COLUMN {$qCol} TEXT";
         
         try {
             error_log("Adding column to dynamic table: {$sql}");
@@ -1345,16 +1125,9 @@ class DeviceManager {
      * @return bool
      */
     public function deleteFromDynamicTable($tableName, $primaryKey) {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
+        $qTable = $this->database->quoteIdentifier(sanitizeTableName($tableName));
         try {
-            if ($isPgsql) {
-                $sql = "DELETE FROM \"{$tableName}\" WHERE primary_key = :primary_key";
-            } else {
-                $sql = "DELETE FROM `{$tableName}` WHERE primary_key = :primary_key";
-            }
-            
-            $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            $this->database->execute("DELETE FROM {$qTable} WHERE primary_key = :primary_key", ['primary_key' => $primaryKey]);
             return true;
         } catch (Exception $e) {
             throw new Exception("動的テーブルからの削除に失敗しました: " . $e->getMessage());
@@ -1368,16 +1141,9 @@ class DeviceManager {
      * @return array|null
      */
     public function getDynamicTableData($tableName, $primaryKey) {
-        $isPgsql = $this->database->getDbType() === 'pgsql';
-        
+        $qTable = $this->database->quoteIdentifier(sanitizeTableName($tableName));
         try {
-            if ($isPgsql) {
-                $sql = "SELECT * FROM \"{$tableName}\" WHERE primary_key = :primary_key";
-            } else {
-                $sql = "SELECT * FROM `{$tableName}` WHERE primary_key = :primary_key";
-            }
-            
-            $stmt = $this->database->execute($sql, ['primary_key' => $primaryKey]);
+            $stmt = $this->database->execute("SELECT * FROM {$qTable} WHERE primary_key = :primary_key", ['primary_key' => $primaryKey]);
             return $stmt->fetch();
         } catch (Exception $e) {
             error_log("動的テーブル '{$tableName}' からのデータ取得に失敗: " . $e->getMessage());
