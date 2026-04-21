@@ -8,15 +8,19 @@ services:
       - "8000:80"
     volumes:
       - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
       - ./uploads:/var/www/html/uploads
       - ./logs:/var/www/html/logs
     environment:
+      - DB_TYPE=mysql
       - DB_HOST=mysql
+      - DB_PORT=3306
       - DB_NAME=device_management
       - DB_USER=root
       - DB_PASS=rootpassword
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - device-network
 
@@ -33,6 +37,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - device-network
 
@@ -53,6 +63,7 @@ services:
 # データ永続化用ボリューム
 volumes:
   mysql_data:
+  vendor_data:
 
 # ネットワーク設定
 networks:

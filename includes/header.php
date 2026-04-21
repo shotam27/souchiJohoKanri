@@ -52,6 +52,22 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                             <span class="nav-text nav-text-hidden">CSVダウンロード</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="command_groups.php" class="nav-link <?= $currentPage === 'command_groups' ? 'active' : '' ?>" title="コマンド群登録">
+                            <div class="nav-icon">
+                                <?php include 'svgs/info.svg'; ?>
+                            </div>
+                            <span class="nav-text nav-text-hidden">コマンド群登録</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="macro_output.php" class="nav-link <?= $currentPage === 'macro_output' ? 'active' : '' ?>" title="マクロ出力">
+                            <div class="nav-icon">
+                                <?php include 'svgs/rotate.svg'; ?>
+                            </div>
+                            <span class="nav-text nav-text-hidden">マクロ出力</span>
+                        </a>
+                    </li>
                 </ul>
                 
                 <!-- ユーザー情報 -->

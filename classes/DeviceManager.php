@@ -451,15 +451,14 @@ class DeviceManager {
         
         $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
+        $limitInt  = (int)$limit;
+        $offsetInt = (int)$offset;
         $sql = "
             SELECT * FROM device_info 
             {$whereClause}
             ORDER BY service_name, device_type, device_name, username1
-            LIMIT :limit OFFSET :offset
+            LIMIT {$limitInt} OFFSET {$offsetInt}
         ";
-        
-        $params['limit'] = $limit;
-        $params['offset'] = $offset;
         
         try {
             $stmt = $this->database->execute($sql, $params);
@@ -591,6 +590,8 @@ class DeviceManager {
         
         $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
+        $limitInt  = (int)$limit;
+        $offsetInt = (int)$offset;
         $sql = "
             SELECT 
                 primary_key,
@@ -625,11 +626,8 @@ class DeviceManager {
             FROM device_info 
             {$whereClause}
             ORDER BY service_name, device_type, device_name, username1
-            LIMIT :limit OFFSET :offset
+            LIMIT {$limitInt} OFFSET {$offsetInt}
         ";
-        
-        $params['limit'] = $limit;
-        $params['offset'] = $offset;
         
         try {
             $stmt = $this->database->execute($sql, $params);
@@ -1024,6 +1022,15 @@ class DeviceManager {
      */
     public function addColumnToDynamicTable($tableName, $columnName): bool {
         $tableName = sanitizeTableName($tableName);
+
+        // カラムが既に存在する場合はスキップ
+        $existingColumns = $this->database->getTableColumns($tableName);
+        foreach ($existingColumns as $col) {
+            if (strcasecmp($col['COLUMN_NAME'], $columnName) === 0) {
+                return false; // 既に存在
+            }
+        }
+
         $qTable = $this->database->quoteIdentifier($tableName);
         $qCol   = $this->database->quoteIdentifier($columnName);
         $sql = "ALTER TABLE {$qTable} ADD COLUMN {$qCol} TEXT";

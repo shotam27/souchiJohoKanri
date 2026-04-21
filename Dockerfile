@@ -1,8 +1,14 @@
 # PHP 8.2 with Apache
 FROM php:8.2-apache
 
+# 必要なシステムパッケージをインストール（Composer依存含む）
+RUN apt-get update && apt-get install -y unzip git && rm -rf /var/lib/apt/lists/*
+
 # 必要な拡張機能をインストール
 RUN docker-php-ext-install pdo pdo_mysql mysqli
+
+# Composerをインストール
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # PHP設定（アップロード制限を緩和）
 RUN echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/uploads.ini \
@@ -18,6 +24,9 @@ WORKDIR /var/www/html
 
 # アプリケーションファイルをコピー
 COPY . /var/www/html/
+
+# Composer依存関係をインストール
+RUN cd /var/www/html && composer install --no-dev --optimize-autoloader
 
 # 必要なディレクトリを作成して権限を設定
 RUN mkdir -p /var/www/html/uploads /var/www/html/logs \

@@ -366,8 +366,111 @@ try {
             break;
             
         default:
-            throw new Exception('不正なアクションです: ' . $action);
-    }
+            // ---- コマンド群 アクション ----
+            if (in_array($action, ['save_command_group', 'get_command_groups', 'get_command_group_detail', 'delete_command_group'], true)) {
+                // テーブルが無ければ自動作成
+                if (!$database->tableExists('command_groups')) {
+                    require_once __DIR__ . '/admin/init_command_groups_table.php';
+                }
+
+                if ($action === 'save_command_group') {
+                    $groupName  = trim($_POST['group_name']  ?? '');
+                    $deviceType = trim($_POST['device_type'] ?? '');
+                    $description = trim($_POST['description'] ?? '');
+                    $prompts    = $_POST['prompts']   ?? [];
+                    $commands   = $_POST['commands']  ?? [];
+
+                    if ($groupName === '')  throw new Exception('コマンド群名は必須です');
+                    if ($deviceType === '') throw new Exception('装置種別は必須です');
+                    if (empty($commands))  throw new Exception('コマンドを1行以上登録してください');
+
+                    $conn = $database->connect();
+                    $conn->beginTransaction();
+                    try {
+                        $conn->executeStatement(
+                            "INSERT INTO command_groups (group_name, device_type, description, created_by)
+                             VALUES (?, ?, ?, ?)",
+                            [$groupName, $deviceType, $description ?: null, $_SESSION['username'] ?? null]
+                        );
+                        $groupId = $conn->lastInsertId();
+                        for ($i = 0; $i < count($commands); $i++) {
+                            $cmd = trim($commands[$i]);
+                            if ($cmd === '') continue;
+                            $pmt = trim($prompts[$i] ?? '#');
+                            $conn->executeStatement(
+                                "INSERT INTO command_group_items (command_group_id, sort_order, prompt, command)
+                                 VALUES (?, ?, ?, ?)",
+                                [$groupId, $i, $pmt, $cmd]
+                            );
+                        }
+                        $conn->commit();
+                    } catch (Exception $ex) {
+                        $conn->rollBack();
+                        throw $ex;
+                    }
+                    $response = ['success' => true, 'message' => 'コマンド群を登録しました'];
+
+                } elseif ($action === 'get_command_groups') {
+                    $rows = $database->query(
+                        "SELECT cg.id, cg.group_name, cg.device_type, cg.description,
+                                COUNT(ci.id) AS item_count
+                         FROM command_groups cg
+                         LEFT JOIN command_group_items ci ON ci.command_group_id = cg.id
+                         GROUP BY cg.id, cg.group_name, cg.device_type, cg.description
+                         ORDER BY cg.device_type, cg.group_name"
+                    );
+                    $response = ['success' => true, 'groups' => $rows];
+
+                } elseif ($action === 'get_command_group_detail') {
+                    $id = (int)($_POST['id'] ?? 0);
+                    if (!$id) throw new Exception('IDが不正です');
+                    $groups = $database->query(
+                        "SELECT id, group_name, device_type, description FROM command_groups WHERE id = ?", [$id]
+                    );
+                    if (empty($groups)) throw new Exception('コマンド群が見つかりません');
+                    $group = $groups[0];
+                    $group['items'] = $database->query(
+                        "SELECT prompt, command FROM command_group_items
+                         WHERE command_group_id = ? ORDER BY sort_order", [$id]
+                    );
+                    $response = ['success' => true, 'group' => $group];
+
+                } elseif ($action === 'delete_command_group') {
+                    $id = (int)($_POST['id'] ?? 0);
+                    if (!$id) throw new Exception('IDが不正です');
+                    $database->execute("DELETE FROM command_groups WHERE id = ?", [$id]);
+                    $response = ['success' => true, 'message' => '削除しました'];
+                }
+            } elseif ($action === 'get_devices_for_macro') {
+                    // 装置一覧取得（サービス名＋装置種別でフィルタ）
+                    $svc = trim($_POST['service_name'] ?? '');
+                    $dt  = trim($_POST['device_type']  ?? '');
+                    if ($svc === '' || $dt === '') throw new Exception('サービス名と装置種別を指定してください');
+                    $devices = $database->query(
+                        "SELECT primary_key, device_name, login_ip, username1, password1
+                         FROM device_info
+                         WHERE service_name = ? AND device_type = ?
+                         ORDER BY device_name",
+                        [$svc, $dt]
+                    );
+                    $response = ['success' => true, 'devices' => $devices];
+
+                } elseif ($action === 'get_command_groups_by_device_type') {
+                    // 装置種別に紐づくコマンド群一覧
+                    if (!$database->tableExists('command_groups')) {
+                        $response = ['success' => true, 'groups' => []];
+                    } else {
+                        $dt = trim($_POST['device_type'] ?? '');
+                        $sql  = "SELECT id, group_name, device_type FROM command_groups";
+                        $params = [];
+                        if ($dt !== '') { $sql .= " WHERE device_type = ?"; $params[] = $dt; }
+                        $sql .= " ORDER BY device_type, group_name";
+                        $response = ['success' => true, 'groups' => $database->query($sql, $params)];
+                    }
+
+                } else {
+                throw new Exception('不正なアクションです: ' . $action);
+            }    }
     
 } catch (Exception $e) {
     $response = [
