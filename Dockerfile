@@ -34,5 +34,11 @@ RUN mkdir -p /var/www/html/uploads /var/www/html/logs \
     && chmod 777 /var/www/html/logs \
     && chown -R www-data:www-data /var/www/html/uploads /var/www/html/logs
 
+# DB初期化 + Apache起動スクリプトを設定
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Apacheのポート80を公開
 EXPOSE 80
+
+CMD ["/docker-entrypoint.sh"]

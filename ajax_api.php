@@ -367,7 +367,7 @@ try {
             
         default:
             // ---- コマンド群 アクション ----
-            if (in_array($action, ['save_command_group', 'get_command_groups', 'get_command_group_detail', 'delete_command_group'], true)) {
+            if (in_array($action, ['save_command_group', 'get_command_groups', 'get_command_group_detail', 'delete_command_group', 'update_command_group'], true)) {
                 // テーブルが無ければ自動作成
                 if (!$database->tableExists('command_groups')) {
                     require_once __DIR__ . '/admin/init_command_groups_table.php';
@@ -440,6 +440,45 @@ try {
                     if (!$id) throw new Exception('IDが不正です');
                     $database->execute("DELETE FROM command_groups WHERE id = ?", [$id]);
                     $response = ['success' => true, 'message' => '削除しました'];
+
+                } elseif ($action === 'update_command_group') {
+                    $id          = (int)($_POST['id']          ?? 0);
+                    $groupName   = trim($_POST['group_name']   ?? '');
+                    $deviceType  = trim($_POST['device_type']  ?? '');
+                    $description = trim($_POST['description']  ?? '');
+                    $prompts     = $_POST['prompts']   ?? [];
+                    $commands    = $_POST['commands']  ?? [];
+
+                    if (!$id)            throw new Exception('IDが不正です');
+                    if ($groupName === '')  throw new Exception('コマンド群名は必須です');
+                    if ($deviceType === '') throw new Exception('装置種別は必須です');
+                    if (empty($commands))  throw new Exception('コマンドを1行以上登録してください');
+
+                    $conn = $database->connect();
+                    $conn->beginTransaction();
+                    try {
+                        $conn->executeStatement(
+                            "UPDATE command_groups SET group_name=?, device_type=?, description=? WHERE id=?",
+                            [$groupName, $deviceType, $description ?: null, $id]
+                        );
+                        $conn->executeStatement(
+                            "DELETE FROM command_group_items WHERE command_group_id=?", [$id]
+                        );
+                        for ($i = 0; $i < count($commands); $i++) {
+                            $cmd = trim($commands[$i]);
+                            if ($cmd === '') continue;
+                            $pmt = trim($prompts[$i] ?? '#');
+                            $conn->executeStatement(
+                                "INSERT INTO command_group_items (command_group_id, sort_order, prompt, command) VALUES (?, ?, ?, ?)",
+                                [$id, $i, $pmt, $cmd]
+                            );
+                        }
+                        $conn->commit();
+                    } catch (Exception $ex) {
+                        $conn->rollBack();
+                        throw $ex;
+                    }
+                    $response = ['success' => true, 'message' => 'コマンド群を更新しました'];
                 }
             } elseif ($action === 'get_devices_for_macro') {
                     // 装置一覧取得（サービス名＋装置種別でフィルタ）

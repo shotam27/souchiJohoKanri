@@ -109,9 +109,6 @@ foreach ($primaryKeys as $idx => $pk) {
         $ttl .= "sendln '{$command}'\n";
     }
 
-    $ttl .= "\n";
-    $ttl .= "disconnect\n";
-    $ttl .= "\n";
 }
 
 $ttl .= "; ============================================================\n";

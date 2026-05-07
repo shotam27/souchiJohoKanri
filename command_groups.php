@@ -74,7 +74,7 @@ require_once 'includes/header.php';
         <form id="commandGroupForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
-            <div class="form-row">
+            <div class="form-stack">
                 <div class="form-group">
                     <label class="form-label" for="group_name">コマンド群名 <span class="required">*</span></label>
                     <input type="text" id="group_name" name="group_name" class="form-control" required
@@ -92,7 +92,7 @@ require_once 'includes/header.php';
                     <input type="text" id="device_type_custom" name="device_type_custom" class="form-control mt-1"
                            placeholder="装置種別を直接入力" style="display:none;">
                 </div>
-                <div class="form-group" style="flex:2">
+                <div class="form-group">
                     <label class="form-label" for="description">説明</label>
                     <input type="text" id="description" name="description" class="form-control"
                            placeholder="任意のメモ">
@@ -159,6 +159,7 @@ require_once 'includes/header.php';
                 <td><?= (int)$g['item_count'] ?> 行</td>
                 <td>
                     <button class="btn btn-sm btn-secondary view-group" data-id="<?= (int)$g['id'] ?>">詳細</button>
+                    <button class="btn btn-sm btn-primary edit-group" data-id="<?= (int)$g['id'] ?>">編集</button>
                     <button class="btn btn-sm btn-danger delete-group" data-id="<?= (int)$g['id'] ?>" data-name="<?= htmlspecialchars($g['group_name']) ?>">削除</button>
                 </td>
             </tr>
@@ -182,12 +183,54 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- 編集モーダル -->
+<div id="editModal" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-header">
+            <h3>コマンド群編集</h3>
+            <button type="button" class="modal-close" id="closeEditModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="editCommandGroupForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <input type="hidden" id="edit_id" name="id" value="">
+                <div class="form-stack">
+                    <div class="form-group">
+                        <label class="form-label" for="edit_group_name">コマンド群名 <span class="required">*</span></label>
+                        <input type="text" id="edit_group_name" name="group_name" class="form-control" required placeholder="例：初期設定コマンド群">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit_device_type">対象装置種別 <span class="required">*</span></label>
+                        <input type="text" id="edit_device_type" name="device_type" class="form-control" required placeholder="例：Router">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit_description">説明</label>
+                        <input type="text" id="edit_description" name="description" class="form-control" placeholder="任意のメモ">
+                    </div>
+                </div>
+                <div class="section-label">プロンプト＋コマンド</div>
+                <div id="editCommandItems"></div>
+                <div class="command-actions">
+                    <button type="button" id="editAddRowBtn" class="btn btn-secondary">＋ 行を追加</button>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">保存する</button>
+                    <button type="button" class="btn btn-outline" id="cancelEditBtn">キャンセル</button>
+                </div>
+                <div id="editFormMessage" class="alert" style="display:none;"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
 </div><!-- page-container -->
 </div><!-- main-content -->
 
 <style>
 .form-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
 .form-row .form-group { flex:1; min-width:180px; }
+.form-stack { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+.form-stack .form-group { width:100%; }
 .section-label { font-weight:600; margin-bottom:8px; color:#374151; }
 .command-row {
     display:flex; align-items:center; gap:8px; margin-bottom:8px;
@@ -231,7 +274,11 @@ document.getElementById('device_type').addEventListener('change', function () {
 
 /* ---- 行追加 ---- */
 let rowIndex = 1;
-document.getElementById('addRowBtn').addEventListener('click', addRow);
+document.getElementById('addRowBtn').addEventListener('click', function() {
+    const prompts = document.querySelectorAll('#commandItems .prompt-input');
+    const lastPrompt = prompts.length ? prompts[prompts.length - 1].value : '#';
+    addRow(lastPrompt, '');
+});
 
 function addRow(promptVal, commandVal) {
     rowIndex++;
@@ -339,6 +386,7 @@ async function reloadGroupList() {
                 <td>${g.item_count} 行</td>
                 <td>
                     <button class="btn btn-sm btn-secondary view-group" data-id="${g.id}">詳細</button>
+                    <button class="btn btn-sm btn-primary edit-group" data-id="${g.id}">編集</button>
                     <button class="btn btn-sm btn-danger delete-group" data-id="${g.id}" data-name="${escHtml(g.group_name)}">削除</button>
                 </td>
             </tr>`).join('');
@@ -383,6 +431,28 @@ document.addEventListener('click', async function (e) {
         if (data.success) { e.target.closest('tr').remove(); }
         else alert(data.error || '削除に失敗しました');
     }
+
+    /* ---- 編集モーダルを開く ---- */
+    if (e.target.classList.contains('edit-group')) {
+        const id = e.target.dataset.id;
+        document.getElementById('editModal').style.display = 'flex';
+        document.getElementById('editFormMessage').style.display = 'none';
+        document.getElementById('editCommandItems').innerHTML = '<div class="loading">読み込み中...</div>';
+        try {
+            const res  = await fetch('ajax_api.php', { method:'POST',
+                body: new URLSearchParams({ action:'get_command_group_detail', id, csrf_token: CSRF }) });
+            const data = await res.json();
+            if (!data.success) { alert(data.error || '読み込みに失敗しました'); return; }
+            const g = data.group;
+            document.getElementById('edit_id').value          = g.id;
+            document.getElementById('edit_group_name').value  = g.group_name;
+            document.getElementById('edit_device_type').value = g.device_type;
+            document.getElementById('edit_description').value = g.description || '';
+            document.getElementById('editCommandItems').innerHTML = '';
+            editRowIndex = 0;
+            (g.items.length ? g.items : [{prompt:'#', command:''}]).forEach(it => addEditRow(it.prompt, it.command));
+        } catch (err) { alert('エラー: ' + err.message); }
+    }
 });
 
 document.getElementById('closeModal').addEventListener('click', () => {
@@ -399,6 +469,96 @@ document.getElementById('resetBtn').addEventListener('click', function () {
         rowIndex = 0; addRow('#', '');
     }, 10);
 });
+
+/* ---- 編集モーダル: 行管理 ---- */
+let editRowIndex = 0;
+
+function addEditRow(promptVal, commandVal) {
+    editRowIndex++;
+    const div = document.createElement('div');
+    div.className = 'command-row';
+    div.innerHTML = `
+        <span class="row-num">${document.querySelectorAll('#editCommandItems .command-row').length + 1}</span>
+        <input type="text" name="edit_prompt[]" class="form-control prompt-input"
+               placeholder="プロンプト例: #" value="${escHtml(promptVal || '#')}">
+        <input type="text" name="edit_command[]" class="form-control command-input"
+               placeholder="コマンドを入力" value="${escHtml(commandVal || '')}">
+        <button type="button" class="btn btn-icon btn-danger remove-edit-row" title="削除">✕</button>
+    `;
+    document.getElementById('editCommandItems').appendChild(div);
+    renumberEditRows();
+}
+
+function renumberEditRows() {
+    document.querySelectorAll('#editCommandItems .command-row .row-num').forEach((el, i) => el.textContent = i + 1);
+}
+
+document.getElementById('editAddRowBtn').addEventListener('click', function() {
+    const prompts = document.querySelectorAll('#editCommandItems .prompt-input');
+    const lastPrompt = prompts.length ? prompts[prompts.length - 1].value : '#';
+    addEditRow(lastPrompt, '');
+});
+
+document.getElementById('editCommandItems').addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-edit-row')) {
+        const rows = document.querySelectorAll('#editCommandItems .command-row');
+        if (rows.length <= 1) { alert('最低1行は必要です'); return; }
+        e.target.closest('.command-row').remove();
+        renumberEditRows();
+    }
+});
+
+/* ---- 編集モーダル: 閉じる ---- */
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+
+/* ---- 編集フォーム送信 ---- */
+document.getElementById('editCommandGroupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const deviceType = document.getElementById('edit_device_type').value.trim();
+    if (!deviceType) { showEditMsg('error', '装置種別を入力してください'); return; }
+
+    const prompts  = [...document.querySelectorAll('[name="edit_prompt[]"]')].map(i => i.value.trim());
+    const commands = [...document.querySelectorAll('[name="edit_command[]"]')].map(i => i.value.trim());
+    if (commands.some(c => !c)) { showEditMsg('error', 'コマンドが空の行があります'); return; }
+
+    const body = new URLSearchParams({
+        action:      'update_command_group',
+        csrf_token:  CSRF,
+        id:          document.getElementById('edit_id').value,
+        group_name:  document.getElementById('edit_group_name').value.trim(),
+        device_type: deviceType,
+        description: document.getElementById('edit_description').value.trim(),
+    });
+    prompts.forEach(p  => body.append('prompts[]', p));
+    commands.forEach(c => body.append('commands[]', c));
+
+    try {
+        const res  = await fetch('ajax_api.php', { method:'POST', body });
+        const data = await res.json();
+        if (data.success) {
+            showEditMsg('success', data.message || '更新しました');
+            await reloadGroupList();
+            setTimeout(closeEditModal, 1200);
+        } else {
+            showEditMsg('error', data.message || data.error || 'エラーが発生しました');
+        }
+    } catch (err) {
+        showEditMsg('error', 'サーバーエラー: ' + err.message);
+    }
+});
+
+function showEditMsg(type, text) {
+    const el = document.getElementById('editFormMessage');
+    el.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
+    el.textContent = text;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
