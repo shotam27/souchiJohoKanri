@@ -85,11 +85,9 @@ try {
     echo "[INFO] 読み込み行数  : " . ($stats['total_rows'] ?? count($csv->getData())) . " 件\n";
 
     // DB 接続
-    $dbType  = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
     $database = new Database(
         DB_HOST, DB_NAME, DB_USER, DB_PASS,
-        $charset, $dbType,
+        DB_CHARSET, 'mysql',
         defined('DB_PORT') ? DB_PORT : null
     );
 

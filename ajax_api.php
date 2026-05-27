@@ -38,9 +38,7 @@ try {
     }
     
     // データベース接続
-    $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', defined('DB_PORT') ? DB_PORT : null);
     $deviceManager = new DeviceManager($database);
     
     $response = ['success' => false, 'data' => null, 'message' => ''];
@@ -387,21 +385,21 @@ try {
                     $conn = $database->connect();
                     $conn->beginTransaction();
                     try {
-                        $conn->executeStatement(
+                        $stmt = $conn->prepare(
                             "INSERT INTO command_groups (group_name, device_type, description, created_by)
-                             VALUES (?, ?, ?, ?)",
-                            [$groupName, $deviceType, $description ?: null, $_SESSION['username'] ?? null]
+                             VALUES (?, ?, ?, ?)"
                         );
+                        $stmt->execute([$groupName, $deviceType, $description ?: null, $_SESSION['username'] ?? null]);
                         $groupId = $conn->lastInsertId();
                         for ($i = 0; $i < count($commands); $i++) {
                             $cmd = trim($commands[$i]);
                             if ($cmd === '') continue;
                             $pmt = trim($prompts[$i] ?? '#');
-                            $conn->executeStatement(
+                            $stmt2 = $conn->prepare(
                                 "INSERT INTO command_group_items (command_group_id, sort_order, prompt, command)
-                                 VALUES (?, ?, ?, ?)",
-                                [$groupId, $i, $pmt, $cmd]
+                                 VALUES (?, ?, ?, ?)"
                             );
+                            $stmt2->execute([$groupId, $i, $pmt, $cmd]);
                         }
                         $conn->commit();
                     } catch (Exception $ex) {
@@ -457,21 +455,22 @@ try {
                     $conn = $database->connect();
                     $conn->beginTransaction();
                     try {
-                        $conn->executeStatement(
-                            "UPDATE command_groups SET group_name=?, device_type=?, description=? WHERE id=?",
-                            [$groupName, $deviceType, $description ?: null, $id]
+                        $stmt = $conn->prepare(
+                            "UPDATE command_groups SET group_name=?, device_type=?, description=? WHERE id=?"
                         );
-                        $conn->executeStatement(
-                            "DELETE FROM command_group_items WHERE command_group_id=?", [$id]
+                        $stmt->execute([$groupName, $deviceType, $description ?: null, $id]);
+                        $stmt = $conn->prepare(
+                            "DELETE FROM command_group_items WHERE command_group_id=?"
                         );
+                        $stmt->execute([$id]);
                         for ($i = 0; $i < count($commands); $i++) {
                             $cmd = trim($commands[$i]);
                             if ($cmd === '') continue;
                             $pmt = trim($prompts[$i] ?? '#');
-                            $conn->executeStatement(
-                                "INSERT INTO command_group_items (command_group_id, sort_order, prompt, command) VALUES (?, ?, ?, ?)",
-                                [$id, $i, $pmt, $cmd]
+                            $stmt2 = $conn->prepare(
+                                "INSERT INTO command_group_items (command_group_id, sort_order, prompt, command) VALUES (?, ?, ?, ?)"
                             );
+                            $stmt2->execute([$id, $i, $pmt, $cmd]);
                         }
                         $conn->commit();
                     } catch (Exception $ex) {

@@ -5,7 +5,7 @@
 
 // データベース設定（環境変数から取得）
 // Render PostgreSQL用設定
-define('DB_TYPE', getenv('DB_TYPE') ?: 'pgsql'); // 'pgsql' or 'mysql'
+define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql');
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_PORT', getenv('DB_PORT') ?: '5432'); // PostgreSQL: 5432, MySQL: 3306
 define('DB_NAME', getenv('DB_NAME') ?: 'device_management');
@@ -31,11 +31,6 @@ date_default_timezone_set('Asia/Tokyo');
 
 // セッション設定
 session_start();
-
-// Composer autoload（Doctrine DBAL等）
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-}
 
 // クラスファイルの自動読み込み
 spl_autoload_register(function ($class_name) {

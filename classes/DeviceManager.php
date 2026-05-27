@@ -23,35 +23,35 @@ class DeviceManager {
      * @throws Exception
      */
     public function createDeviceInfoTable(): bool {
-        $sm = $this->database->getSchemaManager();
-        if ($sm->tablesExist(['device_info'])) {
+        if ($this->database->tableExists('device_info')) {
             return false;
         }
 
-        $table = new \Doctrine\DBAL\Schema\Table('device_info');
-        $table->addColumn('primary_key',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 500, 'notnull' => true]);
-        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
-        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
-        $table->addColumn('device_name',  \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
-        $table->addColumn('login_ip',     \Doctrine\DBAL\Types\Types::STRING, ['length' => 45,  'notnull' => false]);
-        $table->addColumn('username1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => true]);
-        $table->addColumn('password1',    \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
+        $usernameCols = '';
         for ($i = 2; $i <= 10; $i++) {
-            $table->addColumn("username{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
-            $table->addColumn("password{$i}", \Doctrine\DBAL\Types\Types::STRING, ['length' => 255, 'notnull' => false]);
+            $usernameCols .= "    `username{$i}` VARCHAR(100) NULL,\n";
+            $usernameCols .= "    `password{$i}` VARCHAR(255) NULL,\n";
         }
-        $table->addColumn('created_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
-        $table->addColumn('updated_by', \Doctrine\DBAL\Types\Types::STRING, ['length' => 100, 'notnull' => false]);
-        $table->addColumn('created_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->addColumn('updated_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->setPrimaryKey(['primary_key']);
-        $table->addIndex(['service_name', 'device_type'], 'idx_service_device_type');
-        $table->addIndex(['service_name', 'device_type', 'device_name', 'username1'], 'idx_device_info');
-        $table->addOption('engine',  'InnoDB');
-        $table->addOption('charset', 'utf8mb4');
-        $table->addOption('collate', 'utf8mb4_unicode_ci');
 
-        $sm->createTable($table);
+        $sql = "CREATE TABLE `device_info` (
+    `primary_key`  VARCHAR(500) NOT NULL,
+    `service_name` VARCHAR(100) NOT NULL,
+    `device_type`  VARCHAR(100) NOT NULL,
+    `device_name`  VARCHAR(100) NOT NULL,
+    `login_ip`     VARCHAR(45)  NULL,
+    `username1`    VARCHAR(100) NOT NULL,
+    `password1`    VARCHAR(255) NULL,
+    {$usernameCols}
+    `created_by`   VARCHAR(100) NULL,
+    `updated_by`   VARCHAR(100) NULL,
+    `created_at`   DATETIME NULL,
+    `updated_at`   DATETIME NULL,
+    PRIMARY KEY (`primary_key`),
+    INDEX `idx_service_device_type` (`service_name`, `device_type`),
+    INDEX `idx_device_info` (`service_name`, `device_type`, `device_name`, `username1`(100))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+        $this->database->execute($sql);
         return true;
     }
     
@@ -74,26 +74,25 @@ class DeviceManager {
      */
     public function createDynamicTable($tableName, $primaryKeyColumn, $extendedColumns): bool {
         $tableName = sanitizeTableName($tableName);
-        $sm = $this->database->getSchemaManager();
 
-        if ($sm->tablesExist([$tableName])) {
+        if ($this->database->tableExists($tableName)) {
             return false;
         }
 
-        $table = new \Doctrine\DBAL\Schema\Table($tableName);
-        $table->addColumn($primaryKeyColumn, \Doctrine\DBAL\Types\Types::STRING, ['length' => 500, 'notnull' => true]);
+        $qTable = $this->database->quoteIdentifier($tableName);
+        $qPK    = $this->database->quoteIdentifier($primaryKeyColumn);
+        $colDefs = "{$qPK} VARCHAR(500) NOT NULL";
         foreach ($extendedColumns as $column) {
-            $table->addColumn($column, \Doctrine\DBAL\Types\Types::TEXT, ['notnull' => false]);
+            $qCol     = $this->database->quoteIdentifier($column);
+            $colDefs .= ",\n    {$qCol} TEXT NULL";
         }
-        $table->addColumn('created_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->addColumn('updated_at', \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->setPrimaryKey([$primaryKeyColumn]);
-        $table->addOption('engine',  'InnoDB');
-        $table->addOption('charset', 'utf8mb4');
-        $table->addOption('collate', 'utf8mb4_unicode_ci');
+        $colDefs .= ",\n    `created_at` DATETIME NULL";
+        $colDefs .= ",\n    `updated_at` DATETIME NULL";
+
+        $sql = "CREATE TABLE {$qTable} (\n    {$colDefs},\n    PRIMARY KEY ({$qPK})\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
         try {
-            $sm->createTable($table);
+            $this->database->execute($sql);
             return true;
         } catch (\Exception $e) {
             throw new Exception("動的テーブル '{$tableName}' の作成に失敗しました: " . $e->getMessage());
@@ -138,31 +137,18 @@ class DeviceManager {
         }
 
         $qTable        = $this->database->quoteIdentifier('device_info');
-        $qConflict     = $this->database->quoteIdentifier('primary_key');
         $quotedCols    = array_map(fn($c) => $this->database->quoteIdentifier($c), $columns);
         $placeholders  = array_map(fn($c) => ":{$c}", $columns);
 
-        if ($this->database->isMySQL()) {
-            $updateClauses = array_map(function ($col) {
-                $q = $this->database->quoteIdentifier($col);
-                return "{$q} = VALUES({$q})";
-            }, $updateColumns);
-            $sql = "INSERT INTO {$qTable} (" . implode(', ', $quotedCols) . ")
+        $updateClauses = array_map(function ($col) {
+            $q = $this->database->quoteIdentifier($col);
+            return "{$q} = VALUES({$q})";
+        }, $updateColumns);
+        $sql = "INSERT INTO {$qTable} (" . implode(', ', $quotedCols) . ")
                 VALUES (" . implode(', ', $placeholders) . ")
                 ON DUPLICATE KEY UPDATE
                     " . implode(",\n                    ", $updateClauses) . ",
                     updated_at = CURRENT_TIMESTAMP";
-        } else {
-            $updateClauses = array_map(function ($col) {
-                $q = $this->database->quoteIdentifier($col);
-                return "{$q} = EXCLUDED.{$q}";
-            }, $updateColumns);
-            $sql = "INSERT INTO {$qTable} (" . implode(', ', $quotedCols) . ")
-                VALUES (" . implode(', ', $placeholders) . ")
-                ON CONFLICT ({$qConflict}) DO UPDATE SET
-                    " . implode(",\n                    ", $updateClauses) . ",
-                    updated_at = CURRENT_TIMESTAMP";
-        }
 
         try {
             $this->database->execute($sql, $params);
@@ -203,31 +189,19 @@ class DeviceManager {
 
             if ($key !== $primaryKeyColumn) {
                 $q = $this->database->quoteIdentifier($key);
-                if ($this->database->isMySQL()) {
-                    $updateClauses[] = "{$q} = VALUES({$q})";
-                } else {
-                    $updateClauses[] = "{$q} = EXCLUDED.{$q}";
-                }
+                $updateClauses[] = "{$q} = VALUES({$q})";
             }
             $placeholderIndex++;
         }
 
         $qTable    = $this->database->quoteIdentifier($tableName);
-        $qConflict = $this->database->quoteIdentifier($primaryKeyColumn);
         $colList   = implode(', ', $columns);
         $phList    = implode(', ', $placeholders);
         $updateStr = implode(', ', $updateClauses);
 
-        if ($this->database->isMySQL()) {
-            $sql = "INSERT INTO {$qTable} ({$colList}) VALUES ({$phList})";
-            if (!empty($updateClauses)) {
-                $sql .= " ON DUPLICATE KEY UPDATE {$updateStr}, updated_at = CURRENT_TIMESTAMP";
-            }
-        } else {
-            $sql = "INSERT INTO {$qTable} ({$colList}) VALUES ({$phList})";
-            if (!empty($updateClauses)) {
-                $sql .= " ON CONFLICT ({$qConflict}) DO UPDATE SET {$updateStr}, updated_at = CURRENT_TIMESTAMP";
-            }
+        $sql = "INSERT INTO {$qTable} ({$colList}) VALUES ({$phList})";
+        if (!empty($updateClauses)) {
+            $sql .= " ON DUPLICATE KEY UPDATE {$updateStr}, updated_at = CURRENT_TIMESTAMP";
         }
         
         try {
@@ -507,7 +481,10 @@ class DeviceManager {
     public function getDynamicTables(): array {
         try {
             $systemTables = ['device_info', 'service_device_type_relations', 'audit_logs', 'users'];
-            $all = $this->database->getSchemaManager()->listTableNames();
+            $stmt = $this->database->execute(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name"
+            );
+            $all = $stmt->fetchAll(PDO::FETCH_COLUMN);
             return array_values(array_filter($all, fn($t) => !in_array($t, $systemTables)));
         } catch (\Exception $e) {
             throw new Exception("動的テーブル一覧の取得に失敗しました: " . $e->getMessage());
@@ -744,29 +721,26 @@ class DeviceManager {
      * @throws Exception
      */
     public function createRelationTable(): bool {
-        $sm = $this->database->getSchemaManager();
-        if ($sm->tablesExist(['service_device_type_relations'])) {
+        if ($this->database->tableExists('service_device_type_relations')) {
             return false;
         }
 
-        $table = new \Doctrine\DBAL\Schema\Table('service_device_type_relations');
-        $table->addColumn('id',           \Doctrine\DBAL\Types\Types::INTEGER, ['autoincrement' => true, 'notnull' => true]);
-        $table->addColumn('service_name', \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
-        $table->addColumn('device_type',  \Doctrine\DBAL\Types\Types::STRING,  ['length' => 100, 'notnull' => true]);
-        $table->addColumn('description',  \Doctrine\DBAL\Types\Types::TEXT,    ['notnull' => false]);
-        $table->addColumn('is_active',    \Doctrine\DBAL\Types\Types::SMALLINT, ['notnull' => false, 'default' => 1]);
-        $table->addColumn('created_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->addColumn('updated_at',   \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['service_name', 'device_type'], 'unique_service_device_type');
-        $table->addIndex(['service_name'], 'idx_service_name');
-        $table->addIndex(['device_type'],  'idx_device_type');
-        $table->addIndex(['is_active'],    'idx_active');
-        $table->addOption('engine',  'InnoDB');
-        $table->addOption('charset', 'utf8mb4');
-        $table->addOption('collate', 'utf8mb4_unicode_ci');
+        $sql = "CREATE TABLE `service_device_type_relations` (
+    `id`           INT NOT NULL AUTO_INCREMENT,
+    `service_name` VARCHAR(100) NOT NULL,
+    `device_type`  VARCHAR(100) NOT NULL,
+    `description`  TEXT NULL,
+    `is_active`    SMALLINT NULL DEFAULT 1,
+    `created_at`   DATETIME NULL,
+    `updated_at`   DATETIME NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `unique_service_device_type` (`service_name`, `device_type`),
+    INDEX `idx_service_name` (`service_name`),
+    INDEX `idx_device_type` (`device_type`),
+    INDEX `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
-        $sm->createTable($table);
+        $this->database->execute($sql);
         return true;
     }
     
@@ -783,24 +757,14 @@ class DeviceManager {
         if (!$this->relationTableExists()) {
             $this->createRelationTable();
         }
-        
-        if ($this->database->isMySQL()) {
-            $sql = "INSERT INTO service_device_type_relations
+
+        $sql = "INSERT INTO service_device_type_relations
                 (service_name, device_type, description)
                 VALUES (:service_name, :device_type, :description)
                 ON DUPLICATE KEY UPDATE
                     description = VALUES(description),
                     is_active = 1,
                     updated_at = CURRENT_TIMESTAMP";
-        } else {
-            $sql = "INSERT INTO service_device_type_relations
-                (service_name, device_type, description)
-                VALUES (:service_name, :device_type, :description)
-                ON CONFLICT (service_name, device_type) DO UPDATE SET
-                    description = EXCLUDED.description,
-                    is_active = TRUE,
-                    updated_at = CURRENT_TIMESTAMP";
-        }
         
         $params = [
             'service_name' => $serviceName,
@@ -1002,11 +966,16 @@ class DeviceManager {
      */
     public function getTableColumns($tableName) {
         try {
-            $sm = $this->database->getSchemaManager();
-            if (!$sm->tablesExist([$tableName])) {
+            if (!$this->database->tableExists($tableName)) {
                 return [];
             }
-            return array_keys($sm->listTableColumns($tableName));
+            $stmt = $this->database->execute(
+                "SELECT COLUMN_NAME FROM information_schema.columns
+                 WHERE table_schema = DATABASE() AND table_name = ?
+                 ORDER BY ORDINAL_POSITION",
+                [$tableName]
+            );
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
         } catch (Exception $e) {
             error_log("Failed to get columns for table {$tableName}: " . $e->getMessage());
             return [];

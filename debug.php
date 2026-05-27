@@ -45,21 +45,16 @@ if (file_exists('config.php')) {
     require_once 'config.php';
     
     try {
-        $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-        $dbPort = defined('DB_PORT') ? DB_PORT : ($dbType === 'pgsql' ? 5432 : 3306);
+        $dbPort = defined('DB_PORT') ? DB_PORT : 3306;
         
         echo "接続情報:\n";
-        echo "  DB_TYPE: {$dbType}\n";
+        echo "  DB_TYPE: mysql\n";
         echo "  DB_HOST: " . DB_HOST . "\n";
         echo "  DB_PORT: {$dbPort}\n";
         echo "  DB_NAME: " . DB_NAME . "\n";
         echo "  DB_USER: " . DB_USER . "\n\n";
         
-        if ($dbType === 'pgsql') {
-            $dsn = "pgsql:host=" . DB_HOST . ";port={$dbPort};dbname=" . DB_NAME;
-        } else {
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-        }
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
         
         $pdo = new PDO($dsn, DB_USER, DB_PASS, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -69,11 +64,7 @@ if (file_exists('config.php')) {
         echo "✅ データベース接続成功!\n";
         
         // テーブル一覧を取得
-        if ($dbType === 'pgsql') {
-            $stmt = $pdo->query("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'");
-        } else {
-            $stmt = $pdo->query("SHOW TABLES");
-        }
+        $stmt = $pdo->query("SHOW TABLES");
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo "\nテーブル数: " . count($tables) . "\n";
         if (count($tables) > 0) {

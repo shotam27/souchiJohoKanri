@@ -1,20 +1,14 @@
-<?php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Connection as DBALConnection;
-use Doctrine\DBAL\Platforms\MySQLPlatform;
-use Doctrine\DBAL\Schema\AbstractSchemaManager;
-
+﻿<?php
 /**
- * Database謗･邯夂ｮ｡逅・け繝ｩ繧ｹ・・octrine DBAL菴ｿ逕ｨ・・
+ * データベース接続管理クラス（PDO使用・MySQL専用）
  */
 class Database {
-    private ?DBALConnection $connection = null;
+    private ?PDO $connection = null;
     private string $host;
     private string $dbname;
     private string $username;
     private string $password;
     private string $charset;
-    private string $dbType;
     private int $port;
 
     public function __construct($host, $dbname, $username, $password, $charset = 'utf8mb4', $dbType = 'mysql', $port = null) {
@@ -23,53 +17,40 @@ class Database {
         $this->username = $username;
         $this->password = $password;
         $this->charset  = $charset;
-        $this->dbType   = $dbType;
-        $this->port     = (int)($port ?: ($dbType === 'pgsql' ? 5432 : 3306));
+        $this->port     = (int)($port ?: 3306);
     }
 
     public function getDbType(): string {
-        return $this->dbType;
+        return 'mysql';
     }
 
-    /**
-     * 迴ｾ蝨ｨ縺ｮDB縺勲ySQL縺九←縺・°繧定ｿ斐☆・・ostgreSQL縺ｪ繧映alse・・
-     */
     public function isMySQL(): bool {
-        return $this->connect()->getDatabasePlatform() instanceof MySQLPlatform;
+        return true;
     }
 
     /**
-     * DBAL謗･邯壹ｒ蜿門ｾ暦ｼ域磁邯壽ｸ医∩縺ｧ縺ｪ縺代ｌ縺ｰ謗･邯壹☆繧具ｼ・
+     * PDO接続を取得（未接続であれば接続する）
      */
-    public function connect(): DBALConnection {
+    public function connect(): PDO {
         if ($this->connection === null) {
-            $driver = $this->dbType === 'pgsql' ? 'pdo_pgsql' : 'pdo_mysql';
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->dbname};charset={$this->charset}";
 
-            $params = [
-                'driver'   => $driver,
-                'host'     => $this->host,
-                'dbname'   => $this->dbname,
-                'user'     => $this->username,
-                'password' => $this->password,
-                'port'     => $this->port,
-                'charset'  => $this->charset,
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
             ];
 
-            // Google Cloud SQL逕ｨSSL險ｭ螳夲ｼ・B_SSL_MODE迺ｰ蠅・､画焚縺瑚ｨｭ螳壹＆繧後※縺・ｋ譎ゅ・縺ｿ・抒ender迺ｰ蠅・ｼ・
-            if ($this->dbType === 'mysql' && getenv('DB_SSL_MODE')) {
-                $params['driverOptions'] = [
-                    PDO::MYSQL_ATTR_SSL_CA              => '/etc/ssl/certs/ca-certificates.crt',
-                    PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-                ];
+            // Google Cloud SQL用SSL設定（DB_SSL_MODE環境変数が設定されている場合のみ）
+            if (getenv('DB_SSL_MODE')) {
+                $options[PDO::MYSQL_ATTR_SSL_CA]                = '/etc/ssl/certs/ca-certificates.crt';
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
             }
 
             try {
-                $this->connection = DriverManager::getConnection($params);
-                if ($this->dbType === 'pgsql') {
-                    $this->connection->executeStatement("SET NAMES 'UTF8'");
-                }
-            } catch (\Exception $e) {
-                throw new Exception("繝・・繧ｿ繝吶・繧ｹ謗･邯壹お繝ｩ繝ｼ: " . $e->getMessage());
+                $this->connection = new PDO($dsn, $this->username, $this->password, $options);
+            } catch (PDOException $e) {
+                throw new Exception("データベース接続エラー: " . $e->getMessage());
             }
         }
         return $this->connection;
@@ -78,13 +59,12 @@ class Database {
     public function close(): void {
         if ($this->connection !== null) {
             try {
-                if ($this->connection->isTransactionActive()) {
+                if ($this->connection->inTransaction()) {
                     $this->connection->rollBack();
                 }
             } catch (\Exception $e) {
                 error_log("Error during transaction cleanup: " . $e->getMessage());
             }
-            $this->connection->close();
             $this->connection = null;
         }
     }
@@ -98,85 +78,81 @@ class Database {
     }
 
     public function rollBack(): void {
-        if ($this->connect()->isTransactionActive()) {
+        if ($this->connect()->inTransaction()) {
             $this->connect()->rollBack();
         }
     }
 
     public function inTransaction(): bool {
-        return $this->connect()->isTransactionActive();
+        return $this->connect()->inTransaction();
     }
 
     /**
-     * 繝励Μ繝壹い繝峨せ繝・・繝医Γ繝ｳ繝医・螳溯｡鯉ｼ亥ｾ梧婿莠呈鋤・啀DOStatement繧定ｿ斐☆・・
+     * プリペアドステートメントを実行しPDOStatementを返す
      */
     public function execute($query, $params = []) {
         try {
-            $pdo  = $this->connect()->getNativeConnection();
-            $stmt = $pdo->prepare($query);
+            $stmt = $this->connect()->prepare($query);
             $stmt->execute($params);
             return $stmt;
-        } catch (\Exception $e) {
-            throw new Exception("繧ｯ繧ｨ繝ｪ螳溯｡後お繝ｩ繝ｼ: " . $e->getMessage() . " SQL: " . $query);
+        } catch (PDOException $e) {
+            throw new Exception("クエリ実行エラー: " . $e->getMessage() . " SQL: " . $query);
         }
     }
 
     /**
-     * SQL繧ｯ繧ｨ繝ｪ繧貞ｮ溯｡後＠縺ｦ邨先棡繧帝・蛻励〒霑斐☆
+     * SQLクエリを実行して結果を配列で返す
      */
     public function query($query, $params = []) {
         try {
             $stmt = $this->execute($query, $params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            throw new Exception("繧ｯ繧ｨ繝ｪ螳溯｡後お繝ｩ繝ｼ: " . $e->getMessage() . " SQL: " . $query);
+            throw new Exception("クエリ実行エラー: " . $e->getMessage() . " SQL: " . $query);
         }
     }
 
     /**
-     * 隴伜挨蟄撰ｼ医ユ繝ｼ繝悶Ν蜷阪・繧ｫ繝ｩ繝蜷搾ｼ峨ｒDB縺ｫ蠢懊§縺ｦ繧ｯ繧ｩ繝ｼ繝・
-     * MySQL: `name` / PostgreSQL: "name"
+     * 識別子（テーブル名・カラム名）をMySQLバッククォートでクォート
      */
     public function quoteIdentifier(string $name): string {
-        return $this->connect()->quoteIdentifier($name);
+        return chr(96) . str_replace(chr(96), chr(96).chr(96), $name) . chr(96);
     }
 
     /**
-     * DBAL繧ｹ繧ｭ繝ｼ繝槭・繝阪・繧ｸ繝｣繝ｼ繧貞叙蠕・
-     */
-    public function getSchemaManager(): AbstractSchemaManager {
-        return $this->connect()->createSchemaManager();
-    }
-
-    /**
-     * 繝・・繝悶Ν縺ｮ蟄伜惠遒ｺ隱・
+     * テーブルの存在確認
      */
     public function tableExists(string $tableName): bool {
-        return $this->getSchemaManager()->tablesExist([$tableName]);
+        try {
+            $stmt = $this->connect()->prepare(
+                "SELECT COUNT(*) FROM information_schema.tables
+                 WHERE table_schema = DATABASE() AND table_name = ?"
+            );
+            $stmt->execute([$tableName]);
+            return (int)$stmt->fetchColumn() > 0;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
-     * 繝・・繝悶Ν縺ｮ繧ｫ繝ｩ繝諠・ｱ繧貞叙蠕暦ｼ亥ｾ梧婿莠呈鋤・咾OLUMN_NAME / DATA_TYPE 蠖｢蠑擾ｼ・
+     * テーブルのカラム情報を取得（COLUMN_NAME / DATA_TYPE 形式）
      */
     public function getTableColumns($tableName): array {
         try {
-            $sm = $this->getSchemaManager();
-            if (!$sm->tablesExist([$tableName])) {
+            if (!$this->tableExists($tableName)) {
                 return [];
             }
-            $result = [];
-            foreach ($sm->listTableColumns($tableName) as $name => $col) {
-                $result[] = [
-                    'COLUMN_NAME'    => $name,
-                    'DATA_TYPE'      => $col->getType()->getName(),
-                    'IS_NULLABLE'    => $col->getNotnull() ? 'NO' : 'YES',
-                    'COLUMN_DEFAULT' => $col->getDefault(),
-                ];
-            }
-            return $result;
+            $stmt = $this->connect()->prepare(
+                "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+                 FROM information_schema.columns
+                 WHERE table_schema = DATABASE() AND table_name = ?
+                 ORDER BY ORDINAL_POSITION"
+            );
+            $stmt->execute([$tableName]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            throw new Exception("繧ｫ繝ｩ繝諠・ｱ蜿門ｾ励お繝ｩ繝ｼ: " . $e->getMessage());
+            throw new Exception("カラム情報取得エラー: " . $e->getMessage());
         }
     }
 }
-

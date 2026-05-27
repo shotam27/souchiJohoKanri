@@ -2,13 +2,11 @@
 require_once __DIR__ . '/../config.php';
 
 try {
-    $dbType  = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', defined('DB_PORT') ? DB_PORT : null);
     $conn = $database->connect();
 
     // command_groups テーブル
-    $conn->executeStatement("
+    $conn->exec("
         CREATE TABLE IF NOT EXISTS command_groups (
             id          INT AUTO_INCREMENT PRIMARY KEY,
             group_name  VARCHAR(200) NOT NULL COMMENT 'コマンド群名',
@@ -23,7 +21,7 @@ try {
     echo "✓ command_groups テーブル作成完了\n";
 
     // command_group_items テーブル
-    $conn->executeStatement("
+    $conn->exec("
         CREATE TABLE IF NOT EXISTS command_group_items (
             id              INT AUTO_INCREMENT PRIMARY KEY,
             command_group_id INT NOT NULL,

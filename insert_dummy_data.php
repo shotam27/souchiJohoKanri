@@ -2,9 +2,7 @@
 require_once 'config.php';
 
 try {
-    $dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-    $charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', defined('DB_PORT') ? DB_PORT : null);
     
     echo "ダミーデータ登録を開始します...\n\n";
     

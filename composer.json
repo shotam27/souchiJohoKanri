@@ -1,7 +1,5 @@
 {
-    "require": {
-        "doctrine/dbal": "^3.8"
-    },
+    "require": {},
     "autoload": {
         "psr-4": {}
     },

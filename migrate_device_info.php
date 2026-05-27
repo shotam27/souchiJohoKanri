@@ -13,9 +13,7 @@ requireLogin();
 //     die('管理者権限が必要です');
 // }
 
-$dbType = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-$charset = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
-$database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
+$database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', defined('DB_PORT') ? DB_PORT : null);
 
 ?>
 <!DOCTYPE html>
@@ -85,12 +83,8 @@ try {
     
     $backupTableName = 'device_info_backup_' . date('Ymd_His');
     
-    if ($dbType === 'pgsql') {
-        $database->execute("CREATE TABLE \"{$backupTableName}\" AS SELECT * FROM device_info");
-    } else {
-        $database->execute("CREATE TABLE `{$backupTableName}` LIKE device_info");
-        $database->execute("INSERT INTO `{$backupTableName}` SELECT * FROM device_info");
-    }
+    $database->execute("CREATE TABLE `{$backupTableName}` LIKE device_info");
+    $database->execute("INSERT INTO `{$backupTableName}` SELECT * FROM device_info");
     
     echo "<p class='success'>✓ バックアップテーブル作成: {$backupTableName}</p>";
     echo "</div>";
@@ -104,31 +98,19 @@ try {
         
         // device_ip → login_ip
         if (in_array('device_ip', $existingColumnNames)) {
-            if ($dbType === 'pgsql') {
-                $database->execute("ALTER TABLE device_info RENAME COLUMN device_ip TO login_ip");
-            } else {
-                $database->execute("ALTER TABLE device_info CHANGE device_ip login_ip VARCHAR(45)");
-            }
+            $database->execute("ALTER TABLE device_info CHANGE device_ip login_ip VARCHAR(45)");
             echo "<p class='success'>✓ device_ip → login_ip</p>";
         }
         
         // username → username1
         if (in_array('username', $existingColumnNames)) {
-            if ($dbType === 'pgsql') {
-                $database->execute("ALTER TABLE device_info RENAME COLUMN username TO username1");
-            } else {
-                $database->execute("ALTER TABLE device_info CHANGE username username1 VARCHAR(100) NOT NULL");
-            }
+            $database->execute("ALTER TABLE device_info CHANGE username username1 VARCHAR(100) NOT NULL");
             echo "<p class='success'>✓ username → username1</p>";
         }
         
         // password → password1
         if (in_array('password', $existingColumnNames)) {
-            if ($dbType === 'pgsql') {
-                $database->execute("ALTER TABLE device_info RENAME COLUMN password TO password1");
-            } else {
-                $database->execute("ALTER TABLE device_info CHANGE password password1 VARCHAR(255)");
-            }
+            $database->execute("ALTER TABLE device_info CHANGE password password1 VARCHAR(255)");
             echo "<p class='success'>✓ password → password1</p>";
         }
         
@@ -149,11 +131,7 @@ try {
         }
         
         foreach ($additionalColumns as $col) {
-            if ($dbType === 'pgsql') {
-                $database->execute("ALTER TABLE device_info ADD COLUMN \"{$col}\" VARCHAR(255)");
-            } else {
-                $database->execute("ALTER TABLE device_info ADD COLUMN `{$col}` VARCHAR(255)");
-            }
+            $database->execute("ALTER TABLE device_info ADD COLUMN `{$col}` VARCHAR(255)");
             echo "<p class='success'>✓ カラム追加: {$col}</p>";
         }
         
@@ -168,13 +146,8 @@ try {
         echo "<h3>ステップ6: インデックス再作成</h3>";
         
         try {
-            if ($dbType === 'pgsql') {
-                $database->execute("DROP INDEX IF EXISTS idx_device_info");
-                $database->execute("CREATE INDEX idx_device_info ON device_info (service_name, device_type, device_name, username1)");
-            } else {
-                $database->execute("DROP INDEX idx_device_info ON device_info");
-                $database->execute("CREATE INDEX idx_device_info ON device_info (service_name, device_type, device_name, username1)");
-            }
+            $database->execute("DROP INDEX idx_device_info ON device_info");
+            $database->execute("CREATE INDEX idx_device_info ON device_info (service_name, device_type, device_name, username1)");
             echo "<p class='success'>✓ インデックス再作成完了</p>";
         } catch (Exception $e) {
             echo "<p class='warning'>⚠ インデックス再作成: " . $e->getMessage() . "</p>";

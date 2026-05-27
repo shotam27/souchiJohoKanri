@@ -7,9 +7,7 @@ requireLogin();
 $pageTitle = 'コマンド群マクロ出力 - 装置情報管理システム';
 
 try {
-    $dbType   = defined('DB_TYPE') ? DB_TYPE : 'mysql';
-    $charset  = ($dbType === 'pgsql') ? 'utf8' : DB_CHARSET;
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, $charset, $dbType, defined('DB_PORT') ? DB_PORT : null);
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, 'mysql', defined('DB_PORT') ? DB_PORT : null);
     $deviceManager = new DeviceManager($database);
     $services = $deviceManager->getServiceNamesFromRelation();
 } catch (Exception $e) {
