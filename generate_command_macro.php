@@ -114,13 +114,12 @@ if ($macroMode === 'device_select') {
         }
 
         // Step 2: inputbox メッセージ（装置一覧）
-        $inputLines = implode('\\n', array_map(
-            fn($d, $n) => ' ' . ($n + 1) . ':' . $d['devName'] . '(' . $d['user'] . ')',
-            $validDevices,
-            array_keys($validDevices)
-        ));
-        $total = count($validDevices);
-        $ttl .= "inputbox \"接続先を選択：\\n{$inputLines}\" \"装置選択\" 1\n";
+        $ttl .= "MESSAGE = \"接続先選択：\"\n";
+        foreach ($validDevices as $n => $d) {
+            $num = $n + 1;
+            $ttl .= "strconcat MESSAGE \"\\n {$num}:{$d['devName']}({$d['user']})\"\n";
+        }
+        $ttl .= "inputbox MESSAGE \"装置選択\" 1\n";
         $ttl .= "str2int NODESELECT inputstr\n";
         $ttl .= "\n";
 

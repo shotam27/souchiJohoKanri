@@ -124,17 +124,17 @@
         <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 49 ファイル<br>
-            <strong>生成日時:</strong> 2026-06-18 13:11:32
+            <strong>生成日時:</strong> 2026-06-18 14:15:38
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">macro_output.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:10:47)</span></li>
-                <li><a href="#file-2">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:10:19)</span></li>
-                <li><a href="#file-3">command_groups.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:09:40)</span></li>
-                <li><a href="#file-4">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:08:31)</span></li>
-                <li><a href="#file-5">admin\init_command_groups_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:08:01)</span></li>
+                <li><a href="#file-1">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 14:15:11)</span></li>
+                <li><a href="#file-2">command_groups.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
+                <li><a href="#file-3">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
+                <li><a href="#file-4">admin\init_command_groups_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
+                <li><a href="#file-5">macro_output.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
                 <li><a href="#file-6">login.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 11:07:08)</span></li>
                 <li><a href="#file-7">classes\User.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 11:07:08)</span></li>
                 <li><a href="#file-8">classes\Database.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 10:49:10)</span></li>
@@ -185,342 +185,8 @@
 
         <div class="file-section" id="file-1">
             <div class="file-header">
-                <h2>macro_output.php</h2>
-                <div class="file-path">📂 macro_output.php | 行数: 324 | 最終更新: 2026-06-18 13:10:47</div>
-            </div>
-            <div class="code-wrapper">
-                <button class="copy-button" onclick="copyCode(this)">コピー</button>
-                <pre><code>&lt;?php
-require_once &#x27;config.php&#x27;;
-require_once __DIR__ . &#x27;/includes/auth_helper.php&#x27;;
-
-requireLogin();
-
-$pageTitle = &#x27;コマンド群マクロ出力 - 装置情報管理システム&#x27;;
-
-try {
-    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, &#x27;mysql&#x27;, defined(&#x27;DB_PORT&#x27;) ? DB_PORT : null);
-    $deviceManager = new DeviceManager($database);
-    $services = $deviceManager-&gt;getServiceNamesFromRelation();
-} catch (Exception $e) {
-    $initError = $e-&gt;getMessage();
-}
-
-require_once &#x27;includes/header.php&#x27;;
-?&gt;
-
-&lt;div class=&quot;main-content&quot;&gt;
-&lt;div class=&quot;page-container&quot;&gt;
-
-&lt;div class=&quot;page-header&quot;&gt;
-    &lt;h1 class=&quot;page-title&quot;&gt;
-        &lt;div class=&quot;page-title-icon black-svg&quot;&gt;&lt;?php include &#x27;svgs/download.svg&#x27;; ?&gt;&lt;/div&gt;
-        コマンド群マクロ出力
-    &lt;/h1&gt;
-&lt;/div&gt;
-
-&lt;?php if (!empty($initError)): ?&gt;
-&lt;div class=&quot;alert alert-error&quot;&gt;&lt;?= htmlspecialchars($initError) ?&gt;&lt;/div&gt;
-&lt;?php endif; ?&gt;
-
-&lt;div class=&quot;wizard-layout&quot;&gt;
-
-    &lt;!-- Step 1: サービス名 --&gt;
-    &lt;div class=&quot;wizard-step&quot; id=&quot;step1&quot;&gt;
-        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;1&lt;/span&gt; サービス名を選択&lt;/div&gt;
-        &lt;div class=&quot;step-body&quot;&gt;
-            &lt;select id=&quot;sel_service&quot; class=&quot;form-control&quot;&gt;
-                &lt;option value=&quot;&quot;&gt;-- サービス名を選択 --&lt;/option&gt;
-                &lt;?php foreach ($services ?? [] as $svc): ?&gt;
-                &lt;option value=&quot;&lt;?= htmlspecialchars($svc) ?&gt;&quot;&gt;&lt;?= htmlspecialchars($svc) ?&gt;&lt;/option&gt;
-                &lt;?php endforeach; ?&gt;
-            &lt;/select&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
-
-    &lt;!-- Step 2: 装置種別 --&gt;
-    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step2&quot;&gt;
-        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;2&lt;/span&gt; 装置種別を選択&lt;/div&gt;
-        &lt;div class=&quot;step-body&quot;&gt;
-            &lt;select id=&quot;sel_device_type&quot; class=&quot;form-control&quot; disabled&gt;
-                &lt;option value=&quot;&quot;&gt;-- 先にサービス名を選択 --&lt;/option&gt;
-            &lt;/select&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
-
-    &lt;!-- Step 3: 対象装置 --&gt;
-    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step3&quot;&gt;
-        &lt;div class=&quot;step-header&quot;&gt;
-            &lt;span class=&quot;step-num&quot;&gt;3&lt;/span&gt; 対象装置を選択
-            &lt;label class=&quot;check-all-label&quot;&gt;
-                &lt;input type=&quot;checkbox&quot; id=&quot;checkAll&quot; checked&gt; すべて選択/解除
-            &lt;/label&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;step-body&quot;&gt;
-            &lt;div id=&quot;deviceList&quot; class=&quot;device-list&quot;&gt;
-                &lt;p class=&quot;text-muted&quot;&gt;装置種別を選択してください&lt;/p&gt;
-            &lt;/div&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
-
-    &lt;!-- Step 4: コマンド群 --&gt;
-    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step4&quot;&gt;
-        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;4&lt;/span&gt; コマンド群を選択&lt;/div&gt;
-        &lt;div class=&quot;step-body&quot;&gt;
-            &lt;select id=&quot;sel_command_group&quot; class=&quot;form-control&quot; disabled&gt;
-                &lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;
-            &lt;/select&gt;
-            &lt;div id=&quot;commandPreview&quot; class=&quot;command-preview&quot; style=&quot;display:none;&quot;&gt;&lt;/div&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
-
-    &lt;!-- Step 5: 出力 --&gt;
-    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step5&quot;&gt;
-        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;5&lt;/span&gt; マクロ出力&lt;/div&gt;
-        &lt;div class=&quot;step-body&quot;&gt;
-            &lt;div id=&quot;outputSummary&quot; class=&quot;output-summary&quot;&gt;&lt;/div&gt;
-            &lt;form id=&quot;macroForm&quot; method=&quot;POST&quot; action=&quot;generate_command_macro.php&quot; target=&quot;_blank&quot;&gt;
-                &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;&lt;?= htmlspecialchars($_SESSION[&#x27;csrf_token&#x27;] ?? &#x27;&#x27;) ?&gt;&quot;&gt;
-                &lt;input type=&quot;hidden&quot; name=&quot;service_name&quot; id=&quot;f_service&quot;&gt;
-                &lt;input type=&quot;hidden&quot; name=&quot;device_type&quot; id=&quot;f_device_type&quot;&gt;
-                &lt;input type=&quot;hidden&quot; name=&quot;command_group_id&quot; id=&quot;f_group_id&quot;&gt;
-                &lt;input type=&quot;hidden&quot; name=&quot;macro_mode&quot; id=&quot;f_macro_mode&quot; value=&quot;normal&quot;&gt;
-                &lt;div id=&quot;f_devices_container&quot;&gt;&lt;/div&gt;
-                &lt;div style=&quot;display:flex; gap:10px; flex-wrap:wrap;&quot;&gt;
-                    &lt;button type=&quot;submit&quot; class=&quot;btn btn-primary btn-lg&quot; id=&quot;downloadBtn&quot; disabled
-                            onclick=&quot;document.getElementById(&#x27;f_macro_mode&#x27;).value=&#x27;normal&#x27;&quot;&gt;
-                        ▼ Teraterm マクロをダウンロード (.ttl)
-                    &lt;/button&gt;
-                    &lt;button type=&quot;submit&quot; class=&quot;btn btn-secondary btn-lg&quot; id=&quot;downloadBtnSelect&quot; disabled
-                            onclick=&quot;document.getElementById(&#x27;f_macro_mode&#x27;).value=&#x27;device_select&#x27;&quot;&gt;
-                        ▼ 装置選択ありで作成 (.ttl)
-                    &lt;/button&gt;
-                &lt;/div&gt;
-            &lt;/form&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
-
-&lt;/div&gt;&lt;!-- wizard-layout --&gt;
-&lt;/div&gt;&lt;!-- page-container --&gt;
-&lt;/div&gt;&lt;!-- main-content --&gt;
-
-&lt;style&gt;
-.wizard-layout { display:flex; flex-direction:column; gap:16px; }
-.wizard-step { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; transition: opacity .2s; }
-.step-disabled { opacity:.45; pointer-events:none; }
-.step-header {
-    display:flex; align-items:center; gap:10px;
-    background:#f3f4f6; padding:10px 16px;
-    font-weight:600; font-size:15px; color:#374151;
-}
-.step-num {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:26px; height:26px; border-radius:50%;
-    background:#4f46e5; color:#fff; font-size:13px; font-weight:700; flex-shrink:0;
-}
-.step-body { padding:16px; }
-.check-all-label { margin-left:auto; font-weight:400; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; }
-.device-list { display:flex; flex-wrap:wrap; gap:8px; max-height:260px; overflow-y:auto; }
-.device-item {
-    display:flex; align-items:center; gap:6px;
-    padding:6px 10px; border:1px solid #e5e7eb; border-radius:6px;
-    font-size:13px; cursor:pointer; user-select:none;
-    background:#fff; transition: border-color .15s, background .15s;
-}
-.device-item:hover { border-color:#4f46e5; }
-.device-item.checked { background:#eef2ff; border-color:#4f46e5; }
-.device-ip { color:#6b7280; font-size:12px; }
-.command-preview {
-    margin-top:12px; background:#1e1e2e; color:#cdd6f4;
-    border-radius:6px; padding:14px 16px; font-family:monospace; font-size:12px;
-    max-height:220px; overflow-y:auto; white-space:pre-wrap;
-}
-.output-summary { margin-bottom:14px; color:#374151; font-size:14px; }
-.output-summary strong { color:#4f46e5; }
-.btn-lg { padding:12px 28px; font-size:16px; }
-.text-muted { color:#6b7280; font-size:13px; }
-&lt;/style&gt;
-
-&lt;script&gt;
-const CSRF = document.querySelector(&#x27;[name=csrf_token]&#x27;).value;
-
-async function apiPost(action, params = {}) {
-    const body = new URLSearchParams({ action, csrf_token: CSRF, ...params });
-    const res = await fetch(&#x27;ajax_api.php&#x27;, { method: &#x27;POST&#x27;, body });
-    return res.json();
-}
-
-function enable(stepId)  { document.getElementById(stepId).classList.remove(&#x27;step-disabled&#x27;); }
-function disable(stepId) { document.getElementById(stepId).classList.add(&#x27;step-disabled&#x27;); }
-
-/* ---- Step 1: サービス選択 ---- */
-document.getElementById(&#x27;sel_service&#x27;).addEventListener(&#x27;change&#x27;, async function () {
-    const svc = this.value;
-    [&#x27;step2&#x27;,&#x27;step3&#x27;,&#x27;step4&#x27;,&#x27;step5&#x27;].forEach(disable);
-    resetStep3(); resetStep4(); resetStep5();
-
-    if (!svc) return;
-
-    // 装置種別を取得
-    const data = await apiPost(&#x27;get_device_types&#x27;, { service_name: svc });
-    const sel = document.getElementById(&#x27;sel_device_type&#x27;);
-    sel.innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- 装置種別を選択 --&lt;/option&gt;&#x27;;
-    (Array.isArray(data.data) ? data.data : []).forEach(dt =&gt; {
-        sel.innerHTML += `&lt;option value=&quot;${esc(dt)}&quot;&gt;${esc(dt)}&lt;/option&gt;`;
-    });
-    sel.disabled = false;
-    enable(&#x27;step2&#x27;);
-});
-
-/* ---- Step 2: 装置種別選択 ---- */
-document.getElementById(&#x27;sel_device_type&#x27;).addEventListener(&#x27;change&#x27;, async function () {
-    const svc = document.getElementById(&#x27;sel_service&#x27;).value;
-    const dt  = this.value;
-    [&#x27;step3&#x27;,&#x27;step4&#x27;,&#x27;step5&#x27;].forEach(disable);
-    resetStep3(); resetStep4(); resetStep5();
-
-    if (!dt) return;
-
-    // 装置一覧
-    const dData = await apiPost(&#x27;get_devices_for_macro&#x27;, { service_name: svc, device_type: dt });
-    renderDeviceList(dData.devices || []);
-    enable(&#x27;step3&#x27;);
-
-    // コマンド群
-    const gData = await apiPost(&#x27;get_command_groups_by_device_type&#x27;, { device_type: dt });
-    const sel = document.getElementById(&#x27;sel_command_group&#x27;);
-    sel.innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;&#x27;;
-    (gData.groups || []).forEach(g =&gt; {
-        sel.innerHTML += `&lt;option value=&quot;${g.id}&quot;&gt;${esc(g.group_name)}&lt;/option&gt;`;
-    });
-    sel.disabled = false;
-    enable(&#x27;step4&#x27;);
-});
-
-/* ---- 装置リスト描画 ---- */
-function renderDeviceList(devices) {
-    const container = document.getElementById(&#x27;deviceList&#x27;);
-    if (!devices.length) {
-        container.innerHTML = &#x27;&lt;p class=&quot;text-muted&quot;&gt;この組み合わせの装置情報がありません&lt;/p&gt;&#x27;;
-        return;
-    }
-    container.innerHTML = devices.map(d =&gt; `
-        &lt;label class=&quot;device-item checked&quot;&gt;
-            &lt;input type=&quot;checkbox&quot; class=&quot;device-cb&quot; value=&quot;${esc(d.primary_key)}&quot;
-                   data-name=&quot;${esc(d.device_name)}&quot; data-ip=&quot;${esc(d.login_ip||&#x27;&#x27;)}&quot;
-                   data-user=&quot;${esc(d.username1||&#x27;&#x27;)}&quot; data-pass=&quot;${esc(d.password1||&#x27;&#x27;)}&quot; checked&gt;
-            &lt;span&gt;${esc(d.device_name)}&lt;/span&gt;
-            &lt;span class=&quot;device-ip&quot;&gt;${esc(d.login_ip||&#x27;&#x27;)}&lt;/span&gt;
-        &lt;/label&gt;`).join(&#x27;&#x27;);
-
-    document.querySelectorAll(&#x27;.device-cb&#x27;).forEach(cb =&gt; {
-        cb.addEventListener(&#x27;change&#x27;, function () {
-            this.closest(&#x27;.device-item&#x27;).classList.toggle(&#x27;checked&#x27;, this.checked);
-            updateStep5();
-        });
-    });
-    updateStep5();
-}
-
-/* ---- すべて選択/解除 ---- */
-document.getElementById(&#x27;checkAll&#x27;).addEventListener(&#x27;change&#x27;, function () {
-    document.querySelectorAll(&#x27;.device-cb&#x27;).forEach(cb =&gt; {
-        cb.checked = this.checked;
-        cb.closest(&#x27;.device-item&#x27;).classList.toggle(&#x27;checked&#x27;, this.checked);
-    });
-    updateStep5();
-});
-
-/* ---- Step 4: コマンド群選択 ---- */
-document.getElementById(&#x27;sel_command_group&#x27;).addEventListener(&#x27;change&#x27;, async function () {
-    const id = this.value;
-    document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;none&#x27;;
-    resetStep5();
-
-    if (!id) return;
-
-    const data = await apiPost(&#x27;get_command_group_detail&#x27;, { id });
-    if (data.success) {
-        const g = data.group;
-        const proto = (g.protocol || &#x27;ssh&#x27;).toUpperCase();
-        const port  = g.port || 22;
-        const lines = g.items.map((it, i) =&gt;
-            `${String(i+1).padStart(2,&#x27; &#x27;)}. [${it.prompt}] ${it.command}`).join(&#x27;\n&#x27;);
-        document.getElementById(&#x27;commandPreview&#x27;).textContent =
-            `【${g.group_name}】  接続: ${proto}:${port}\n${lines}`;
-        document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;block&#x27;;
-        document.getElementById(&#x27;f_group_id&#x27;).value = id;
-        updateStep5();
-    }
-});
-
-/* ---- Step 5 更新 ---- */
-function updateStep5() {
-    const checkedCbs = [...document.querySelectorAll(&#x27;.device-cb:checked&#x27;)];
-    const groupId = document.getElementById(&#x27;f_group_id&#x27;).value;
-    const svc  = document.getElementById(&#x27;sel_service&#x27;).value;
-    const dt   = document.getElementById(&#x27;sel_device_type&#x27;).value;
-    const selOpt = document.getElementById(&#x27;sel_command_group&#x27;).selectedOptions[0];
-    const groupName = selOpt?.text || &#x27;&#x27;;
-    // previewテキストから接続情報を抽出
-    const previewText = document.getElementById(&#x27;commandPreview&#x27;).textContent || &#x27;&#x27;;
-    const connMatch = previewText.match(/接続: ([A-Z]+:\d+)/);
-    const connInfo = connMatch ? connMatch[1] : &#x27;&#x27;;
-
-    if (!checkedCbs.length || !groupId) { disable(&#x27;step5&#x27;); return; }
-
-    enable(&#x27;step5&#x27;);
-    document.getElementById(&#x27;f_service&#x27;).value     = svc;
-    document.getElementById(&#x27;f_device_type&#x27;).value = dt;
-
-    // 選択装置を hidden input に反映
-    const cont = document.getElementById(&#x27;f_devices_container&#x27;);
-    cont.innerHTML = checkedCbs.map(cb =&gt;
-        `&lt;input type=&quot;hidden&quot; name=&quot;primary_keys[]&quot; value=&quot;${esc(cb.value)}&quot;&gt;
-         &lt;input type=&quot;hidden&quot; name=&quot;ips[]&quot; value=&quot;${esc(cb.dataset.ip)}&quot;&gt;
-         &lt;input type=&quot;hidden&quot; name=&quot;usernames[]&quot; value=&quot;${esc(cb.dataset.user)}&quot;&gt;
-         &lt;input type=&quot;hidden&quot; name=&quot;passwords[]&quot; value=&quot;${esc(cb.dataset.pass)}&quot;&gt;
-         &lt;input type=&quot;hidden&quot; name=&quot;device_names[]&quot; value=&quot;${esc(cb.dataset.name)}&quot;&gt;`
-    ).join(&#x27;&#x27;);
-
-    document.getElementById(&#x27;outputSummary&#x27;).innerHTML =
-        `サービス: &lt;strong&gt;${esc(svc)}&lt;/strong&gt; ／ 装置種別: &lt;strong&gt;${esc(dt)}&lt;/strong&gt;&lt;br&gt;
-         対象装置: &lt;strong&gt;${checkedCbs.length} 台&lt;/strong&gt; ／ コマンド群: &lt;strong&gt;${esc(groupName)}&lt;/strong&gt;${connInfo ? &#x27; ／ 接続: &lt;strong&gt;&#x27; + esc(connInfo) + &#x27;&lt;/strong&gt;&#x27; : &#x27;&#x27;}`;
-
-    document.getElementById(&#x27;downloadBtn&#x27;).disabled = false;
-    document.getElementById(&#x27;downloadBtnSelect&#x27;).disabled = false;
-}
-
-function resetStep3() {
-    document.getElementById(&#x27;deviceList&#x27;).innerHTML = &#x27;&lt;p class=&quot;text-muted&quot;&gt;装置種別を選択してください&lt;/p&gt;&#x27;;
-}
-function resetStep4() {
-    document.getElementById(&#x27;sel_command_group&#x27;).innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;&#x27;;
-    document.getElementById(&#x27;sel_command_group&#x27;).disabled = true;
-    document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;none&#x27;;
-    document.getElementById(&#x27;f_group_id&#x27;).value = &#x27;&#x27;;
-}
-function resetStep5() {
-    document.getElementById(&#x27;outputSummary&#x27;).innerHTML = &#x27;&#x27;;
-    document.getElementById(&#x27;downloadBtn&#x27;).disabled = true;
-    document.getElementById(&#x27;downloadBtnSelect&#x27;).disabled = true;
-    disable(&#x27;step5&#x27;);
-}
-
-function esc(s) {
-    return String(s||&#x27;&#x27;).replace(/&amp;/g,&#x27;&amp;amp;&#x27;).replace(/&lt;/g,&#x27;&amp;lt;&#x27;).replace(/&gt;/g,&#x27;&amp;gt;&#x27;).replace(/&quot;/g,&#x27;&amp;quot;&#x27;);
-}
-&lt;/script&gt;
-
-&lt;?php require_once &#x27;includes/footer.php&#x27;; ?&gt;
-</code></pre>
-            </div>
-        </div>
-
-        <div class="file-section" id="file-2">
-            <div class="file-header">
                 <h2>generate_command_macro.php</h2>
-                <div class="file-path">📂 generate_command_macro.php | 行数: 259 | 最終更新: 2026-06-18 13:10:19</div>
+                <div class="file-path">📂 generate_command_macro.php | 行数: 258 | 最終更新: 2026-06-18 14:15:11</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -640,13 +306,12 @@ if ($macroMode === &#x27;device_select&#x27;) {
         }
 
         // Step 2: inputbox メッセージ（装置一覧）
-        $inputLines = implode(&#x27;\\n&#x27;, array_map(
-            fn($d, $n) =&gt; &#x27; &#x27; . ($n + 1) . &#x27;:&#x27; . $d[&#x27;devName&#x27;] . &#x27;(&#x27; . $d[&#x27;user&#x27;] . &#x27;)&#x27;,
-            $validDevices,
-            array_keys($validDevices)
-        ));
-        $total = count($validDevices);
-        $ttl .= &quot;inputbox \&quot;接続先を選択：\\n{$inputLines}\&quot; \&quot;装置選択\&quot; 1\n&quot;;
+        $ttl .= &quot;MESSAGE = \&quot;接続先選択：\&quot;\n&quot;;
+        foreach ($validDevices as $n =&gt; $d) {
+            $num = $n + 1;
+            $ttl .= &quot;strconcat MESSAGE \&quot;\\n {$num}:{$d[&#x27;devName&#x27;]}({$d[&#x27;user&#x27;]})\&quot;\n&quot;;
+        }
+        $ttl .= &quot;inputbox MESSAGE \&quot;装置選択\&quot; 1\n&quot;;
         $ttl .= &quot;str2int NODESELECT inputstr\n&quot;;
         $ttl .= &quot;\n&quot;;
 
@@ -786,10 +451,10 @@ exit;
             </div>
         </div>
 
-        <div class="file-section" id="file-3">
+        <div class="file-section" id="file-2">
             <div class="file-header">
                 <h2>command_groups.php</h2>
-                <div class="file-path">📂 command_groups.php | 行数: 614 | 最終更新: 2026-06-18 13:09:40</div>
+                <div class="file-path">📂 command_groups.php | 行数: 614 | 最終更新: 2026-06-18 13:12:39</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -1410,10 +1075,10 @@ function showEditMsg(type, text) {
             </div>
         </div>
 
-        <div class="file-section" id="file-4">
+        <div class="file-section" id="file-3">
             <div class="file-header">
                 <h2>ajax_api.php</h2>
-                <div class="file-path">📂 ajax_api.php | 行数: 541 | 最終更新: 2026-06-18 13:08:31</div>
+                <div class="file-path">📂 ajax_api.php | 行数: 541 | 最終更新: 2026-06-18 13:12:39</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -1961,10 +1626,10 @@ echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             </div>
         </div>
 
-        <div class="file-section" id="file-5">
+        <div class="file-section" id="file-4">
             <div class="file-header">
                 <h2>init_command_groups_table.php</h2>
-                <div class="file-path">📂 admin\init_command_groups_table.php | 行数: 56 | 最終更新: 2026-06-18 13:08:01</div>
+                <div class="file-path">📂 admin\init_command_groups_table.php | 行数: 56 | 最終更新: 2026-06-18 13:12:39</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -2023,6 +1688,340 @@ try {
 }
 
 echo &quot;\n初期化完了！\n&quot;;
+</code></pre>
+            </div>
+        </div>
+
+        <div class="file-section" id="file-5">
+            <div class="file-header">
+                <h2>macro_output.php</h2>
+                <div class="file-path">📂 macro_output.php | 行数: 324 | 最終更新: 2026-06-18 13:12:39</div>
+            </div>
+            <div class="code-wrapper">
+                <button class="copy-button" onclick="copyCode(this)">コピー</button>
+                <pre><code>&lt;?php
+require_once &#x27;config.php&#x27;;
+require_once __DIR__ . &#x27;/includes/auth_helper.php&#x27;;
+
+requireLogin();
+
+$pageTitle = &#x27;コマンド群マクロ出力 - 装置情報管理システム&#x27;;
+
+try {
+    $database = new Database(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET, &#x27;mysql&#x27;, defined(&#x27;DB_PORT&#x27;) ? DB_PORT : null);
+    $deviceManager = new DeviceManager($database);
+    $services = $deviceManager-&gt;getServiceNamesFromRelation();
+} catch (Exception $e) {
+    $initError = $e-&gt;getMessage();
+}
+
+require_once &#x27;includes/header.php&#x27;;
+?&gt;
+
+&lt;div class=&quot;main-content&quot;&gt;
+&lt;div class=&quot;page-container&quot;&gt;
+
+&lt;div class=&quot;page-header&quot;&gt;
+    &lt;h1 class=&quot;page-title&quot;&gt;
+        &lt;div class=&quot;page-title-icon black-svg&quot;&gt;&lt;?php include &#x27;svgs/download.svg&#x27;; ?&gt;&lt;/div&gt;
+        コマンド群マクロ出力
+    &lt;/h1&gt;
+&lt;/div&gt;
+
+&lt;?php if (!empty($initError)): ?&gt;
+&lt;div class=&quot;alert alert-error&quot;&gt;&lt;?= htmlspecialchars($initError) ?&gt;&lt;/div&gt;
+&lt;?php endif; ?&gt;
+
+&lt;div class=&quot;wizard-layout&quot;&gt;
+
+    &lt;!-- Step 1: サービス名 --&gt;
+    &lt;div class=&quot;wizard-step&quot; id=&quot;step1&quot;&gt;
+        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;1&lt;/span&gt; サービス名を選択&lt;/div&gt;
+        &lt;div class=&quot;step-body&quot;&gt;
+            &lt;select id=&quot;sel_service&quot; class=&quot;form-control&quot;&gt;
+                &lt;option value=&quot;&quot;&gt;-- サービス名を選択 --&lt;/option&gt;
+                &lt;?php foreach ($services ?? [] as $svc): ?&gt;
+                &lt;option value=&quot;&lt;?= htmlspecialchars($svc) ?&gt;&quot;&gt;&lt;?= htmlspecialchars($svc) ?&gt;&lt;/option&gt;
+                &lt;?php endforeach; ?&gt;
+            &lt;/select&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Step 2: 装置種別 --&gt;
+    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step2&quot;&gt;
+        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;2&lt;/span&gt; 装置種別を選択&lt;/div&gt;
+        &lt;div class=&quot;step-body&quot;&gt;
+            &lt;select id=&quot;sel_device_type&quot; class=&quot;form-control&quot; disabled&gt;
+                &lt;option value=&quot;&quot;&gt;-- 先にサービス名を選択 --&lt;/option&gt;
+            &lt;/select&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Step 3: 対象装置 --&gt;
+    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step3&quot;&gt;
+        &lt;div class=&quot;step-header&quot;&gt;
+            &lt;span class=&quot;step-num&quot;&gt;3&lt;/span&gt; 対象装置を選択
+            &lt;label class=&quot;check-all-label&quot;&gt;
+                &lt;input type=&quot;checkbox&quot; id=&quot;checkAll&quot; checked&gt; すべて選択/解除
+            &lt;/label&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;step-body&quot;&gt;
+            &lt;div id=&quot;deviceList&quot; class=&quot;device-list&quot;&gt;
+                &lt;p class=&quot;text-muted&quot;&gt;装置種別を選択してください&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Step 4: コマンド群 --&gt;
+    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step4&quot;&gt;
+        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;4&lt;/span&gt; コマンド群を選択&lt;/div&gt;
+        &lt;div class=&quot;step-body&quot;&gt;
+            &lt;select id=&quot;sel_command_group&quot; class=&quot;form-control&quot; disabled&gt;
+                &lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;
+            &lt;/select&gt;
+            &lt;div id=&quot;commandPreview&quot; class=&quot;command-preview&quot; style=&quot;display:none;&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Step 5: 出力 --&gt;
+    &lt;div class=&quot;wizard-step step-disabled&quot; id=&quot;step5&quot;&gt;
+        &lt;div class=&quot;step-header&quot;&gt;&lt;span class=&quot;step-num&quot;&gt;5&lt;/span&gt; マクロ出力&lt;/div&gt;
+        &lt;div class=&quot;step-body&quot;&gt;
+            &lt;div id=&quot;outputSummary&quot; class=&quot;output-summary&quot;&gt;&lt;/div&gt;
+            &lt;form id=&quot;macroForm&quot; method=&quot;POST&quot; action=&quot;generate_command_macro.php&quot; target=&quot;_blank&quot;&gt;
+                &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;&lt;?= htmlspecialchars($_SESSION[&#x27;csrf_token&#x27;] ?? &#x27;&#x27;) ?&gt;&quot;&gt;
+                &lt;input type=&quot;hidden&quot; name=&quot;service_name&quot; id=&quot;f_service&quot;&gt;
+                &lt;input type=&quot;hidden&quot; name=&quot;device_type&quot; id=&quot;f_device_type&quot;&gt;
+                &lt;input type=&quot;hidden&quot; name=&quot;command_group_id&quot; id=&quot;f_group_id&quot;&gt;
+                &lt;input type=&quot;hidden&quot; name=&quot;macro_mode&quot; id=&quot;f_macro_mode&quot; value=&quot;normal&quot;&gt;
+                &lt;div id=&quot;f_devices_container&quot;&gt;&lt;/div&gt;
+                &lt;div style=&quot;display:flex; gap:10px; flex-wrap:wrap;&quot;&gt;
+                    &lt;button type=&quot;submit&quot; class=&quot;btn btn-primary btn-lg&quot; id=&quot;downloadBtn&quot; disabled
+                            onclick=&quot;document.getElementById(&#x27;f_macro_mode&#x27;).value=&#x27;normal&#x27;&quot;&gt;
+                        ▼ Teraterm マクロをダウンロード (.ttl)
+                    &lt;/button&gt;
+                    &lt;button type=&quot;submit&quot; class=&quot;btn btn-secondary btn-lg&quot; id=&quot;downloadBtnSelect&quot; disabled
+                            onclick=&quot;document.getElementById(&#x27;f_macro_mode&#x27;).value=&#x27;device_select&#x27;&quot;&gt;
+                        ▼ 装置選択ありで作成 (.ttl)
+                    &lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+&lt;/div&gt;&lt;!-- wizard-layout --&gt;
+&lt;/div&gt;&lt;!-- page-container --&gt;
+&lt;/div&gt;&lt;!-- main-content --&gt;
+
+&lt;style&gt;
+.wizard-layout { display:flex; flex-direction:column; gap:16px; }
+.wizard-step { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; transition: opacity .2s; }
+.step-disabled { opacity:.45; pointer-events:none; }
+.step-header {
+    display:flex; align-items:center; gap:10px;
+    background:#f3f4f6; padding:10px 16px;
+    font-weight:600; font-size:15px; color:#374151;
+}
+.step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%;
+    background:#4f46e5; color:#fff; font-size:13px; font-weight:700; flex-shrink:0;
+}
+.step-body { padding:16px; }
+.check-all-label { margin-left:auto; font-weight:400; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; }
+.device-list { display:flex; flex-wrap:wrap; gap:8px; max-height:260px; overflow-y:auto; }
+.device-item {
+    display:flex; align-items:center; gap:6px;
+    padding:6px 10px; border:1px solid #e5e7eb; border-radius:6px;
+    font-size:13px; cursor:pointer; user-select:none;
+    background:#fff; transition: border-color .15s, background .15s;
+}
+.device-item:hover { border-color:#4f46e5; }
+.device-item.checked { background:#eef2ff; border-color:#4f46e5; }
+.device-ip { color:#6b7280; font-size:12px; }
+.command-preview {
+    margin-top:12px; background:#1e1e2e; color:#cdd6f4;
+    border-radius:6px; padding:14px 16px; font-family:monospace; font-size:12px;
+    max-height:220px; overflow-y:auto; white-space:pre-wrap;
+}
+.output-summary { margin-bottom:14px; color:#374151; font-size:14px; }
+.output-summary strong { color:#4f46e5; }
+.btn-lg { padding:12px 28px; font-size:16px; }
+.text-muted { color:#6b7280; font-size:13px; }
+&lt;/style&gt;
+
+&lt;script&gt;
+const CSRF = document.querySelector(&#x27;[name=csrf_token]&#x27;).value;
+
+async function apiPost(action, params = {}) {
+    const body = new URLSearchParams({ action, csrf_token: CSRF, ...params });
+    const res = await fetch(&#x27;ajax_api.php&#x27;, { method: &#x27;POST&#x27;, body });
+    return res.json();
+}
+
+function enable(stepId)  { document.getElementById(stepId).classList.remove(&#x27;step-disabled&#x27;); }
+function disable(stepId) { document.getElementById(stepId).classList.add(&#x27;step-disabled&#x27;); }
+
+/* ---- Step 1: サービス選択 ---- */
+document.getElementById(&#x27;sel_service&#x27;).addEventListener(&#x27;change&#x27;, async function () {
+    const svc = this.value;
+    [&#x27;step2&#x27;,&#x27;step3&#x27;,&#x27;step4&#x27;,&#x27;step5&#x27;].forEach(disable);
+    resetStep3(); resetStep4(); resetStep5();
+
+    if (!svc) return;
+
+    // 装置種別を取得
+    const data = await apiPost(&#x27;get_device_types&#x27;, { service_name: svc });
+    const sel = document.getElementById(&#x27;sel_device_type&#x27;);
+    sel.innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- 装置種別を選択 --&lt;/option&gt;&#x27;;
+    (Array.isArray(data.data) ? data.data : []).forEach(dt =&gt; {
+        sel.innerHTML += `&lt;option value=&quot;${esc(dt)}&quot;&gt;${esc(dt)}&lt;/option&gt;`;
+    });
+    sel.disabled = false;
+    enable(&#x27;step2&#x27;);
+});
+
+/* ---- Step 2: 装置種別選択 ---- */
+document.getElementById(&#x27;sel_device_type&#x27;).addEventListener(&#x27;change&#x27;, async function () {
+    const svc = document.getElementById(&#x27;sel_service&#x27;).value;
+    const dt  = this.value;
+    [&#x27;step3&#x27;,&#x27;step4&#x27;,&#x27;step5&#x27;].forEach(disable);
+    resetStep3(); resetStep4(); resetStep5();
+
+    if (!dt) return;
+
+    // 装置一覧
+    const dData = await apiPost(&#x27;get_devices_for_macro&#x27;, { service_name: svc, device_type: dt });
+    renderDeviceList(dData.devices || []);
+    enable(&#x27;step3&#x27;);
+
+    // コマンド群
+    const gData = await apiPost(&#x27;get_command_groups_by_device_type&#x27;, { device_type: dt });
+    const sel = document.getElementById(&#x27;sel_command_group&#x27;);
+    sel.innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;&#x27;;
+    (gData.groups || []).forEach(g =&gt; {
+        sel.innerHTML += `&lt;option value=&quot;${g.id}&quot;&gt;${esc(g.group_name)}&lt;/option&gt;`;
+    });
+    sel.disabled = false;
+    enable(&#x27;step4&#x27;);
+});
+
+/* ---- 装置リスト描画 ---- */
+function renderDeviceList(devices) {
+    const container = document.getElementById(&#x27;deviceList&#x27;);
+    if (!devices.length) {
+        container.innerHTML = &#x27;&lt;p class=&quot;text-muted&quot;&gt;この組み合わせの装置情報がありません&lt;/p&gt;&#x27;;
+        return;
+    }
+    container.innerHTML = devices.map(d =&gt; `
+        &lt;label class=&quot;device-item checked&quot;&gt;
+            &lt;input type=&quot;checkbox&quot; class=&quot;device-cb&quot; value=&quot;${esc(d.primary_key)}&quot;
+                   data-name=&quot;${esc(d.device_name)}&quot; data-ip=&quot;${esc(d.login_ip||&#x27;&#x27;)}&quot;
+                   data-user=&quot;${esc(d.username1||&#x27;&#x27;)}&quot; data-pass=&quot;${esc(d.password1||&#x27;&#x27;)}&quot; checked&gt;
+            &lt;span&gt;${esc(d.device_name)}&lt;/span&gt;
+            &lt;span class=&quot;device-ip&quot;&gt;${esc(d.login_ip||&#x27;&#x27;)}&lt;/span&gt;
+        &lt;/label&gt;`).join(&#x27;&#x27;);
+
+    document.querySelectorAll(&#x27;.device-cb&#x27;).forEach(cb =&gt; {
+        cb.addEventListener(&#x27;change&#x27;, function () {
+            this.closest(&#x27;.device-item&#x27;).classList.toggle(&#x27;checked&#x27;, this.checked);
+            updateStep5();
+        });
+    });
+    updateStep5();
+}
+
+/* ---- すべて選択/解除 ---- */
+document.getElementById(&#x27;checkAll&#x27;).addEventListener(&#x27;change&#x27;, function () {
+    document.querySelectorAll(&#x27;.device-cb&#x27;).forEach(cb =&gt; {
+        cb.checked = this.checked;
+        cb.closest(&#x27;.device-item&#x27;).classList.toggle(&#x27;checked&#x27;, this.checked);
+    });
+    updateStep5();
+});
+
+/* ---- Step 4: コマンド群選択 ---- */
+document.getElementById(&#x27;sel_command_group&#x27;).addEventListener(&#x27;change&#x27;, async function () {
+    const id = this.value;
+    document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;none&#x27;;
+    resetStep5();
+
+    if (!id) return;
+
+    const data = await apiPost(&#x27;get_command_group_detail&#x27;, { id });
+    if (data.success) {
+        const g = data.group;
+        const proto = (g.protocol || &#x27;ssh&#x27;).toUpperCase();
+        const port  = g.port || 22;
+        const lines = g.items.map((it, i) =&gt;
+            `${String(i+1).padStart(2,&#x27; &#x27;)}. [${it.prompt}] ${it.command}`).join(&#x27;\n&#x27;);
+        document.getElementById(&#x27;commandPreview&#x27;).textContent =
+            `【${g.group_name}】  接続: ${proto}:${port}\n${lines}`;
+        document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;block&#x27;;
+        document.getElementById(&#x27;f_group_id&#x27;).value = id;
+        updateStep5();
+    }
+});
+
+/* ---- Step 5 更新 ---- */
+function updateStep5() {
+    const checkedCbs = [...document.querySelectorAll(&#x27;.device-cb:checked&#x27;)];
+    const groupId = document.getElementById(&#x27;f_group_id&#x27;).value;
+    const svc  = document.getElementById(&#x27;sel_service&#x27;).value;
+    const dt   = document.getElementById(&#x27;sel_device_type&#x27;).value;
+    const selOpt = document.getElementById(&#x27;sel_command_group&#x27;).selectedOptions[0];
+    const groupName = selOpt?.text || &#x27;&#x27;;
+    // previewテキストから接続情報を抽出
+    const previewText = document.getElementById(&#x27;commandPreview&#x27;).textContent || &#x27;&#x27;;
+    const connMatch = previewText.match(/接続: ([A-Z]+:\d+)/);
+    const connInfo = connMatch ? connMatch[1] : &#x27;&#x27;;
+
+    if (!checkedCbs.length || !groupId) { disable(&#x27;step5&#x27;); return; }
+
+    enable(&#x27;step5&#x27;);
+    document.getElementById(&#x27;f_service&#x27;).value     = svc;
+    document.getElementById(&#x27;f_device_type&#x27;).value = dt;
+
+    // 選択装置を hidden input に反映
+    const cont = document.getElementById(&#x27;f_devices_container&#x27;);
+    cont.innerHTML = checkedCbs.map(cb =&gt;
+        `&lt;input type=&quot;hidden&quot; name=&quot;primary_keys[]&quot; value=&quot;${esc(cb.value)}&quot;&gt;
+         &lt;input type=&quot;hidden&quot; name=&quot;ips[]&quot; value=&quot;${esc(cb.dataset.ip)}&quot;&gt;
+         &lt;input type=&quot;hidden&quot; name=&quot;usernames[]&quot; value=&quot;${esc(cb.dataset.user)}&quot;&gt;
+         &lt;input type=&quot;hidden&quot; name=&quot;passwords[]&quot; value=&quot;${esc(cb.dataset.pass)}&quot;&gt;
+         &lt;input type=&quot;hidden&quot; name=&quot;device_names[]&quot; value=&quot;${esc(cb.dataset.name)}&quot;&gt;`
+    ).join(&#x27;&#x27;);
+
+    document.getElementById(&#x27;outputSummary&#x27;).innerHTML =
+        `サービス: &lt;strong&gt;${esc(svc)}&lt;/strong&gt; ／ 装置種別: &lt;strong&gt;${esc(dt)}&lt;/strong&gt;&lt;br&gt;
+         対象装置: &lt;strong&gt;${checkedCbs.length} 台&lt;/strong&gt; ／ コマンド群: &lt;strong&gt;${esc(groupName)}&lt;/strong&gt;${connInfo ? &#x27; ／ 接続: &lt;strong&gt;&#x27; + esc(connInfo) + &#x27;&lt;/strong&gt;&#x27; : &#x27;&#x27;}`;
+
+    document.getElementById(&#x27;downloadBtn&#x27;).disabled = false;
+    document.getElementById(&#x27;downloadBtnSelect&#x27;).disabled = false;
+}
+
+function resetStep3() {
+    document.getElementById(&#x27;deviceList&#x27;).innerHTML = &#x27;&lt;p class=&quot;text-muted&quot;&gt;装置種別を選択してください&lt;/p&gt;&#x27;;
+}
+function resetStep4() {
+    document.getElementById(&#x27;sel_command_group&#x27;).innerHTML = &#x27;&lt;option value=&quot;&quot;&gt;-- コマンド群を選択 --&lt;/option&gt;&#x27;;
+    document.getElementById(&#x27;sel_command_group&#x27;).disabled = true;
+    document.getElementById(&#x27;commandPreview&#x27;).style.display = &#x27;none&#x27;;
+    document.getElementById(&#x27;f_group_id&#x27;).value = &#x27;&#x27;;
+}
+function resetStep5() {
+    document.getElementById(&#x27;outputSummary&#x27;).innerHTML = &#x27;&#x27;;
+    document.getElementById(&#x27;downloadBtn&#x27;).disabled = true;
+    document.getElementById(&#x27;downloadBtnSelect&#x27;).disabled = true;
+    disable(&#x27;step5&#x27;);
+}
+
+function esc(s) {
+    return String(s||&#x27;&#x27;).replace(/&amp;/g,&#x27;&amp;amp;&#x27;).replace(/&lt;/g,&#x27;&amp;lt;&#x27;).replace(/&gt;/g,&#x27;&amp;gt;&#x27;).replace(/&quot;/g,&#x27;&amp;quot;&#x27;);
+}
+&lt;/script&gt;
+
+&lt;?php require_once &#x27;includes/footer.php&#x27;; ?&gt;
 </code></pre>
             </div>
         </div>
