@@ -115,12 +115,17 @@ if ($macroMode === 'device_select') {
 
         // Step 2: inputbox メッセージ（装置一覧）
         $ttl .= "MESSAGE = \"接続先選択：\"\n";
+        $ttl .= "strconcat MESSAGE \"\\n 0:キャンセル\"\n";
         foreach ($validDevices as $n => $d) {
             $num = $n + 1;
             $ttl .= "strconcat MESSAGE \"\\n {$num}:{$d['devName']}({$d['user']})\"\n";
         }
         $ttl .= "inputbox MESSAGE \"装置選択\" 1\n";
         $ttl .= "str2int NODESELECT inputstr\n";
+        $ttl .= "\n";
+        $ttl .= "if NODESELECT=0 then\n";
+        $ttl .= "\tend\n";
+        $ttl .= "endif\n";
         $ttl .= "\n";
 
         // Step 3: if/endif で変数設定

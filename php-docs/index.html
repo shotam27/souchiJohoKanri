@@ -124,13 +124,13 @@
         <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 49 ファイル<br>
-            <strong>生成日時:</strong> 2026-06-18 14:15:38
+            <strong>生成日時:</strong> 2026-06-18 14:21:48
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 14:15:11)</span></li>
+                <li><a href="#file-1">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 14:21:33)</span></li>
                 <li><a href="#file-2">command_groups.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
                 <li><a href="#file-3">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
                 <li><a href="#file-4">admin\init_command_groups_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
@@ -186,7 +186,7 @@
         <div class="file-section" id="file-1">
             <div class="file-header">
                 <h2>generate_command_macro.php</h2>
-                <div class="file-path">📂 generate_command_macro.php | 行数: 258 | 最終更新: 2026-06-18 14:15:11</div>
+                <div class="file-path">📂 generate_command_macro.php | 行数: 263 | 最終更新: 2026-06-18 14:21:33</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -307,12 +307,17 @@ if ($macroMode === &#x27;device_select&#x27;) {
 
         // Step 2: inputbox メッセージ（装置一覧）
         $ttl .= &quot;MESSAGE = \&quot;接続先選択：\&quot;\n&quot;;
+        $ttl .= &quot;strconcat MESSAGE \&quot;\\n 0:キャンセル\&quot;\n&quot;;
         foreach ($validDevices as $n =&gt; $d) {
             $num = $n + 1;
             $ttl .= &quot;strconcat MESSAGE \&quot;\\n {$num}:{$d[&#x27;devName&#x27;]}({$d[&#x27;user&#x27;]})\&quot;\n&quot;;
         }
         $ttl .= &quot;inputbox MESSAGE \&quot;装置選択\&quot; 1\n&quot;;
         $ttl .= &quot;str2int NODESELECT inputstr\n&quot;;
+        $ttl .= &quot;\n&quot;;
+        $ttl .= &quot;if NODESELECT=0 then\n&quot;;
+        $ttl .= &quot;\tend\n&quot;;
+        $ttl .= &quot;endif\n&quot;;
         $ttl .= &quot;\n&quot;;
 
         // Step 3: if/endif で変数設定
