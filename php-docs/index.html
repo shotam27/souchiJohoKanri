@@ -124,13 +124,13 @@
         <h1>📁 PHP, CSS & Shell Script Files Documentation</h1>
         <div class="stats">
             <strong>総ファイル数:</strong> 49 ファイル<br>
-            <strong>生成日時:</strong> 2026-06-18 14:21:48
+            <strong>生成日時:</strong> 2026-06-18 14:46:30
         </div>
         
         <div class="toc">
             <h2>📑 目次</h2>
             <ul>
-                <li><a href="#file-1">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 14:21:33)</span></li>
+                <li><a href="#file-1">generate_command_macro.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 14:44:36)</span></li>
                 <li><a href="#file-2">command_groups.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
                 <li><a href="#file-3">ajax_api.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
                 <li><a href="#file-4">admin\init_command_groups_table.php</a> <span style="color: #666; font-size: 0.9em;">(最終更新: 2026-06-18 13:12:39)</span></li>
@@ -186,7 +186,7 @@
         <div class="file-section" id="file-1">
             <div class="file-header">
                 <h2>generate_command_macro.php</h2>
-                <div class="file-path">📂 generate_command_macro.php | 行数: 263 | 最終更新: 2026-06-18 14:21:33</div>
+                <div class="file-path">📂 generate_command_macro.php | 行数: 322 | 最終更新: 2026-06-18 14:44:36</div>
             </div>
             <div class="code-wrapper">
                 <button class="copy-button" onclick="copyCode(this)">コピー</button>
@@ -305,33 +305,92 @@ if ($macroMode === &#x27;device_select&#x27;) {
             $ttl .= &quot;\n&quot;;
         }
 
-        // Step 2: inputbox メッセージ（装置一覧）
-        $ttl .= &quot;MESSAGE = \&quot;接続先選択：\&quot;\n&quot;;
-        $ttl .= &quot;strconcat MESSAGE \&quot;\\n 0:キャンセル\&quot;\n&quot;;
-        foreach ($validDevices as $n =&gt; $d) {
-            $num = $n + 1;
-            $ttl .= &quot;strconcat MESSAGE \&quot;\\n {$num}:{$d[&#x27;devName&#x27;]}({$d[&#x27;user&#x27;]})\&quot;\n&quot;;
-        }
-        $ttl .= &quot;inputbox MESSAGE \&quot;装置選択\&quot; 1\n&quot;;
-        $ttl .= &quot;str2int NODESELECT inputstr\n&quot;;
-        $ttl .= &quot;\n&quot;;
-        $ttl .= &quot;if NODESELECT=0 then\n&quot;;
-        $ttl .= &quot;\tend\n&quot;;
-        $ttl .= &quot;endif\n&quot;;
-        $ttl .= &quot;\n&quot;;
+        // Step 2: 510バイト上限で装置をページ分割
+        // Teraterm は Shift-JIS ベースなので SJIS バイト数で計算
+        $sjisBytes = function(string $s): int {
+            $conv = mb_convert_encoding($s, &#x27;SJIS-win&#x27;, &#x27;UTF-8&#x27;);
+            return strlen($conv);
+        };
 
-        // Step 3: if/endif で変数設定
+        $maxBytes   = 510;
+        $baseBytes  = $sjisBytes(&quot;接続先選択：&quot;) + $sjisBytes(&quot;\n 0:キャンセル&quot;);
+        $nextBytes  = $sjisBytes(&quot;\n 999:次へ&quot;);
+
+        // ページ分割
+        $pages        = [];
+        $currentPage  = [];
+        $currentBytes = $baseBytes + $nextBytes; // 「999:次へ」の予約分
+
         foreach ($validDevices as $n =&gt; $d) {
-            $num = $n + 1;
-            $ttl .= &quot;if NODESELECT={$num} then\n&quot;;
-            $ttl .= &quot;\tHOSTADDR = HOSTADDR{$num}\n&quot;;
-            $ttl .= &quot;\tUSERNAME = USERNAME{$num}\n&quot;;
-            $ttl .= &quot;\tPASSWORD = PASSWORD{$num}\n&quot;;
-            $ttl .= &quot;endif\n&quot;;
+            $num  = $n + 1;
+            $line = &quot;\n {$num}:{$d[&#x27;devName&#x27;]}({$d[&#x27;user&#x27;]})&quot;;
+            $lb   = $sjisBytes($line);
+            if (!empty($currentPage) &amp;&amp; $currentBytes + $lb &gt; $maxBytes) {
+                $pages[]      = $currentPage;
+                $currentPage  = [];
+                $currentBytes = $baseBytes + $nextBytes;
+            }
+            $currentPage[]  = [&#x27;num&#x27; =&gt; $num, &#x27;device&#x27; =&gt; $d];
+            $currentBytes  += $lb;
+        }
+        if (!empty($currentPage)) {
+            $pages[] = $currentPage;
+        }
+        $totalPages = count($pages);
+
+        // Step 3: ページごとに inputbox → if/endif → 次ページ or 接続セクションへ
+        foreach ($pages as $pi =&gt; $pageDevices) {
+            $isLast  = ($pi === $totalPages - 1);
+            $pageNum = $pi + 1;
+
+            $ttl .= &quot;:page{$pageNum}\n&quot;;
+            $ttl .= &quot;MESSAGE = \&quot;接続先選択：\&quot;\n&quot;;
+            $ttl .= &quot;strconcat MESSAGE \&quot;\\n 0:キャンセル\&quot;\n&quot;;
+            foreach ($pageDevices as $item) {
+                $n = $item[&#x27;num&#x27;];
+                $d = $item[&#x27;device&#x27;];
+                $ttl .= &quot;strconcat MESSAGE \&quot;\\n {$n}:{$d[&#x27;devName&#x27;]}({$d[&#x27;user&#x27;]})\&quot;\n&quot;;
+            }
+            if (!$isLast) {
+                $ttl .= &quot;strconcat MESSAGE \&quot;\\n 999:次へ\&quot;\n&quot;;
+            }
+            $ttl .= &quot;inputbox MESSAGE \&quot;装置選択\&quot; 1\n&quot;;
+            $ttl .= &quot;str2int NODESELECT inputstr\n&quot;;
             $ttl .= &quot;\n&quot;;
+
+            // 0: キャンセル → 終了
+            $ttl .= &quot;if NODESELECT=0 then\n&quot;;
+            $ttl .= &quot;\tend\n&quot;;
+            $ttl .= &quot;endif\n&quot;;
+
+            // 999: 次へ → 次ページへジャンプ
+            if (!$isLast) {
+                $ttl .= &quot;if NODESELECT=999 then\n&quot;;
+                $ttl .= &quot;\tgoto page&quot; . ($pageNum + 1) . &quot;\n&quot;;
+                $ttl .= &quot;endif\n&quot;;
+            }
+            $ttl .= &quot;\n&quot;;
+
+            // 選択装置の変数をセット
+            foreach ($pageDevices as $item) {
+                $n = $item[&#x27;num&#x27;];
+                $ttl .= &quot;if NODESELECT={$n} then\n&quot;;
+                $ttl .= &quot;\tHOSTADDR = HOSTADDR{$n}\n&quot;;
+                $ttl .= &quot;\tUSERNAME = USERNAME{$n}\n&quot;;
+                $ttl .= &quot;\tPASSWORD = PASSWORD{$n}\n&quot;;
+                $ttl .= &quot;endif\n&quot;;
+            }
+            $ttl .= &quot;\n&quot;;
+
+            // 最終ページ以外は接続セクションへジャンプ
+            if (!$isLast) {
+                $ttl .= &quot;goto connect_and_run\n&quot;;
+                $ttl .= &quot;\n&quot;;
+            }
         }
 
         // Step 4: 接続文字列構築と接続
+        $ttl .= &quot;:connect_and_run\n&quot;;
         if ($protocol === &#x27;ssh&#x27;) {
             $ttl .= &quot;line1 = HOSTADDR\n&quot;;
             $ttl .= &quot;strconcat line1 &#x27;:{$port} /ssh /2 /auth=password /user=&#x27;\n&quot;;
