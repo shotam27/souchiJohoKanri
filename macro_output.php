@@ -250,9 +250,12 @@ document.getElementById('sel_command_group').addEventListener('change', async fu
     const data = await apiPost('get_command_group_detail', { id });
     if (data.success) {
         const g = data.group;
+        const proto = (g.protocol || 'ssh').toUpperCase();
+        const port  = g.port || 22;
         const lines = g.items.map((it, i) =>
             `${String(i+1).padStart(2,' ')}. [${it.prompt}] ${it.command}`).join('\n');
-        document.getElementById('commandPreview').textContent = `【${g.group_name}】\n${lines}`;
+        document.getElementById('commandPreview').textContent =
+            `【${g.group_name}】  接続: ${proto}:${port}\n${lines}`;
         document.getElementById('commandPreview').style.display = 'block';
         document.getElementById('f_group_id').value = id;
         updateStep5();
@@ -265,7 +268,12 @@ function updateStep5() {
     const groupId = document.getElementById('f_group_id').value;
     const svc  = document.getElementById('sel_service').value;
     const dt   = document.getElementById('sel_device_type').value;
-    const groupName = document.getElementById('sel_command_group').selectedOptions[0]?.text || '';
+    const selOpt = document.getElementById('sel_command_group').selectedOptions[0];
+    const groupName = selOpt?.text || '';
+    // previewテキストから接続情報を抽出
+    const previewText = document.getElementById('commandPreview').textContent || '';
+    const connMatch = previewText.match(/接続: ([A-Z]+:\d+)/);
+    const connInfo = connMatch ? connMatch[1] : '';
 
     if (!checkedCbs.length || !groupId) { disable('step5'); return; }
 
@@ -285,7 +293,7 @@ function updateStep5() {
 
     document.getElementById('outputSummary').innerHTML =
         `サービス: <strong>${esc(svc)}</strong> ／ 装置種別: <strong>${esc(dt)}</strong><br>
-         対象装置: <strong>${checkedCbs.length} 台</strong> ／ コマンド群: <strong>${esc(groupName)}</strong>`;
+         対象装置: <strong>${checkedCbs.length} 台</strong> ／ コマンド群: <strong>${esc(groupName)}</strong>${connInfo ? ' ／ 接続: <strong>' + esc(connInfo) + '</strong>' : ''}`;
 
     document.getElementById('downloadBtn').disabled = false;
     document.getElementById('downloadBtnSelect').disabled = false;

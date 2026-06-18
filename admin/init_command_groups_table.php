@@ -12,6 +12,8 @@ try {
             group_name  VARCHAR(200) NOT NULL COMMENT 'コマンド群名',
             device_type VARCHAR(100) NOT NULL COMMENT '対象装置種別',
             description TEXT                  COMMENT '説明',
+            protocol    VARCHAR(20)  NOT NULL DEFAULT 'ssh' COMMENT '接続プロトコル(ssh/telnet)',
+            port        SMALLINT UNSIGNED NOT NULL DEFAULT 22 COMMENT '接続ポート番号',
             created_by  VARCHAR(100),
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -19,6 +21,17 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
     echo "✓ command_groups テーブル作成完了\n";
+
+    // 既存テーブルに protocol / port カラムがなければ追加
+    $cols = array_column($database->getTableColumns('command_groups'), 'COLUMN_NAME');
+    if (!in_array('protocol', $cols, true)) {
+        $conn->exec("ALTER TABLE command_groups ADD COLUMN protocol VARCHAR(20) NOT NULL DEFAULT 'ssh' COMMENT '接続プロトコル(ssh/telnet)' AFTER description");
+        echo "✓ command_groups.protocol カラム追加\n";
+    }
+    if (!in_array('port', $cols, true)) {
+        $conn->exec("ALTER TABLE command_groups ADD COLUMN port SMALLINT UNSIGNED NOT NULL DEFAULT 22 COMMENT '接続ポート番号' AFTER protocol");
+        echo "✓ command_groups.port カラム追加\n";
+    }
 
     // command_group_items テーブル
     $conn->exec("

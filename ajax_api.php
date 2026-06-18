@@ -372,24 +372,27 @@ try {
                 }
 
                 if ($action === 'save_command_group') {
-                    $groupName  = trim($_POST['group_name']  ?? '');
-                    $deviceType = trim($_POST['device_type'] ?? '');
+                    $groupName   = trim($_POST['group_name']  ?? '');
+                    $deviceType  = trim($_POST['device_type'] ?? '');
                     $description = trim($_POST['description'] ?? '');
-                    $prompts    = $_POST['prompts']   ?? [];
-                    $commands   = $_POST['commands']  ?? [];
+                    $protocol    = trim($_POST['protocol']    ?? 'ssh');
+                    $port        = max(1, min(65535, (int)($_POST['port'] ?? 22)));
+                    $prompts     = $_POST['prompts']   ?? [];
+                    $commands    = $_POST['commands']  ?? [];
 
                     if ($groupName === '')  throw new Exception('コマンド群名は必須です');
                     if ($deviceType === '') throw new Exception('装置種別は必須です');
                     if (empty($commands))  throw new Exception('コマンドを1行以上登録してください');
+                    if (!in_array($protocol, ['ssh', 'telnet'], true)) throw new Exception('プロトコルが不正です');
 
                     $conn = $database->connect();
                     $conn->beginTransaction();
                     try {
                         $stmt = $conn->prepare(
-                            "INSERT INTO command_groups (group_name, device_type, description, created_by)
-                             VALUES (?, ?, ?, ?)"
+                            "INSERT INTO command_groups (group_name, device_type, description, protocol, port, created_by)
+                             VALUES (?, ?, ?, ?, ?, ?)"
                         );
-                        $stmt->execute([$groupName, $deviceType, $description ?: null, $_SESSION['username'] ?? null]);
+                        $stmt->execute([$groupName, $deviceType, $description ?: null, $protocol, $port, $_SESSION['username'] ?? null]);
                         $groupId = $conn->lastInsertId();
                         for ($i = 0; $i < count($commands); $i++) {
                             $cmd = trim($commands[$i]);
@@ -411,10 +414,11 @@ try {
                 } elseif ($action === 'get_command_groups') {
                     $rows = $database->query(
                         "SELECT cg.id, cg.group_name, cg.device_type, cg.description,
+                                cg.protocol, cg.port,
                                 COUNT(ci.id) AS item_count
                          FROM command_groups cg
                          LEFT JOIN command_group_items ci ON ci.command_group_id = cg.id
-                         GROUP BY cg.id, cg.group_name, cg.device_type, cg.description
+                         GROUP BY cg.id, cg.group_name, cg.device_type, cg.description, cg.protocol, cg.port
                          ORDER BY cg.device_type, cg.group_name"
                     );
                     $response = ['success' => true, 'groups' => $rows];
@@ -423,7 +427,7 @@ try {
                     $id = (int)($_POST['id'] ?? 0);
                     if (!$id) throw new Exception('IDが不正です');
                     $groups = $database->query(
-                        "SELECT id, group_name, device_type, description FROM command_groups WHERE id = ?", [$id]
+                        "SELECT id, group_name, device_type, description, protocol, port FROM command_groups WHERE id = ?", [$id]
                     );
                     if (empty($groups)) throw new Exception('コマンド群が見つかりません');
                     $group = $groups[0];
@@ -444,6 +448,8 @@ try {
                     $groupName   = trim($_POST['group_name']   ?? '');
                     $deviceType  = trim($_POST['device_type']  ?? '');
                     $description = trim($_POST['description']  ?? '');
+                    $protocol    = trim($_POST['protocol']     ?? 'ssh');
+                    $port        = max(1, min(65535, (int)($_POST['port'] ?? 22)));
                     $prompts     = $_POST['prompts']   ?? [];
                     $commands    = $_POST['commands']  ?? [];
 
@@ -451,14 +457,15 @@ try {
                     if ($groupName === '')  throw new Exception('コマンド群名は必須です');
                     if ($deviceType === '') throw new Exception('装置種別は必須です');
                     if (empty($commands))  throw new Exception('コマンドを1行以上登録してください');
+                    if (!in_array($protocol, ['ssh', 'telnet'], true)) throw new Exception('プロトコルが不正です');
 
                     $conn = $database->connect();
                     $conn->beginTransaction();
                     try {
                         $stmt = $conn->prepare(
-                            "UPDATE command_groups SET group_name=?, device_type=?, description=? WHERE id=?"
+                            "UPDATE command_groups SET group_name=?, device_type=?, description=?, protocol=?, port=? WHERE id=?"
                         );
-                        $stmt->execute([$groupName, $deviceType, $description ?: null, $id]);
+                        $stmt->execute([$groupName, $deviceType, $description ?: null, $protocol, $port, $id]);
                         $stmt = $conn->prepare(
                             "DELETE FROM command_group_items WHERE command_group_id=?"
                         );
@@ -499,7 +506,7 @@ try {
                         $response = ['success' => true, 'groups' => []];
                     } else {
                         $dt = trim($_POST['device_type'] ?? '');
-                        $sql  = "SELECT id, group_name, device_type FROM command_groups";
+                        $sql  = "SELECT id, group_name, device_type, protocol, port FROM command_groups";
                         $params = [];
                         if ($dt !== '') { $sql .= " WHERE device_type = ?"; $params[] = $dt; }
                         $sql .= " ORDER BY device_type, group_name";

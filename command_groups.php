@@ -95,6 +95,20 @@ require_once 'includes/header.php';
                     <input type="text" id="description" name="description" class="form-control"
                            placeholder="任意のメモ">
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="protocol">接続プロトコル</label>
+                        <select id="protocol" name="protocol" class="form-control">
+                            <option value="ssh" selected>SSH</option>
+                            <option value="telnet">Telnet</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="port">ポート番号</label>
+                        <input type="number" id="port" name="port" class="form-control" value="22" min="1" max="65535">
+                    </div>
+                </div>
+
             </div>
 
             <!-- コマンド行 -->
@@ -143,6 +157,7 @@ require_once 'includes/header.php';
                     <th>コマンド群名</th>
                     <th>対象装置種別</th>
                     <th>説明</th>
+                    <th>プロトコル</th>
                     <th>行数</th>
                     <th>操作</th>
                 </tr>
@@ -154,6 +169,7 @@ require_once 'includes/header.php';
                 <td><strong><?= htmlspecialchars($g['group_name']) ?></strong></td>
                 <td><?= htmlspecialchars($g['device_type']) ?></td>
                 <td><?= htmlspecialchars($g['description'] ?? '') ?></td>
+                <td><span class="proto-badge proto-<?= htmlspecialchars($g['protocol'] ?? 'ssh') ?>"><?= strtoupper(htmlspecialchars($g['protocol'] ?? 'ssh')) ?>:<?= (int)($g['port'] ?? 22) ?></span></td>
                 <td><?= (int)$g['item_count'] ?> 行</td>
                 <td>
                     <button class="btn btn-sm btn-secondary view-group" data-id="<?= (int)$g['id'] ?>">詳細</button>
@@ -204,6 +220,19 @@ require_once 'includes/header.php';
                     <div class="form-group">
                         <label class="form-label" for="edit_description">説明</label>
                         <input type="text" id="edit_description" name="description" class="form-control" placeholder="任意のメモ">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="edit_protocol">接続プロトコル</label>
+                            <select id="edit_protocol" name="protocol" class="form-control">
+                                <option value="ssh">SSH</option>
+                                <option value="telnet">Telnet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit_port">ポート番号</label>
+                            <input type="number" id="edit_port" name="port" class="form-control" value="22" min="1" max="65535">
+                        </div>
                     </div>
                 </div>
                 <div class="section-label">プロンプト＋コマンド</div>
@@ -257,11 +286,25 @@ require_once 'includes/header.php';
 .detail-table th,.detail-table td { padding:8px 12px;border:1px solid #e5e7eb;text-align:left; }
 .detail-table th { background:#f3f4f6;font-size:13px;color:#374151; }
 .detail-table td.mono { font-family:monospace;font-size:13px; }
-.btn-sm { padding:4px 10px;font-size:13px; }
+.proto-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; font-family:monospace; }
+.proto-ssh    { background:#dbeafe; color:#1d4ed8; }
+.proto-telnet { background:#fef3c7; color:#92400e; }
 </style>
 
 <script>
 const CSRF = document.querySelector('[name=csrf_token]').value;
+
+/* ---- プロトコル変更でポート自動入力 ---- */
+document.getElementById('protocol').addEventListener('change', function () {
+    const p = document.getElementById('port');
+    if (this.value === 'ssh'    && p.value === '23') p.value = '22';
+    if (this.value === 'telnet' && p.value === '22') p.value = '23';
+});
+document.getElementById('edit_protocol').addEventListener('change', function () {
+    const p = document.getElementById('edit_port');
+    if (this.value === 'ssh'    && p.value === '23') p.value = '22';
+    if (this.value === 'telnet' && p.value === '22') p.value = '23';
+});
 
 /* ---- 直接入力トグル ---- */
 document.getElementById('device_type').addEventListener('change', function () {
@@ -336,6 +379,8 @@ document.getElementById('commandGroupForm').addEventListener('submit', async fun
         group_name:  document.getElementById('group_name').value.trim(),
         device_type: deviceType,
         description: document.getElementById('description').value.trim(),
+        protocol:    document.getElementById('protocol').value,
+        port:        document.getElementById('port').value,
     });
     prompts.forEach(p  => body.append('prompts[]', p));
     commands.forEach(c => body.append('commands[]', c));
@@ -381,6 +426,7 @@ async function reloadGroupList() {
                 <td><strong>${escHtml(g.group_name)}</strong></td>
                 <td>${escHtml(g.device_type)}</td>
                 <td>${escHtml(g.description||'')}</td>
+                <td><span class="proto-badge proto-${escHtml(g.protocol||'ssh')}">${(g.protocol||'ssh').toUpperCase()}:${g.port||22}</span></td>
                 <td>${g.item_count} 行</td>
                 <td>
                     <button class="btn btn-sm btn-secondary view-group" data-id="${g.id}">詳細</button>
@@ -406,6 +452,7 @@ document.addEventListener('click', async function (e) {
             document.getElementById('modalTitle').textContent = g.group_name + '（' + g.device_type + '）';
             document.getElementById('modalBody').innerHTML = `
                 <p>${escHtml(g.description||'')}</p>
+                <p><strong>接続:</strong> <span class="proto-badge proto-${escHtml(g.protocol||'ssh')}">${(g.protocol||'ssh').toUpperCase()}:${g.port||22}</span></p>
                 <table class="detail-table">
                     <thead><tr><th>#</th><th>プロンプト</th><th>コマンド</th></tr></thead>
                     <tbody>${g.items.map((it,i) => `
@@ -446,6 +493,8 @@ document.addEventListener('click', async function (e) {
             document.getElementById('edit_group_name').value  = g.group_name;
             document.getElementById('edit_device_type').value = g.device_type;
             document.getElementById('edit_description').value = g.description || '';
+            document.getElementById('edit_protocol').value    = g.protocol || 'ssh';
+            document.getElementById('edit_port').value        = g.port || 22;
             document.getElementById('editCommandItems').innerHTML = '';
             editRowIndex = 0;
             (g.items.length ? g.items : [{prompt:'#', command:''}]).forEach(it => addEditRow(it.prompt, it.command));
@@ -531,6 +580,8 @@ document.getElementById('editCommandGroupForm').addEventListener('submit', async
         group_name:  document.getElementById('edit_group_name').value.trim(),
         device_type: deviceType,
         description: document.getElementById('edit_description').value.trim(),
+        protocol:    document.getElementById('edit_protocol').value,
+        port:        document.getElementById('edit_port').value,
     });
     prompts.forEach(p  => body.append('prompts[]', p));
     commands.forEach(c => body.append('commands[]', c));

@@ -33,7 +33,7 @@ try {
 
     // コマンド群情報を取得
     $groups = $database->query(
-        "SELECT id, group_name, device_type FROM command_groups WHERE id = ?",
+        "SELECT id, group_name, device_type, protocol, port FROM command_groups WHERE id = ?",
         [$commandGroupId]
     );
     if (empty($groups)) {
@@ -58,6 +58,8 @@ try {
    ============================================================ */
 $now       = date('Y-m-d H:i:s');
 $groupName = $group['group_name'];
+$protocol  = $group['protocol'] ?? 'ssh';
+$port      = (int)($group['port'] ?? 22);
 $totalDev  = count($primaryKeys);
 
 // ヘッダーコメント（共通）
@@ -71,6 +73,7 @@ $ttl .= "; 生成日時   : {$now}\n";
 if ($macroMode === 'device_select') {
     $ttl .= "; モード     : 装置選択あり（旧 Teraterm 対応）\n";
 }
+$ttl .= "; 接続     : " . strtoupper($protocol) . " ポート {$port}\n";
 $ttl .= "; ============================================================\n\n";
 
 if ($macroMode === 'device_select') {
@@ -133,13 +136,21 @@ if ($macroMode === 'device_select') {
         }
 
         // Step 4: 接続文字列構築と接続
-        $ttl .= "line1 = HOSTADDR\n";
-        $ttl .= "strconcat line1 ':22 /ssh /2 /auth=password /user='\n";
-        $ttl .= "strconcat line1 USERNAME\n";
-        $ttl .= "strconcat line1 ' /passwd='\n";
-        $ttl .= "strconcat line1 PASSWORD\n";
-        $ttl .= "\n";
-        $ttl .= "connect line1\n";
+        if ($protocol === 'ssh') {
+            $ttl .= "line1 = HOSTADDR\n";
+            $ttl .= "strconcat line1 ':{$port} /ssh /2 /auth=password /user='\n";
+            $ttl .= "strconcat line1 USERNAME\n";
+            $ttl .= "strconcat line1 ' /passwd='\n";
+            $ttl .= "strconcat line1 PASSWORD\n";
+            $ttl .= "\n";
+            $ttl .= "connect line1\n";
+        } else {
+            // Telnet: 認証情報はコマンド項目の wait/sendln で対応
+            $ttl .= "line1 = HOSTADDR\n";
+            $ttl .= "strconcat line1 ':{$port} /telnet'\n";
+            $ttl .= "\n";
+            $ttl .= "connect line1\n";
+        }
         $ttl .= "\n";
 
         // Step 5: コマンド送信（選択後の 1 装置に対して）
@@ -183,13 +194,20 @@ if ($macroMode === 'device_select') {
         $ttl .= "USERNAME = '{$user}'\n";
         $ttl .= "PASSWORD = '{$pass}'\n";
         $ttl .= "\n";
-        $ttl .= "COMMAND = HOSTADDR\n";
-        $ttl .= "strconcat COMMAND ':22 /ssh /2 /auth=password /user='\n";
-        $ttl .= "strconcat COMMAND USERNAME\n";
-        $ttl .= "strconcat COMMAND ' /passwd='\n";
-        $ttl .= "strconcat COMMAND PASSWORD\n";
-        $ttl .= "\n";
-        $ttl .= "connect COMMAND\n";
+        if ($protocol === 'ssh') {
+            $ttl .= "COMMAND = HOSTADDR\n";
+            $ttl .= "strconcat COMMAND ':{$port} /ssh /2 /auth=password /user='\n";
+            $ttl .= "strconcat COMMAND USERNAME\n";
+            $ttl .= "strconcat COMMAND ' /passwd='\n";
+            $ttl .= "strconcat COMMAND PASSWORD\n";
+            $ttl .= "\n";
+            $ttl .= "connect COMMAND\n";
+        } else {
+            $ttl .= "COMMAND = HOSTADDR\n";
+            $ttl .= "strconcat COMMAND ':{$port} /telnet'\n";
+            $ttl .= "\n";
+            $ttl .= "connect COMMAND\n";
+        }
         $ttl .= "\n";
 
         // コマンド群の各行: プロンプト待ち → コマンド送信
