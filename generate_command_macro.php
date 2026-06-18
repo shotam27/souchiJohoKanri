@@ -113,33 +113,92 @@ if ($macroMode === 'device_select') {
             $ttl .= "\n";
         }
 
-        // Step 2: inputbox メッセージ（装置一覧）
-        $ttl .= "MESSAGE = \"接続先選択：\"\n";
-        $ttl .= "strconcat MESSAGE \"\\n 0:キャンセル\"\n";
-        foreach ($validDevices as $n => $d) {
-            $num = $n + 1;
-            $ttl .= "strconcat MESSAGE \"\\n {$num}:{$d['devName']}({$d['user']})\"\n";
-        }
-        $ttl .= "inputbox MESSAGE \"装置選択\" 1\n";
-        $ttl .= "str2int NODESELECT inputstr\n";
-        $ttl .= "\n";
-        $ttl .= "if NODESELECT=0 then\n";
-        $ttl .= "\tend\n";
-        $ttl .= "endif\n";
-        $ttl .= "\n";
+        // Step 2: 510バイト上限で装置をページ分割
+        // Teraterm は Shift-JIS ベースなので SJIS バイト数で計算
+        $sjisBytes = function(string $s): int {
+            $conv = mb_convert_encoding($s, 'SJIS-win', 'UTF-8');
+            return strlen($conv);
+        };
 
-        // Step 3: if/endif で変数設定
+        $maxBytes   = 510;
+        $baseBytes  = $sjisBytes("接続先選択：") + $sjisBytes("\n 0:キャンセル");
+        $nextBytes  = $sjisBytes("\n 999:次へ");
+
+        // ページ分割
+        $pages        = [];
+        $currentPage  = [];
+        $currentBytes = $baseBytes + $nextBytes; // 「999:次へ」の予約分
+
         foreach ($validDevices as $n => $d) {
-            $num = $n + 1;
-            $ttl .= "if NODESELECT={$num} then\n";
-            $ttl .= "\tHOSTADDR = HOSTADDR{$num}\n";
-            $ttl .= "\tUSERNAME = USERNAME{$num}\n";
-            $ttl .= "\tPASSWORD = PASSWORD{$num}\n";
-            $ttl .= "endif\n";
+            $num  = $n + 1;
+            $line = "\n {$num}:{$d['devName']}({$d['user']})";
+            $lb   = $sjisBytes($line);
+            if (!empty($currentPage) && $currentBytes + $lb > $maxBytes) {
+                $pages[]      = $currentPage;
+                $currentPage  = [];
+                $currentBytes = $baseBytes + $nextBytes;
+            }
+            $currentPage[]  = ['num' => $num, 'device' => $d];
+            $currentBytes  += $lb;
+        }
+        if (!empty($currentPage)) {
+            $pages[] = $currentPage;
+        }
+        $totalPages = count($pages);
+
+        // Step 3: ページごとに inputbox → if/endif → 次ページ or 接続セクションへ
+        foreach ($pages as $pi => $pageDevices) {
+            $isLast  = ($pi === $totalPages - 1);
+            $pageNum = $pi + 1;
+
+            $ttl .= ":page{$pageNum}\n";
+            $ttl .= "MESSAGE = \"接続先選択：\"\n";
+            $ttl .= "strconcat MESSAGE \"\\n 0:キャンセル\"\n";
+            foreach ($pageDevices as $item) {
+                $n = $item['num'];
+                $d = $item['device'];
+                $ttl .= "strconcat MESSAGE \"\\n {$n}:{$d['devName']}({$d['user']})\"\n";
+            }
+            if (!$isLast) {
+                $ttl .= "strconcat MESSAGE \"\\n 999:次へ\"\n";
+            }
+            $ttl .= "inputbox MESSAGE \"装置選択\" 1\n";
+            $ttl .= "str2int NODESELECT inputstr\n";
             $ttl .= "\n";
+
+            // 0: キャンセル → 終了
+            $ttl .= "if NODESELECT=0 then\n";
+            $ttl .= "\tend\n";
+            $ttl .= "endif\n";
+
+            // 999: 次へ → 次ページへジャンプ
+            if (!$isLast) {
+                $ttl .= "if NODESELECT=999 then\n";
+                $ttl .= "\tgoto page" . ($pageNum + 1) . "\n";
+                $ttl .= "endif\n";
+            }
+            $ttl .= "\n";
+
+            // 選択装置の変数をセット
+            foreach ($pageDevices as $item) {
+                $n = $item['num'];
+                $ttl .= "if NODESELECT={$n} then\n";
+                $ttl .= "\tHOSTADDR = HOSTADDR{$n}\n";
+                $ttl .= "\tUSERNAME = USERNAME{$n}\n";
+                $ttl .= "\tPASSWORD = PASSWORD{$n}\n";
+                $ttl .= "endif\n";
+            }
+            $ttl .= "\n";
+
+            // 最終ページ以外は接続セクションへジャンプ
+            if (!$isLast) {
+                $ttl .= "goto connect_and_run\n";
+                $ttl .= "\n";
+            }
         }
 
         // Step 4: 接続文字列構築と接続
+        $ttl .= ":connect_and_run\n";
         if ($protocol === 'ssh') {
             $ttl .= "line1 = HOSTADDR\n";
             $ttl .= "strconcat line1 ':{$port} /ssh /2 /auth=password /user='\n";
