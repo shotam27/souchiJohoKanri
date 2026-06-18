@@ -92,10 +92,18 @@ require_once 'includes/header.php';
                 <input type="hidden" name="service_name" id="f_service">
                 <input type="hidden" name="device_type" id="f_device_type">
                 <input type="hidden" name="command_group_id" id="f_group_id">
+                <input type="hidden" name="macro_mode" id="f_macro_mode" value="normal">
                 <div id="f_devices_container"></div>
-                <button type="submit" class="btn btn-primary btn-lg" id="downloadBtn" disabled>
-                    ▼ Teraterm マクロをダウンロード (.ttl)
-                </button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-primary btn-lg" id="downloadBtn" disabled
+                            onclick="document.getElementById('f_macro_mode').value='normal'">
+                        ▼ Teraterm マクロをダウンロード (.ttl)
+                    </button>
+                    <button type="submit" class="btn btn-secondary btn-lg" id="downloadBtnSelect" disabled
+                            onclick="document.getElementById('f_macro_mode').value='device_select'">
+                        ▼ 装置選択ありで作成 (.ttl)
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -280,6 +288,7 @@ function updateStep5() {
          対象装置: <strong>${checkedCbs.length} 台</strong> ／ コマンド群: <strong>${esc(groupName)}</strong>`;
 
     document.getElementById('downloadBtn').disabled = false;
+    document.getElementById('downloadBtnSelect').disabled = false;
 }
 
 function resetStep3() {
@@ -294,6 +303,7 @@ function resetStep4() {
 function resetStep5() {
     document.getElementById('outputSummary').innerHTML = '';
     document.getElementById('downloadBtn').disabled = true;
+    document.getElementById('downloadBtnSelect').disabled = true;
     disable('step5');
 }
 

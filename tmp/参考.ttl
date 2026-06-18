@@ -1,0 +1,30 @@
+HOSTADDR1 = 'xxx.xxx.xxx.xxx'
+USERNAME1 = 'username'
+PASSWORD1 = 'password'
+
+HOSTADDR2 = 'xxx.xxx.xxx.xxx'
+USERNAME2 = 'username'
+PASSWORD2 = 'password'
+
+inputbox "接続先を選択：\n 1:装置名称(username)\n 2:装置名称(username)" "装置選択" 1
+str2int NODESELECT inputstr
+
+if NODESELECT=1 then
+	HOSTADDR = HOSTADDR1
+	USERNAME = USERNAME1
+	PASSWORD = PASSWORD1
+endif
+
+if NODESELECT=2 then
+	HOSTADDR = HOSTADDR2
+	USERNAME = USERNAME2
+	PASSWORD = PASSWORD2
+endif
+
+line1 = HOSTADDR
+strconcat line1 ':22 /ssh /2 /auth=password /user='
+strconcat line1 USERNAME
+strconcat line1 ' /passwd='
+strconcat line1 PASSWORD
+
+connect line1

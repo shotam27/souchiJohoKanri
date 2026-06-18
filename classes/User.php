@@ -78,8 +78,8 @@ class User {
             $conn = $this->db->connect();
             $sql = "SELECT COUNT(*) FROM users WHERE username = :username";
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([':username' => $username]);
-            return $result->fetchOne() > 0;
+            $stmt->execute([':username' => $username]);
+            return (int)$stmt->fetchColumn() > 0;
         } catch (PDOException $e) {
             error_log("Username check error: " . $e->getMessage());
             return false;
@@ -103,8 +103,8 @@ class User {
             $conn = $this->db->connect();
             $sql = "SELECT id, username, password_hash, is_active FROM users WHERE username = :username";
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([':username' => $username]);
-            $user = $result->fetchAssociative();
+            $stmt->execute([':username' => $username]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$user) {
                 return ['success' => false, 'error' => 'ユーザー名またはパスワードが正しくありません'];
@@ -219,8 +219,8 @@ class User {
             $conn = $this->db->connect();
             $sql = "SELECT id, username, created_at, last_login, is_active FROM users WHERE id = :id";
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([':id' => $userId]);
-            return $result->fetchAssociative();
+            $stmt->execute([':id' => $userId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Get user error: " . $e->getMessage());
             return null;
@@ -240,8 +240,8 @@ class User {
             $conn = $this->db->connect();
             $sql = "SELECT password_hash FROM users WHERE id = :id";
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([':id' => $userId]);
-            $user = $result->fetchAssociative();
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$user) {
                 return ['success' => false, 'error' => 'ユーザーが見つかりません'];

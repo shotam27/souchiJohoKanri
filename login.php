@@ -23,8 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $user->login($username, $password);
         
         if ($result['success']) {
-            // リダイレクト先を指定（元のページに戻る）
-            $redirect = $_GET['redirect'] ?? 'index.php';
+            // リダイレクト先を指定（同一オリジンのパスのみ許可）
+            $redirect = $_GET['redirect'] ?? '';
+            // 外部URLへのオープンリダイレクトを防ぐため、相対パスのみ許可
+            if (empty($redirect) || !preg_match('/^[a-zA-Z0-9_\-\.\/]+$/', $redirect)) {
+                $redirect = 'index.php';
+            }
             header('Location: ' . $redirect);
             exit;
         } else {
